@@ -40,6 +40,7 @@ import { makeRng } from './rng.js'
 import { LOOKS, SKINS, lookAt } from './looks.js'
 import { prefersReducedMotion } from './motion.js'
 import { GROUND as CRICKET, PITCH_LENGTH, BALL_R as CRICKET_BALL_R, BAT, strokeAt } from '../cricket/ground.js'
+import { armsAt } from '../netball/arms.js'
 import { loadBoardLogos, logoReady, logoBox, BOARD_W, BOARD_COUNT, boardCentre, drawTopSign, loadTopSign } from './boards.js'
 
 const PI = Math.PI
@@ -478,6 +479,8 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     }
   }
 
+  let hoop = null
+  let shooter = null
   // A netball post in the goal's place: a pole with a pad round it, and
   // a ring 3.05 metres up, held out in front of the pole, with a short
   // net hanging from it.
@@ -493,7 +496,8 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     const pad = new Mesh(keep(new CylinderGeometry(0.12, 0.12, 1.9, 14)), keep(new MeshLambertMaterial({ color: new Color(colours.accent) })))
     pad.position.set(0, 0.95, L)
     scene.add(pad)
-    const ring = new Mesh(keep(new TorusGeometry(RING.r, 0.016, 8, 32)), keep(new MeshLambertMaterial({ color: 0xe0263c, emissive: 0x3a0a10 })))
+    // The ring is drawn stout, to be picked out on a phone.
+    const ring = new Mesh(keep(new TorusGeometry(RING.r, 0.024, 10, 36)), keep(new MeshLambertMaterial({ color: 0xe0263c, emissive: 0x4a0d14 })))
     ring.rotation.x = PI / 2
     ring.position.set(0, RING.y, RING.z)
     scene.add(ring)
@@ -507,6 +511,25 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     hoopNet.position.set(0, RING.y - 0.19, RING.z)
     hoopNet.renderOrder = 2
     scene.add(hoopNet)
+    hoop = { net: hoopNet, ring, y: RING.y }
+
+    // The shooter's own arms (netball/arms.js): a sleeve and a hand each,
+    // drawn from the hand down to the elbow.
+    const sleeve = keep(new MeshLambertMaterial({ color: new Color(kits?.home?.shirt || colours.kit || '#c8102e') }))
+    const skin = keep(new MeshLambertMaterial({ color: new Color(LOOKS[1].skin) }))
+    const foreGeo = keep(new BoxGeometry(0.1, 0.5, 0.1))
+    const handGeo = keep(new BoxGeometry(0.11, 0.14, 0.08))
+    shooter = [0, 1].map(() => {
+      const arm = new Group()
+      const fore = new Mesh(foreGeo, sleeve)
+      fore.position.y = -0.32
+      const hand = new Mesh(handGeo, skin)
+      hand.position.y = -0.02
+      arm.add(fore, hand)
+      arm.visible = false
+      scene.add(arm)
+      return arm
+    })
   }
 
   // The net: four panels whose points move when the ball hits.
@@ -1194,6 +1217,7 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     takerShadow.position.set(b.x, 0.012, b.z)
   }
 
+  const armWay = new Vector3()
   // The ball in the bowler's hand, as he runs in.
   const heldAt = new Vector3()
   function ballInHand() {
@@ -1331,6 +1355,27 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     keeper.root.visible = !keeperless
     keeperShadow.visible = !keeperless
     const dropped = keeperless ? 0 : poseKeeper(state.keeper, now, state.holding)
+    // Netball: the shooter's arms, and the net and the ring as a goal
+    // goes through (swish runs from 0 to 1).
+    if (shooter) {
+      const a = state.arms
+      const placed = a ? armsAt(cam, a.at, a.lift) : []
+      shooter.forEach((arm, i) => {
+        const at = placed[i]
+        arm.visible = Boolean(at)
+        if (!at) return
+        arm.position.set(at.hand.x, at.hand.y, at.hand.z)
+        armWay.set(at.hand.x - at.elbow.x, at.hand.y - at.elbow.y, at.hand.z - at.elbow.z).normalize()
+        arm.quaternion.setFromUnitVectors(Y_AXIS, armWay)
+      })
+    }
+    if (hoop) {
+      const through = Math.sin(clamp(state.hoop?.swish || 0, 0, 1) * PI)
+      hoop.net.scale.y = 1 + 0.6 * through
+      hoop.net.position.y = hoop.y - 0.19 * hoop.net.scale.y
+      hoop.ring.material.emissive.setHex(through > 0.05 ? 0xf0c05a : 0x4a0d14)
+      hoop.ring.scale.setScalar(1 + 0.08 * through)
+    }
     // A ball in her hands comes down with her as she lands.
     // A ball the bowler has not let go of yet is in his hand.
     const held = cricket && state.ball.held ? ballInHand() : null

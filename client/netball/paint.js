@@ -3,6 +3,7 @@
 // ball, each put on the screen by the camera the 3D scene uses.
 
 import { RING, BALL_R } from './rules.js'
+import { armsAt } from './arms.js'
 import { GOAL } from '../shootout/physics.js'
 
 const LINE = GOAL.lineZ
@@ -19,11 +20,24 @@ export function paintNetball(g, s) {
   s.line({ x: 0, y: 0, z: LINE }, { x: 0, y: RING.height, z: LINE }, 0.09, '#ffffff')
   s.line({ x: 0, y: 0.1, z: LINE }, { x: 0, y: 1.9, z: LINE }, 0.24, s.colours.accent)
 
-  // The ring, seen from below as a flat oval, with its net under it.
-  if (!s.seen(hoop)) return
+  // The shooter's arms come up from the foot of the screen to the ball,
+  // drawn last of all, over everything.
+  const arms = () => {
+    if (!s.arms) return
+    for (const a of armsAt(s.view, s.arms.at, s.arms.lift)) {
+      s.line(a.elbow, a.hand, 0.1, s.colours.kit || '#c8102e')
+      s.disc(a.hand, 0.065, '#d9a07a')
+    }
+  }
+
+  // The ring, seen from below as a flat oval, with its net under it. As
+  // a goal goes through, the net is pulled down and the ring glows gold.
+  if (!s.seen(hoop)) { arms(); return }
+  const through = Math.sin(Math.min(1, Math.max(0, hoop.swish || 0)) * Math.PI)
   const centre = s.at(hoop)
   const rx = Math.max(6, RING.radius * centre.scale)
   const ry = Math.max(2, rx * 0.3)
+  const drop = rx * 1.9 * (1 + 0.6 * through)
   // A ball that has dropped below the ring is behind its near edge.
   const below = s.ball.y < hoop.y - 0.05
   const ball = () => {
@@ -43,11 +57,12 @@ export function paintNetball(g, s) {
   g.strokeStyle = 'rgba(255,255,255,0.85)'
   g.lineWidth = Math.max(1, rx * 0.04)
   for (let i = -3; i <= 3; i++) {
-    g.beginPath(); g.moveTo(centre.x + (i / 3) * rx, centre.y); g.lineTo(centre.x + (i / 3) * rx * 0.62, centre.y + rx * 1.9); g.stroke()
+    g.beginPath(); g.moveTo(centre.x + (i / 3) * rx, centre.y); g.lineTo(centre.x + (i / 3) * rx * 0.62, centre.y + drop); g.stroke()
   }
-  g.beginPath(); g.ellipse(centre.x, centre.y + rx * 1.9, rx * 0.62, ry * 0.62, 0, 0, Math.PI * 2); g.stroke()
-  g.strokeStyle = '#e0263c'
-  g.lineWidth = Math.max(2.5, rx * 0.14)
+  g.beginPath(); g.ellipse(centre.x, centre.y + drop, rx * 0.62, ry * 0.62, 0, 0, Math.PI * 2); g.stroke()
+  g.strokeStyle = through > 0.05 ? s.colours.accent : '#e0263c'
+  g.lineWidth = Math.max(3, rx * (0.18 + 0.08 * through))
   g.beginPath(); g.ellipse(centre.x, centre.y, rx, ry, 0, 0, Math.PI * 2); g.stroke()
   if (below) ball()
+  arms()
 }

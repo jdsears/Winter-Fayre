@@ -25,20 +25,25 @@ export const ELEVATION = (35 * Math.PI) / 180
 export const SPEED = { min: 11.5, max: 27 }
 // How hard a metre a second of wind pushes the ball sideways, in metres
 // a second each second.
-export const WIND_PUSH = 0.24
+export const WIND_PUSH = 0.36
 // The most a curled swipe can bend the ball, the same way.
 export const BEND_MAX = 3
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 
 // The five kicks: how far out, how far to one side, and the wind's
-// strength from and to, in metres a second.
+// strength from and to, in metres a second. The wind rises steeply
+// (John found the game too easy, 13 November 2026): by the fourth kick
+// the ball must be aimed outside the posts to come back between them,
+// and on the fifth a long way outside.
 export const SPOTS = [
   { d: 18, x: 0, wind: [0, 0] },
-  { d: 22, x: 6, wind: [2, 3] },
-  { d: 26, x: 11, wind: [3, 5] },
-  { d: 30, x: 15, wind: [5, 7] },
-  { d: 34, x: 19, wind: [7, 9] },
+  { d: 22, x: 6, wind: [3, 5] },
+  { d: 26, x: 11, wind: [6, 8] },
+  { d: 30, x: 15, wind: [9, 11] },
+  { d: 34, x: 19, wind: [12, 14] },
 ]
+// The strongest wind there is, for the arrow that shows it.
+export const WIND_MOST = SPOTS[SPOTS.length - 1].wind[1]
 
 // A kick's set-up: where the ball is and how the wind blows. kick is 0
 // for the first and 4 for the last. The side of the pitch and the way
