@@ -76,6 +76,10 @@ export function topSignFrom(doc = globalThis.document) {
   }
 }
 
+// How tall the badge stands on the sign, as a share of the sign's height:
+// as tall as the gold edges allow, with a little room above and below.
+export const BADGE_TALL = 0.78
+
 // Draws the sign on a canvas of w by h: the logo on white, or the badge
 // beside the name on the site's deep colour. With a line over the name,
 // that line is drawn smaller above it, in white, and the name below it
@@ -97,8 +101,8 @@ export function drawTopSign(g, w, h, sign, { logo = null, badge = null, colours,
   g.fillRect(0, 0, w, edge)
   g.fillRect(0, h - edge, w, edge)
   const word = (sign.name || '').toUpperCase()
-  const mark = logoReady(badge) ? h * 0.66 : 0
-  const gap = mark ? h * 0.14 : 0
+  const mark = logoReady(badge) ? h * BADGE_TALL : 0
+  const gap = mark ? h * 0.12 : 0
   if (sign.over) {
     const over = sign.over.toUpperCase()
     const room = w * 0.92 - mark - gap

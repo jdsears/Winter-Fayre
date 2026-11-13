@@ -52,7 +52,7 @@ export function arcadeHtml() {
   const tiles = GAMES.map(g => `<li class="gt"><a href="${attr(g.href)}">${tileArt(g.key)}<span class="gt-b"><span class="gt-t">${esc(g.title)}</span><span class="gt-p">${esc(g.text)}</span>${prizeLine(g.key) ? `<span class="gt-w">${esc(prizeLine(g.key))}</span>` : ''}<span class="btn y">${esc(g.play)}</span></span></a></li>`).join('')
   return `<header class="hero" id="top">
   <div class="wrap">
-    <div class="wm host">${crestImg({ shown: 72 })}<span>${esc(SITE.host)}</span></div>
+    <div class="wm host">${crestImg({ shown: 96 })}<span>${esc(SITE.host)}</span></div>
     <h1>${esc(SITE.short)} <em>Sports Arcade</em></h1>
     <p>Quick sports games to play on your phone. Beat a game's target and show your screen at the sports stall to claim a sweet, and put your three letters on today's leaderboard.</p>
   </div>

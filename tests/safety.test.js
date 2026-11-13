@@ -133,14 +133,14 @@ describe('the repository', () => {
     assert.deepEqual(media, [path.join('server', 'crest', 'psa.webp')])
   })
 
-  test('the crest is a small WebP picture, 256 pixels square: nothing a phone would notice fetching', () => {
+  test('the crest is a small WebP picture, 512 pixels square: nothing a phone would notice fetching', () => {
     const bytes = readFileSync(path.join(ROOT, 'server', 'crest', 'psa.webp'))
-    assert.ok(bytes.length < 12 * 1024, `${bytes.length} bytes`)
+    assert.ok(bytes.length < 24 * 1024, `${bytes.length} bytes`)
     assert.equal(bytes.subarray(0, 4).toString('latin1'), 'RIFF')
     assert.equal(bytes.subarray(8, 16).toString('latin1'), 'WEBPVP8X')
     // The size the picture says it is: width and height, each less one.
-    assert.equal(bytes.readUIntLE(24, 3) + 1, 256)
-    assert.equal(bytes.readUIntLE(27, 3) + 1, 256)
+    assert.equal(bytes.readUIntLE(24, 3) + 1, 512)
+    assert.equal(bytes.readUIntLE(27, 3) + 1, 512)
   })
 
   test('holds no secret: no .env, and nothing that looks like a key', () => {

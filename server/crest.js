@@ -2,10 +2,14 @@
 // picture the site holds. John supplied it and has said he has
 // permission to use it (13 November 2026).
 //
-// It is the picture he sent, whole and unaltered but for two things: it
-// is made small (256 pixels square, WebP, about six kilobytes) and its
-// corners are rounded. It is shown on its own plum background, as it
-// came, and the site's winter colours are left as they are.
+// It is the picture he sent, whole: nothing is cropped, recoloured or
+// redrawn. Three things are done to it. It is made small (512 pixels
+// square, WebP, about eighteen kilobytes). Its corners are rounded. And
+// it is sharpened, as John asked: the picture he had was a soft one, so
+// its blur is undone as far as it can be without leaving marks, which
+// firms the edges of the shapes that are there and adds none. It is
+// shown on its own plum background, as it came, and the site's winter
+// colours are left as they are.
 //
 // It is served from this site under a name made from what is in it, so
 // a browser may keep it for good, and it is the only picture the big
@@ -30,7 +34,7 @@ export function readCrest(file = FILE) {
     const bytes = readFileSync(file)
     if (bytes.subarray(0, 4).toString('latin1') !== 'RIFF' || bytes.subarray(8, 12).toString('latin1') !== 'WEBP') return null
     const name = crypto.createHash('sha256').update(bytes).digest('hex').slice(0, 16)
-    return { bytes, path: `/media/badge/${name}.webp`, size: 256, alt: CREST_ALT }
+    return { bytes, path: `/media/badge/${name}.webp`, size: 512, alt: CREST_ALT }
   } catch {
     return null
   }
@@ -41,7 +45,7 @@ export const CREST = readCrest()
 // The crest on a page, `shown` pixels square (a style sheet may size it
 // further by its class). The picture's own size is given so the page
 // does not jump as it loads. Nothing at all where there is no crest.
-export function crestImg({ shown = 72, cls = 'crest', lazy = false } = {}, crest = CREST) {
+export function crestImg({ shown = 96, cls = 'crest', lazy = false } = {}, crest = CREST) {
   if (!crest) return ''
   return `<img class="${attr(cls)}" src="${attr(crest.path)}" width="${shown}" height="${shown}" alt="${attr(crest.alt)}" decoding="async"${lazy ? ' loading="lazy"' : ''}>`
 }
