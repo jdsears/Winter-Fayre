@@ -47,6 +47,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { GAMES } from '../shared/games.js'
 import { APPEAL } from '../shared/appeal.js'
+import { footballTv } from '../shared/prizes.js'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
@@ -664,7 +665,7 @@ async function story(browsers, base) {
 // The numbers page on a phone, behind its password: nothing wider than
 // the screen, every Take off button big enough for a thumb, and a tap on
 // one takes that entry off. The television check has put ten invented
-// entries on the keepy-uppies leaderboard by now.
+// entries on every leaderboard by now.
 async function numbersPage(browser, base) {
   const where = '/numbers at 375'
   const context = await browser.newContext({ viewport: { width: 375, height: 812 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, httpCredentials: { username: 'check', password: NUMBERS } })
@@ -672,7 +673,8 @@ async function numbersPage(browser, base) {
   await scrollThrough(page)
   report(where, await page.evaluate(measure))
   const before = await page.locator('form[action="/numbers/remove"]').count()
-  if (before !== 10) problem(where, `${before} entries have a Take off button, not the 10 that were added`)
+  const added = GAMES.length * 10
+  if (before !== added) problem(where, `${before} entries have a Take off button, not the ${added} that were added`)
   if (before) {
     await page.locator('form[action="/numbers/remove"] button').first().click()
     await page.waitForLoadState('load')
@@ -690,26 +692,29 @@ async function numbersPage(browser, base) {
   await closed.close()
 }
 
-// The stall's TV screen, as a television shows it, with one leaderboard
-// full: ten invented goes of one or two keepy-uppies, which the site
-// takes at once.
+// The stall's TV screen, as a television shows it, with every
+// leaderboard full, as they will be an hour into the fayre: ten invented
+// goes on each, of a score small enough for the site to take at once.
 async function television(browsers, base) {
   // The leaderboards, the code and the appeal's screen of words are
   // measured where 3D is off, so the appeal's turn is that screen; the
   // appeal's turn with its story in 3D is measured after, where it is on.
   const browser = browsers.no3d
-  for (let n = 0; n < 10; n++) {
-    const { ticket } = await (await fetch(`${base}/api/board/keepy`)).json()
-    const res = await fetch(`${base}/api/board/keepy`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initials: ['ABC', 'XYZ', 'LMN', 'QRS', 'TUV'][n % 5], score: n < 5 ? 2 : 1, ticket }) })
-    if (!res.ok) problem('/tv', `an invented score for the picture was refused (${res.status})`)
+  for (const g of GAMES) {
+    for (let n = 0; n < 10; n++) {
+      const { ticket } = await (await fetch(`${base}/api/board/${g.key}`)).json()
+      const score = g.key === 'keepy' && n < 5 ? 2 : 1
+      const res = await fetch(`${base}/api/board/${g.key}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initials: ['ABC', 'XYZ', 'LMN', 'QRS', 'TUV'][n % 5], score, ticket }) })
+      if (!res.ok) problem('/tv', `an invented score for the ${g.key} leaderboard was refused (${res.status})`)
+    }
   }
   for (const [width, height, name] of [[1920, 1080, 'tv-1920x1080'], [1280, 720, 'tv-1280x720'], [3840, 2160, null]]) {
     const where = `/tv at ${width} by ${height}`
     const context = await browser.newContext({ viewport: { width, height } })
     const page = await openPage(context, base, '/tv', where)
     await page.waitForTimeout(700)
-    // Each board in its turn, keepy-uppies (the full one) among them. The
-    // check gives each its turn here, so it need not wait for them all.
+    // Each board in its turn, every one of them full. The check gives
+    // each its turn here, so it need not wait for them all.
     const seen = new Set()
     for (let turn = 0; turn < GAMES.length; turn++) {
       const m = await page.evaluate((index) => {
@@ -721,7 +726,14 @@ async function television(browsers, base) {
         const card = board?.getBoundingClientRect()
         const row = board?.querySelector('.tvl li')
         const snow = document.querySelector('.tv .snow').getBoundingClientRect()
+        const screen = document.querySelector('.tv').getBoundingClientRect()
+        const heading = document.querySelector('.tvd').getBoundingClientRect()
+        const dots = document.querySelector('[data-tv-dots]').getBoundingClientRect()
         return {
+          // The screen is the television's own height, to the pixel: never taller.
+          tall: Math.round(screen.height) - innerHeight,
+          headingOn: heading.top >= 0,
+          dotsClear: dots.bottom <= snow.top + 1,
           shown: on.length,
           key: board?.getAttribute('data-tv-board'),
           rows: board ? board.querySelectorAll('.tvl li').length : 0,
@@ -736,6 +748,10 @@ async function television(browsers, base) {
       seen.add(m.key)
       const scale = width / 1920
       if (m.shown !== 1) problem(where, `${m.shown} leaderboards are on the screen at once, not one`)
+      if (m.tall !== 0) problem(where, `with the ${m.key} leaderboard on, the screen is ${Math.abs(m.tall)}px ${m.tall > 0 ? 'taller' : 'shorter'} than the television`)
+      if (m.rows !== 10) problem(where, `the ${m.key} leaderboard shows ${m.rows} rows, not the 10 that were added`)
+      if (!m.headingOn) problem(where, `with the ${m.key} leaderboard on, the line over the leaderboards is off the top of the screen`)
+      if (!m.dotsClear) problem(where, `with the ${m.key} leaderboard on, the dots under it run into the snow`)
       if (m.code < 400 * scale) problem(where, `the QR code is ${m.code}px square, under ${Math.round(400 * scale)}`)
       if (!m.codeInside) problem(where, 'the QR code is not wholly on the screen')
       if (m.letters !== null && m.letters < 40 * scale) problem(where, `a leaderboard row's letters are ${m.letters}px, under ${Math.round(40 * scale)}`)
@@ -743,7 +759,44 @@ async function television(browsers, base) {
       if (!m.address) problem(where, 'the address under the code runs into the snow')
       if (m.scrolls) problem(where, 'the screen scrolls')
       if (m.key === 'keepy') {
-        if (m.rows !== 10) problem(where, `the full leaderboard shows ${m.rows} rows, not 10`)
+        // The football's line, in each thing it can say and at its longest
+        // (a winner with wide letters and the highest score): never cut
+        // short, and the board with its ten rows still fits the screen.
+        const lines = [
+          footballTv({ closed: false, leader: null }),
+          footballTv({ closed: true, leader: { initials: 'WMW', score: 1000 } }),
+          footballTv({ closed: true, leader: null }),
+        ]
+        const said = await page.evaluate((lines) => {
+          const board = document.querySelector('.tvb[data-tv-board="keepy"]')
+          const line = board.querySelector('[data-tv-football]')
+          if (!line) return null
+          const snow = document.querySelector('.tv .snow').getBoundingClientRect()
+          const was = line.textContent
+          const out = lines.map((text) => {
+            line.textContent = text
+            const card = board.getBoundingClientRect()
+            const box = line.getBoundingClientRect()
+            const dots = document.querySelector('[data-tv-dots]').getBoundingClientRect()
+            return {
+              text,
+              cut: line.scrollWidth > line.clientWidth + 1 || line.scrollHeight > line.clientHeight + 1,
+              inside: card.bottom <= snow.top + 1 && dots.bottom <= snow.top + 1 && document.querySelector('.tvd').getBoundingClientRect().top >= 0 && Math.round(document.querySelector('.tv').getBoundingClientRect().height) === innerHeight,
+              rows: Math.round(box.height / (parseFloat(getComputedStyle(line).lineHeight) || box.height)),
+              letters: parseFloat(getComputedStyle(line).fontSize),
+            }
+          })
+          line.textContent = was
+          return out
+        }, lines)
+        if (!said) problem(where, 'the keepy-uppies leaderboard does not say anything of the football')
+        else {
+          for (const l of said) {
+            if (l.cut) problem(where, `the football's line is cut short: "${l.text}"`)
+            if (!l.inside) problem(where, `the keepy-uppies leaderboard does not fit the screen when the football's line reads "${l.text}"`)
+            if (l.letters < 28 * scale) problem(where, `the football's line is written at ${l.letters}px, under ${Math.round(28 * scale)}`)
+          }
+        }
         await page.waitForTimeout(700)
         if (name) await page.screenshot({ path: path.join(shots, `${name}.png`) })
       }
@@ -760,7 +813,7 @@ async function television(browsers, base) {
       const inside = (sel) => { const r = scene.querySelector(sel).getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= snow.top + 1 }
       const size = (sel) => parseFloat(getComputedStyle(scene.querySelector(sel)).fontSize)
       return {
-        fills: box.left <= 0 && box.top <= 0 && box.right >= innerWidth && box.bottom >= innerHeight,
+        fills: box.left <= 0 && box.top <= 0 && box.right >= innerWidth && Math.round(box.bottom) === innerHeight,
         code: Math.round(Math.min(code.width, code.height)),
         outside: ['.tvx-w', '.tvx-q', '.tvcode', '.tvx-s', '.tvx-a', '.tvx-ch'].filter(sel => !inside(sel)),
         headline: size('h2'),
@@ -773,7 +826,7 @@ async function television(browsers, base) {
     const scale = width / 1920
     if (!a) problem(where, 'the appeal is not on the page')
     else {
-      if (!a.fills) problem(where, 'the appeal does not fill the screen in its turn')
+      if (!a.fills) problem(where, 'the appeal does not fill the screen in its turn, to the pixel')
       if (a.code < 400 * scale) problem(where, `the appeal's code to scan is ${a.code}px square, under ${Math.round(400 * scale)}`)
       for (const o of a.outside) problem(where, `the appeal's ${o} is not wholly on the screen, clear of the snow`)
       if (a.headline < 80 * scale) problem(where, `the appeal's headline is ${a.headline}px, under ${Math.round(80 * scale)}`)
@@ -923,7 +976,7 @@ async function television3d(browser, base) {
       if (list) parts.list = list
       return {
         marked: scene.classList.contains('s3'),
-        fills: box(scene).left <= 0 && box(scene).top <= 0 && box(scene).right >= innerWidth && box(scene).bottom >= innerHeight,
+        fills: box(scene).left <= 0 && box(scene).top <= 0 && box(scene).right >= innerWidth && Math.round(box(scene).bottom) === innerHeight && Math.round(snow.bottom) === innerHeight,
         picture: getComputedStyle(canvas).display !== 'none' && c.left <= 0 && c.top <= 0 && c.right >= innerWidth && c.bottom >= innerHeight,
         drawnWide: canvas.width,
         lists: lists.map(l => l.getAttribute('data-tv-list')),
@@ -942,7 +995,7 @@ async function television3d(browser, base) {
     const scale = width / 1920
     const judge = (a, list) => {
       if (!a.marked) problem(where, 'the appeal\'s turn is not laid out round the picture')
-      if (!a.fills) problem(where, 'the appeal does not fill the screen in its turn')
+      if (!a.fills) problem(where, 'the appeal does not fill the screen in its turn, to the pixel')
       if (!a.picture) problem(where, 'the picture does not fill the screen behind the appeal\'s words')
       if (a.drawnWide < 640 || a.drawnWide > 1920) problem(where, `the picture is drawn ${a.drawnWide} pixels wide`)
       if (a.lists.length !== 1 || a.lists[0] !== list) problem(where, `the appeal shows the lists "${a.lists.join(', ')}", not "${list}" alone`)

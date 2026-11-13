@@ -276,6 +276,13 @@ describe('the football on the site', () => {
       app.clock.now = at(13, 40)
       html = await (await app.get('/tv', { headers: PERSON })).text()
       assert.match(html, /<p class="tvf won" data-tv-football>The football is won: ABC with 44\. Come to the sports stall\.<\/p>/)
+      // The line is never cut short on the screen: where its words are too
+      // long for one line they go on to a second (the check measures it).
+      const href = /<link rel="stylesheet" href="(\/styles\/site\.[0-9a-f]{12}\.css)">/.exec(html)[1]
+      const css = await (await app.get(href)).text()
+      const rules = css.match(/\.tvf\{[^}]*\}/g) || []
+      assert.ok(rules.length >= 2)
+      for (const rule of rules) assert.ok(!/text-overflow|white-space:\s*nowrap|overflow:\s*hidden/.test(rule), rule)
     } finally {
       await app.close()
     }
