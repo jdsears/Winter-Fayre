@@ -15,7 +15,7 @@
 
 import { project } from '../shootout/camera.js'
 import { BOARDS_Z, GOAL } from '../shootout/physics.js'
-import { BOARD_COUNT, BOARD_W, boardCentre, drawTopSign } from '../shootout/boards.js'
+import { BOARD_COUNT, BOARD_W, boardCentre, drawTopSign, loadTopSign } from '../shootout/boards.js'
 import { mix } from '../shootout/colour.js'
 
 const FONT = '"Barlow Condensed", "Arial Narrow", sans-serif'
@@ -66,6 +66,8 @@ export function createFlatView({ canvas, paint, colours, boards = [], sign = nul
   let cheerUntil = -1
   let lastNow = 0
   const names = boards.length ? boards : ['Winter Fayre']
+  // The sign's badge, if it has one: drawn once it has loaded.
+  const signPics = sign ? loadTopSign(sign) : {}
   // Snow, as shares of the screen, so it falls the same at any size.
   const flakes = Array.from({ length: 80 }, (_, i) => ({ x: (i * 0.618034) % 1, y: (i * 0.381966) % 1, r: 1 + (i % 4) * 0.5, v: 0.05 + (i % 5) * 0.014, p: i * 1.3 }))
 
@@ -176,7 +178,7 @@ export function createFlatView({ canvas, paint, colours, boards = [], sign = nul
         g.save()
         g.translate(b.x, b.y)
         g.scale(b.w / 1152, b.h / 320)
-        drawTopSign(g, 1152, 320, sign, { colours, font: FONT })
+        drawTopSign(g, 1152, 320, sign, { ...signPics, colours, font: FONT })
         g.restore()
       }
     }

@@ -8,7 +8,7 @@ The repository is **jdsears/Winter-Fayre**. Work only in it. It was built from `
 
 1. **One more dependency, for the QR code** (13 November 2026). `qrcode-generator`, used on the server only, so the QR code is drawn from the site's own address.
 2. **The boards read "Wymondham College PSA" and "Winter Fayre"** (13 November 2026). John's instruction for the signage. The big sign across the stand carries both.
-3. **The College's crest and colours** (13 November 2026). John has said he has permission and will supply the crest file. Until it arrives the site uses words only, in a winter palette after the fayre's poster: deep navy, ice blue, white and a warm gold.
+3. **The crest** (13 November 2026). John has said he has permission to use it, and supplied the logo of the Wymondham College Parent Staff Association: the crest and the Association's name on a plum background. It is used whole, as he sent it, made small and given rounded corners. The site's own colours stay as they were, a winter palette after the fayre's poster: deep navy, ice blue, white and a warm gold.
 4. **Every game is winter themed with a splash of Christmas** (13 November 2026). The stadium is a winter night: stars, falling snow, snow on the boards, fairy lights, a Christmas tree either side of the goal, and Christmas hats in the crowd and on the keeper. The visitor's player wears a Christmas red with white trim, the keeper an elf's green. The games' tune is the chorus of Jingle Bells, made on the spot like the rest of the sound.
 5. **Pull requests may be merged once the checks pass** (13 November 2026). For this project only, because the fayre is the next day.
 6. **The prizes are harder than first suggested: 80%** (13 November 2026). John asked for them to be more difficult, at 80%. That is read as four in five where a game has a fixed number of tries, and as double the first suggestion where it has none: penalties 4 of your own 5 kicks, free kicks 8 of 10, keepy-uppies 20, head to head a win, rugby 4 of 5 kicks, netball 8 goals in the thirty seconds (the first suggestion was 5; a faultless thirty seconds is about 18), cricket 28 runs from the six balls (the first suggestion was 15; six sixes is 36, and 28 is the nearest score to 80% of that which can be made without a single). They sit in one file, `shared/prizes.js`, so they are easy to change: one number each.
@@ -28,6 +28,7 @@ The repository is **jdsears/Winter-Fayre**. Work only in it. It was built from `
 - **The stall's TV screen** at `/tv`, made for a 1920 by 1080 television: a large QR code and the words "Scan to play", with the site's address under it to type, and beside it the day's leaderboards. Each game's leaderboard has the screen for nine seconds in turn, and they are asked for again every fifteen seconds. If the wifi drops, what is on the screen stays. If the site is deployed again, the screen reloads itself. It needs no touch or keyboard. On a phone it stacks, and with no script it shows every leaderboard and asks for itself again each minute.
 - **The QR code alone** at `/qr.svg`, to print for the stall. It is drawn by the server from the site's own address, so it is right whatever address the site is on.
 - **Prizes.** When a go reaches its game's number, the finish panel says "You have won a sweet. Show this screen at the sports stall to claim a sweet." with the time it was won, so the stall can see it is that go and not an old picture. A go that falls short is told what to aim for. The arcade's tiles and the TV say what wins a sweet in each game.
+- **The PSA's crest**, the one picture on the site: beside "Wymondham College PSA" at the top of the arcade page, at the top of the stall's TV screen, and on the big sign across the stand in every game, to the left of its words. It is a file of about six kilobytes served by the site itself (`server/crest/psa.webp`, made from the picture John sent: the whole of it, 256 pixels square). If a sharper or different logo is wanted, replacing that one file is all it takes.
 - **The privacy page** at `/privacy`.
 - **The numbers** at `/numbers`, behind `NUMBERS_PASSWORD`: anonymous daily totals of page views and games started and finished, and today's leaderboards with a **Take off** button beside every entry. If three letters appear that should not be on show, John opens `/numbers` on his phone, taps Take off, and the entry goes from the game and from the TV within a quarter of a minute.
 
@@ -44,7 +45,7 @@ The leaderboards and the numbers are kept in the service's memory. If a Railway 
 
 ## What is left
 
-Everything in the brief is built. Waiting on John: the crest file, if he wants it on the big sign and the arcade page.
+Everything in the brief is built, and nothing is waiting on John.
 
 Two things that can be changed quickly if the day shows a need:
 

@@ -9,6 +9,7 @@
 import { esc, attr } from './html.js'
 import { snowBand } from './layout.js'
 import { SITE, COLOURS } from '../site.js'
+import { CREST, crestImg } from '../crest.js'
 import { GAMES } from '../../shared/games.js'
 import { prizeLine } from '../../shared/prizes.js'
 import { shootoutConfig } from '../../client/shootout/config.js'
@@ -51,7 +52,7 @@ export function arcadeHtml() {
   const tiles = GAMES.map(g => `<li class="gt"><a href="${attr(g.href)}">${tileArt(g.key)}<span class="gt-b"><span class="gt-t">${esc(g.title)}</span><span class="gt-p">${esc(g.text)}</span>${prizeLine(g.key) ? `<span class="gt-w">${esc(prizeLine(g.key))}</span>` : ''}<span class="btn y">${esc(g.play)}</span></span></a></li>`).join('')
   return `<header class="hero" id="top">
   <div class="wrap">
-    <div class="wm">${esc(SITE.host)}</div>
+    <div class="wm host">${crestImg({ shown: 72 })}<span>${esc(SITE.host)}</span></div>
     <h1>${esc(SITE.short)} <em>Sports Arcade</em></h1>
     <p>Quick sports games to play on your phone. Beat a game's target and show your screen at the sports stall to claim a sweet, and put your three letters on today's leaderboard.</p>
   </div>
@@ -73,7 +74,9 @@ export function arcadeHtml() {
 // for the boards round the pitch and for the big sign across the stand,
 // and the first go's ticket for the leaderboard.
 function stadiumAttrs(ticket) {
-  return ` data-boards="${attr(JSON.stringify(SITE.boards))}" data-top-sign="${attr(JSON.stringify(SITE.sign))}"${ticket ? ` data-ticket="${attr(ticket)}"` : ''}`
+  // The big sign carries the PSA's crest beside its words.
+  const sign = CREST ? { ...SITE.sign, badge: CREST.path } : SITE.sign
+  return ` data-boards="${attr(JSON.stringify(SITE.boards))}" data-top-sign="${attr(JSON.stringify(sign))}"${ticket ? ` data-ticket="${attr(ticket)}"` : ''}`
 }
 
 const more = '<div class="cta"><a class="btn o" href="/">More games</a></div>'

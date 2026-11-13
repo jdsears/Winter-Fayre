@@ -2,9 +2,9 @@
 //
 // The name of the site is "Winter Fayre Sports Arcade". The boards round
 // the pitch read "Wymondham College PSA" and "Winter Fayre", as John
-// asked (13 November 2026). The College's crest is not used: John has
-// said he has permission and will supply the file, and until he does
-// the site is words only.
+// asked (13 November 2026). The crest of the College's Parent Staff
+// Association, which John supplied and has permission to use, is the
+// one picture the site holds (crest.js).
 
 export const SITE = {
   name: 'Winter Fayre Sports Arcade',

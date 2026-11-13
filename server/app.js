@@ -11,6 +11,7 @@
 //   GET  /fonts/...        Barlow and Barlow Condensed, served from here
 //   GET  /styles/...       the stylesheet
 //   GET  /icon.svg         the site's icon, a snowflake
+//   GET  /media/badge/...  the PSA's crest, the one picture the site holds (crest.js)
 //   GET  /robots.txt       search engines are kept out
 //   GET  /health           for Railway: the service is up
 //   GET  /api/board/<game> a game's leaderboard for the day, and a ticket for a go
@@ -37,6 +38,7 @@ import { renderTv, shortAddress } from './render/tv.js'
 import { qrSvg } from './qr.js'
 import { GAMES, GAME_KEYS, gameByKey } from '../shared/games.js'
 import { COLOURS } from './site.js'
+import { CREST } from './crest.js'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -125,6 +127,14 @@ export function createApp({ origin = 'http://localhost:3000', production = false
     res.set('Cache-Control', 'public, max-age=86400')
     res.type('image/svg+xml').send(ICON)
   })
+
+  // The PSA's crest, under the name made from what is in it.
+  if (CREST) {
+    app.get(CREST.path, (req, res) => {
+      res.set('Cache-Control', 'public, max-age=31536000, immutable')
+      res.type('image/webp').send(CREST.bytes)
+    })
+  }
 
   const fontsDir = path.join(root, 'client', 'fonts')
   const fontFiles = new Set(FACES.map(f => f.file))
