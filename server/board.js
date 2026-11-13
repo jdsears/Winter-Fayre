@@ -29,6 +29,7 @@
 import crypto from 'node:crypto'
 import { createStore } from './store.js'
 import { GAMES } from '../shared/games.js'
+import { FOOTBALL } from '../shared/prizes.js'
 
 export const BOARD_SIZE = 50
 export const TICKET_MAX_AGE_MS = 3 * 60 * 60 * 1000
@@ -54,6 +55,20 @@ export function cleanInitials(value) {
 const LONDON = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' })
 // '2026-11-14' in the UK.
 export const londonDay = (ms) => LONDON.format(new Date(ms))
+// The moment a time of day falls on a day in the UK: '2026-11-14' and
+// '13:30' give that half past one, summer time or winter.
+const LONDON_CLOCK = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+export function londonMoment(day, time) {
+  const [y, m, d] = day.split('-').map(Number)
+  const [hh, mm] = time.split(':').map(Number)
+  // As if the UK kept to UTC, then put right by however far its clocks
+  // stand from it at that moment.
+  const guess = Date.UTC(y, m - 1, d, hh, mm)
+  const p = Object.fromEntries(LONDON_CLOCK.formatToParts(new Date(guess)).map(part => [part.type, part.value]))
+  const shown = Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day), Number(p.hour), Number(p.minute))
+  return guess - (shown - guess)
+}
+
 // 'Saturday 14 November'.
 export function dayName(day) {
   const [y, m, d] = day.split('-').map(Number)
@@ -82,7 +97,9 @@ export function readEntries(raw, maxScore = 1000) {
 //                      slack + perSecond for each second since the ticket is refused
 // runs                 an entry can grow: an add answers with a ticket for its entry
 // ticketKey            what tickets are signed with
-export function createBoard({ store = createStore(), name = 'keepy', maxScore = 1000, perSecond = 2.5, slack = 2, runs = false, now = () => Date.now(), ticketKey = store.secret() } = {}) {
+// football  { until: '13:30' } for the board whose leader at that time
+//           of day wins the football (shared/prizes.js), or null
+export function createBoard({ store = createStore(), name = 'keepy', maxScore = 1000, perSecond = 2.5, slack = 2, runs = false, football = null, now = () => Date.now(), ticketKey = store.secret() } = {}) {
   const used = new Map()
   let queue = Promise.resolve()
   let recent = []
@@ -133,15 +150,42 @@ export function createBoard({ store = createStore(), name = 'keepy', maxScore = 
 
   const shown = (entries) => entries.map(e => ({ initials: e.i, score: e.s }))
 
+  // The football. An entry counts if it was added by the cut-off; the
+  // best of those leads, and once the cut-off has passed has won. The
+  // winner's code is four digits made from the entry and this service's
+  // own secret: the phone that added the entry is told it, and the
+  // numbers page shows it, so the stall can tell the winner from someone
+  // who only says so. Nothing is kept for it.
+  const cutoff = (day) => (football ? londonMoment(day, football.until) : null)
+  const codeOf = (day, e) => String(crypto.createHmac('sha256', ticketKey).update(['football', name, day, e.i, e.s, e.t].join('.')).digest().readUInt32BE(0) % 10000).padStart(4, '0')
+  const leading = (day, entries) => entries.find(e => e.t !== null && e.t <= cutoff(day)) || null
+  const footballOf = (day, entries) => {
+    if (!football) return {}
+    const lead = leading(day, entries)
+    return { football: { until: football.until, closed: now() > cutoff(day), leader: lead ? { initials: lead.i, score: lead.s } : null } }
+  }
+
   return {
     on: true,
     name,
     ticket,
 
-    // { day, name, entries: [{ initials, score }] }, best first.
+    // { day, name, entries: [{ initials, score }] }, best first. On the
+    // football's board, also { football: { until, closed, leader } }.
     async top() {
       const day = today()
-      return { day, name: dayName(day), entries: shown(await load(day)) }
+      const entries = await load(day)
+      return { day, name: dayName(day), entries: shown(entries), ...footballOf(day, entries) }
+    },
+
+    // The football's leader with the winner's code, for the numbers page
+    // alone: { until, closed, leader: { initials, score, at, code } | null },
+    // or null on a board with no football.
+    async winner() {
+      if (!football) return null
+      const day = today()
+      const lead = leading(day, await load(day))
+      return { until: football.until, closed: now() > cutoff(day), leader: lead ? { initials: lead.i, score: lead.s, at: lead.t, code: codeOf(day, lead) } : null }
     },
 
     // { ok: true, rank, day, name, entries } or { ok: false, reason }:
@@ -172,9 +216,13 @@ export function createBoard({ store = createStore(), name = 'keepy', maxScore = 
         // Of two scores the same, the earlier stays ahead.
         const rank = before.filter(e => e.s >= score).length + 1
         if (rank > BOARD_SIZE) return { ok: false, reason: 'low' }
-        const entries = readEntries({ entries: [...before, { i, s: score, t: now() }] }, maxScore)
+        const entry = { i, s: score, t: now() }
+        const entries = readEntries({ entries: [...before, entry] }, maxScore)
         await save(day, entries)
-        return { ok: true, rank, day, name: dayName(day), entries: shown(entries), ...(runs ? { ticket: ticket({ i, s: score }) } : {}) }
+        // An entry added in time for the football is told its code, for
+        // the phone that added it to keep.
+        const inTime = football && entry.t <= cutoff(day)
+        return { ok: true, rank, day, name: dayName(day), entries: shown(entries), ...footballOf(day, entries), ...(inTime ? { claim: codeOf(day, entry) } : {}), ...(runs ? { ticket: ticket({ i, s: score }) } : {}) }
       })
       // A go that could not be kept can be sent again with its ticket.
       queue = work.catch(() => { used.delete(t.nonce) })
@@ -193,7 +241,7 @@ export function createBoard({ store = createStore(), name = 'keepy', maxScore = 
         if (!hit || hit.i !== String(initials) || hit.s !== Number(score)) return { ok: false }
         const entries = all.filter((_, n) => n !== at)
         await save(day, entries)
-        return { ok: true, entries: shown(entries) }
+        return { ok: true, entries: shown(entries), ...footballOf(day, entries) }
       })
       queue = work.catch(() => {})
       return work
@@ -204,6 +252,6 @@ export function createBoard({ store = createStore(), name = 'keepy', maxScore = 
 // A board for every game in the arcade, by the game's key.
 export function createBoards({ store = createStore(), now = () => Date.now(), ticketKey = store.secret() } = {}) {
   const boards = {}
-  for (const g of GAMES) boards[g.key] = createBoard({ store, name: g.key, now, ticketKey, ...g.board })
+  for (const g of GAMES) boards[g.key] = createBoard({ store, name: g.key, now, ticketKey, ...g.board, football: g.key === FOOTBALL.game ? { until: FOOTBALL.until } : null })
   return boards
 }

@@ -80,6 +80,8 @@ footer .fl{display:flex;flex-wrap:wrap;gap:0 22px}
 .num{background:var(--tint);border:1px solid var(--rule-light);border-radius:16px;padding:16px 18px;color:var(--ink);font-size:17px;line-height:1.5}
 .num .nl{display:block;font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:.06em;text-transform:uppercase;color:var(--primary);margin-bottom:4px}
 .num b{font-family:var(--display);font-weight:800;font-size:34px;line-height:1;margin-right:4px}
+.fbw{font-size:20px}
+.fbc{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:.08em;background:var(--accent);color:var(--ink);padding:2px 10px;border-radius:8px}
 .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .nums table{border-collapse:collapse;width:100%;max-width:640px;color:var(--ink);font-size:17px}
 .nums th,.nums td{text-align:left;padding:9px 12px 9px 0;border-bottom:1px solid var(--rule-light);vertical-align:middle}
@@ -142,6 +144,8 @@ const TILES_CSS = `.gts{list-style:none;margin:0;padding:0;display:grid;grid-tem
 .gt-t{font-family:var(--display);font-weight:800;font-size:34px;line-height:1;text-transform:uppercase}
 .gt-p{color:var(--on-light-muted)}
 .gt-w{font-weight:700;color:var(--primary);margin-bottom:10px}
+.gt-w+.gt-f{margin-top:-6px}
+.gt-f{color:#8a5a00}
 .gt .btn{margin-top:auto;align-self:stretch}
 @media (prefers-reduced-motion:reduce){.gt a{transition:none}.gt a:hover,.gt a:focus-visible{transform:none}}`
 
@@ -195,6 +199,13 @@ const STAGE_CSS = `.gs-open{overflow:hidden}
 .gs-prize.won{background:var(--accent);color:var(--ink);font-size:18px;font-weight:700;box-shadow:0 0 0 3px #fff,0 8px 24px #0006}
 .gs-prize.won b{font-family:var(--display);font-weight:800;font-size:28px;line-height:1.05;text-transform:uppercase}
 .gs-prize .t{font-weight:400;font-size:16px}
+.gs-prize.had{background:#ffffff1a;font-size:16px}
+.gs-prize.had b{font-family:var(--display);font-weight:800;font-size:22px;line-height:1.1;text-transform:uppercase}
+.gs-given{align-self:center;min-height:44px;margin-top:8px;padding:0 18px;border-radius:999px;border:2px solid var(--ink);background:transparent;color:var(--ink);font:700 16px var(--body);cursor:pointer}
+.gs-fb{margin:0 0 10px;padding:10px 14px;border-radius:14px;border:2px solid var(--accent);font-size:16px;line-height:1.4;text-align:center}
+.gs-fb.mine,.gs-fb.won{background:var(--accent);color:var(--ink);font-weight:700;font-size:18px}
+.mine{margin:0 0 16px}
+.mine-fb{margin:0 0 16px}
 .gs-end{max-height:calc(100dvh - 76px);overflow-y:auto;overscroll-behavior:contain}
 .gs-extra{display:flex;flex-direction:column;gap:10px}
 .gs-lbf{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px}
@@ -308,6 +319,8 @@ const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display
 .tvb h2{font-size:clamp(38px,10vw,56px);margin:0 0 2px;color:var(--accent)}
 .tvc{color:var(--on-primary-muted);font-size:17px;padding-bottom:10px}
 .tvc b{color:var(--ice);font-weight:700}
+.tvf{margin:0 0 10px;padding:8px 12px;border-radius:12px;border:2px solid var(--accent);color:#fff;font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:20px;line-height:1.2}
+.tvf.won{background:var(--accent);color:var(--ink)}
 .tvl{list-style:none;margin:0;padding:0}
 .tvl li{display:flex;align-items:baseline;gap:14px;padding:5px 8px;border-radius:10px;font-family:var(--display);font-weight:800;font-size:30px;line-height:1.15}
 .tvl li:nth-child(odd){background:#ffffff0f}
@@ -340,7 +353,10 @@ const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display
 .js .tvb.on{display:block;animation:tv-in .6s ease both}
 .js .tvb h2{font-size:min(5vw,9vh)}
 .js .tvc{font-size:min(1.7vw,3vh);padding-bottom:1.2vh}
+.tvf{font-size:min(1.25vw,2.3vh);padding:.6vh 1vw;border-radius:1.4vh;margin-bottom:1vh}
+.js .tvf{font-size:min(1.8vw,3.2vh);padding:.8vh 1.2vw;margin-bottom:1.2vh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .js .tvl li{font-size:min(2.5vw,4.45vh);padding:.35vh 1vw;gap:1.4vw}
+.js .tvb.fb .tvl li{font-size:min(2.3vw,4.05vh);padding:.2vh 1vw}
 .js .tve{font-size:min(2.1vw,3.8vh)}
 .js .tvp{display:flex;justify-content:center;gap:1vw}
 .tvp i{width:1.1vw;height:1.1vw;border-radius:50%;background:#ffffff40}

@@ -344,6 +344,13 @@ async function openTheGames(browser, base, width, height) {
 // frames a second, and the ball falls a frame at a time.
 async function finishPanel(page, where, shot) {
   try {
+    // The panel at its tallest: a sweet waiting to be collected, with the
+    // stall's button, above the football's line and the leaderboard.
+    await page.evaluate(() => {
+      const two = (n) => String(n).padStart(2, '0')
+      const d = new Date()
+      localStorage.setItem('winterfayre:sweet', JSON.stringify({ day: `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`, game: 'penalties', at: '10:42', given: null }))
+    })
     await page.locator('.gs-pitch').focus()
     await page.keyboard.press('Space')
     await page.waitForSelector('.gs-end:not([hidden])', { timeout: 120000 })
@@ -353,11 +360,23 @@ async function finishPanel(page, where, shot) {
       const end = document.querySelector('.gs-end')
       const r = end.getBoundingClientRect()
       const top = document.querySelector('.gs-btns').getBoundingClientRect()
-      return { inside: r.top >= -1 && r.bottom <= innerHeight + 1 && r.left >= -1 && r.right <= innerWidth + 1, clear: r.top >= top.bottom - 1, scrolls: getComputedStyle(end).overflowY }
+      const given = document.querySelector('.gs-given')?.getBoundingClientRect()
+      return {
+        inside: r.top >= -1 && r.bottom <= innerHeight + 1 && r.left >= -1 && r.right <= innerWidth + 1,
+        clear: r.top >= top.bottom - 1,
+        scrolls: getComputedStyle(end).overflowY,
+        given: given ? [Math.round(given.width), Math.round(given.height)] : null,
+        football: Boolean(document.querySelector('.gs-fb')),
+        appeal: Boolean(document.querySelector('.gs-end .gs-appeal a')),
+      }
     })
     if (!fits.inside) problem(where, 'the finish panel does not fit the screen')
     if (!fits.clear) problem(where, 'the finish panel lies over the Sound, Music and Leave buttons')
     if (fits.scrolls !== 'auto' && fits.scrolls !== 'scroll') problem(where, 'the finish panel does not scroll inside itself')
+    if (!fits.given) problem(where, 'a sweet that is waiting has no button for the stall')
+    else if (fits.given[0] < 44 || fits.given[1] < 44) problem(where, `the stall's button is ${fits.given[0]} by ${fits.given[1]}, under 44`)
+    if (!fits.football) problem(where, 'the keepy-uppies finish panel does not say how the football stands')
+    if (!fits.appeal) problem(where, 'the finish panel has no line about the appeal')
     report(`${where}, finished`, await page.evaluate(measure))
     if (shot) await page.screenshot(shot)
   } catch {

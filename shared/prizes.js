@@ -1,4 +1,4 @@
-// The sweets.
+// The prizes: the sweets, and the football.
 //
 // A visitor whose score reaches a game's number here is told, on that
 // game's finish panel, to show their screen at the sports stall. This is
@@ -32,6 +32,48 @@ export const PRIZES = {
 
 // What the finish panel says to a winner. John's words.
 export const PRIZE_WORDS = 'Show this screen at the sports stall to claim a sweet.'
+
+// One sweet each (John, 13 November 2026). The first go on a phone that
+// reaches its game's number wins the sweet, and the phone remembers it
+// for the day: later goes are told so. At the stall the helper taps
+// "sweet given" on the winner's phone, so one winning screen cannot be
+// shown twice. All of this is kept on the phone alone
+// (client/games/prize.js): the site knows nothing of who has won.
+export const ONE_EACH = 'One sweet each.'
+
+// The football (John, 13 November 2026). Aside from the sweets, the best
+// keepy-uppies score of the day wins a FIFA approved football. A score
+// counts once it is on the leaderboard, and whoever leads at the cut-off
+// (UK time) has won it. The leaderboard carries on after that, for
+// sweets and for fun.
+export const FOOTBALL = {
+  game: 'keepy',
+  until: '13:30',
+  said: '1:30pm',
+  prize: 'a FIFA approved football',
+}
+
+// "Best score on the leaderboard by 1:30pm wins a FIFA approved football."
+export const footballLine = () => `Best score on the leaderboard by ${FOOTBALL.said} wins ${FOOTBALL.prize}.`
+
+// The football in one line, for the stall's TV, where the leaderboard
+// under it already shows who leads.
+export function footballTv(state) {
+  if (state?.closed) return footballWords(state)
+  return `${FOOTBALL.prize.replace(/^a /, 'A ')} for the best score by ${FOOTBALL.said}`
+}
+
+// What is said of the football, from what the leaderboard answers
+// ({ closed, leader: { initials, score } | null }): who leads while it is
+// open, and who won once it has closed.
+export function footballWords(state) {
+  if (!state) return footballLine()
+  const { closed, leader } = state
+  if (!closed) return leader ? `${footballLine()} Leading now: ${leader.initials} with ${leader.score}.` : footballLine()
+  return leader
+    ? `The football is won: ${leader.initials} with ${leader.score}. Come to the sports stall.`
+    : `The football was not won: no score was on the leaderboard by ${FOOTBALL.said}.`
+}
 
 // Whether a score wins a sweet in a game.
 export function wonPrize(game, score) {

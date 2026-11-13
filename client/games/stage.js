@@ -142,8 +142,9 @@ export async function openStage({ name, hud = [], others = [], boards = [], spor
     // And, last, what the games are in aid of.
     appealLine(doc).root)
   const status = el(doc, 'p', { class: 'vh', role: 'status' })
+  const top = el(doc, 'div', { class: 'gs-top' }, hudEl, el(doc, 'div', { class: 'gs-btns' }, sound, musicSwitch, leave))
   const root = el(doc, 'div', { class: 'gs', role: 'dialog', 'aria-modal': 'true', 'aria-label': name },
-    pitch, el(doc, 'div', { class: 'gs-top' }, hudEl, el(doc, 'div', { class: 'gs-btns' }, sound, musicSwitch, leave)),
+    pitch, top,
     note, big, prompt, banner, end, status)
   if (reduce) root.setAttribute('data-reduced', 'true')
 
@@ -179,7 +180,19 @@ export async function openStage({ name, hud = [], others = [], boards = [], spor
   const audio = createAudio(win)
   const fx = createFx(fxCanvas, { accent: colours.accent, primary: colours.primary, win })
   let size = { width: 1, height: 1 }
+  // The finish panel stops short of the numbers and the buttons at the
+  // top, however many rows they take on this screen, and scrolls inside
+  // itself if it has more to show than that leaves room for.
+  function fitEnd() {
+    try {
+      const bar = top.getBoundingClientRect().bottom
+      const foot = Math.max(20, Number.parseFloat(win.getComputedStyle(end).bottom) || 20)
+      end.style.maxHeight = `${Math.max(180, Math.round(win.innerHeight - bar - foot - 8))}px`
+    } catch { /* the style sheet's own limit stands */ }
+  }
+
   function resize() {
+    if (!end.hidden) fitEnd()
     const r = pitch.getBoundingClientRect()
     size = { width: Math.max(1, Math.round(r.width)), height: Math.max(1, Math.round(r.height)) }
     const dpr = Math.min(2, win.devicePixelRatio || 1)
@@ -320,6 +333,7 @@ export async function openStage({ name, hud = [], others = [], boards = [], spor
       endTitle.textContent = title
       endLine.textContent = line
       end.hidden = false
+      fitEnd()
       again.focus({ preventScroll: true })
     },
     // The prize for a game and a score (shared/prizes.js), on the finish
