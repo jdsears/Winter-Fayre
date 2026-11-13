@@ -112,6 +112,7 @@ const CSS = `
 .tso-stats dd{margin:0;font:800 26px/1.05 var(--tso-display);color:var(--tso-accent);text-align:right;white-space:nowrap}
 .tso-newbest{display:inline-block;margin:0 0 14px;padding:5px 14px;border-radius:999px;background:var(--tso-accent);color:var(--tso-ink);font-weight:700;font-size:16px}
 .tso-extra{margin:0 0 14px;text-align:center}
+.tso .gs-prize{margin:0 0 14px}
 .tso-actions{display:grid;gap:10px}
 .tso-btn{min-height:50px;padding:0 20px;border-radius:999px;border:2px solid rgba(255,255,255,.7);background:transparent;color:#fff;font-weight:700;font-size:17px;cursor:pointer}
 .tso-btn:hover{border-color:#fff}
@@ -158,6 +159,7 @@ const CSS = `
   .tso-share-note{grid-column:2;grid-row:4}
   .tso-share-link{grid-column:1 / span 2;grid-row:5}
   .tso-extra{grid-column:1 / span 2;grid-row:6;margin:10px 0 0}
+  .tso .gs-prize{grid-column:1 / span 2;grid-row:7;margin:10px 0 0}
 }
 /* A small phone on its side: the switches say on or off by how they look,
    not in words, so the board has room beside them. */

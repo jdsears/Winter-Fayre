@@ -107,7 +107,8 @@ export async function playFreeKicks3D(root, win = window) {
       title: record ? 'New best' : score >= 7 ? 'Great kicking' : score >= 4 ? 'Good go' : 'Full time',
       line: `${score} of ${KICKS} scored. Your best on this device is ${best}.`,
     })
-    stage.say(`${score} of ${KICKS} scored${record ? ', your best yet' : ''}. Best on this device: ${best}.`)
+    const prize = stage.prize('freekick', score)
+    stage.say(`${score} of ${KICKS} scored${record ? ', your best yet' : ''}. Best on this device: ${best}. ${prize}`)
     stage.endExtra.replaceChildren()
     board.show(stage.endExtra, score)
   }

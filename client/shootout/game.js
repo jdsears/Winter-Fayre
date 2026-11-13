@@ -23,6 +23,7 @@ import { canShare, shareLink, shareResult, shareText } from './share.js'
 import { banner as bannerFor, hintFor, outcomeWords, promptFor, turnWords } from './copy.js'
 import { createFx } from './fx.js'
 import { createScene2D } from './scene2d.js'
+import { drawPrize, clearPrize } from '../games/prize.js'
 
 // Timings, in seconds of game time.
 export const TIMING = {
@@ -508,6 +509,8 @@ export function openShootout(config, options = {}) {
     r.goals.textContent = `${stats.goals} of ${stats.shots}`
     r.saves.textContent = String(stats.saves)
     r.points.textContent = String(pointsFor(stats))
+    // The prize, judged on the visitor's own five kicks (shared/prizes.js).
+    const prize = options.prize ? drawPrize(doc, r.prize, options.prize, R.firstFiveGoals(shootout)) : ''
     // The day's leaderboard, when the page has one (games/board.js).
     r.extra.replaceChildren?.()
     options.board?.show(r.extra, pointsFor(stats))
@@ -527,7 +530,7 @@ export function openShootout(config, options = {}) {
     } else {
       audio.groan()
     }
-    announce(ui, [said, `${R.resultLine(shootout)}. You scored ${stats.goals} of ${stats.shots} and made ${stats.saves} ${stats.saves === 1 ? 'save' : 'saves'}.`].filter(Boolean).join(' '), win)
+    announce(ui, [said, `${R.resultLine(shootout)}. You scored ${stats.goals} of ${stats.shots} and made ${stats.saves} ${stats.saves === 1 ? 'save' : 'saves'}.`, prize].filter(Boolean).join(' '), win)
     said = ''
     emit('results', { won, us: t.us, them: t.them, goals: stats.goals, shots: stats.shots, saves: stats.saves, newBest })
   }
@@ -539,6 +542,7 @@ export function openShootout(config, options = {}) {
     stats = { goals: 0, shots: 0, saves: 0 }
     options.board?.next()
     ui.results.extra.replaceChildren?.()
+    clearPrize(ui.results.prize)
     takers = takerOrder(rng)
     keeperLooks = pickKeepers()
     theirKicks = 0

@@ -12,6 +12,7 @@ import { qrMatrix, qrSvg } from '../server/qr.js'
 import { shortAddress, tvBoardHtml, TV_REFRESH_SECONDS } from '../server/render/tv.js'
 import { cspFor } from '../server/security.js'
 import { GAMES } from '../shared/games.js'
+import { prizeLine } from '../shared/prizes.js'
 import { startApp, PERSON } from './support/helpers.js'
 
 // The three big squares in the corners of every QR code: a dark ring
@@ -112,7 +113,8 @@ describe('the TV page', () => {
       for (const g of GAMES) {
         assert.ok(html.includes(`data-tv-board="${g.key}"`), g.key)
         assert.ok(html.includes(`<h2 id="tvb-${g.key}">${g.title}</h2>`), g.key)
-        assert.ok(html.includes(`<p class="tvc">Counting ${g.scores}</p>`), g.key)
+        // What its scores count, and what wins a sweet.
+        assert.ok(html.includes(`<p class="tvc">Counting ${g.scores}. <b>${prizeLine(g.key)}</b></p>`), g.key)
       }
       // Keepy-uppies: its top ten, best first.
       const keepy = /data-tv-board="keepy"[\s\S]*?<\/section>/.exec(html)[0]
@@ -161,7 +163,7 @@ describe('the TV page', () => {
 
   test('a board\'s letters are escaped as they are written', () => {
     const html = tvBoardHtml({ key: 'keepy', title: 'Keepy-uppies', scores: 'keepy-uppies', entries: [{ initials: '<b>', score: 3 }] })
-    assert.ok(!html.includes('<b>'))
-    assert.ok(html.includes('&lt;b&gt;'))
+    assert.ok(html.includes('<span class="i">&lt;b&gt;</span>'))
+    assert.ok(!html.includes('<span class="i"><b>'))
   })
 })

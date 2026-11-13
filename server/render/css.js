@@ -85,6 +85,9 @@ footer .fl{display:flex;flex-wrap:wrap;gap:0 22px}
 .nums td.meter{width:38%}
 .nums meter{width:100%;height:12px}
 .nums .btn{margin-top:26px}
+.nums h3{font-size:26px;margin:22px 0 6px;color:var(--primary)}
+.nums form{margin:0}
+.nums .btn.off{margin:0;min-height:44px;padding:0 16px;font-size:16px;background:#fff}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}`
 
 // The arcade's tiles: one column on a phone, two from 560 and three from 900.
@@ -97,7 +100,8 @@ const TILES_CSS = `.gts{list-style:none;margin:0;padding:0;display:grid;grid-tem
 .gt .gtx{font-family:var(--display);font-weight:800;font-size:44px}
 .gt-b{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:16px 18px 18px;flex:1}
 .gt-t{font-family:var(--display);font-weight:800;font-size:34px;line-height:1;text-transform:uppercase}
-.gt-p{color:var(--on-light-muted);margin-bottom:10px}
+.gt-p{color:var(--on-light-muted)}
+.gt-w{font-weight:700;color:var(--primary);margin-bottom:10px}
 .gt .btn{margin-top:auto;align-self:stretch}
 @media (prefers-reduced-motion:reduce){.gt a{transition:none}.gt a:hover,.gt a:focus-visible{transform:none}}`
 
@@ -139,6 +143,10 @@ const STAGE_CSS = `.gs-open{overflow:hidden}
 .gs-more{display:flex;gap:10px}
 .gs-more .btn{flex:1;padding-left:10px;padding-right:10px}
 .gs-extra:empty{display:none}
+.gs-prize{display:flex;flex-direction:column;gap:2px;margin:0;padding:10px 14px;border-radius:14px;background:#ffffff1a;font-size:16px;line-height:1.35}
+.gs-prize.won{background:var(--accent);color:var(--ink);font-size:18px;font-weight:700;box-shadow:0 0 0 3px #fff,0 8px 24px #0006}
+.gs-prize.won b{font-family:var(--display);font-weight:800;font-size:28px;line-height:1.05;text-transform:uppercase}
+.gs-prize .t{font-weight:400;font-size:16px}
 .gs-end{max-height:calc(100dvh - 76px);overflow-y:auto;overscroll-behavior:contain}
 .gs-extra{display:flex;flex-direction:column;gap:10px}
 .gs-lbf{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px}
@@ -250,6 +258,7 @@ const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display
 .tvb{min-width:0;background:#0e1729cc;border:2px solid #ffffff2e;border-radius:22px;padding:18px 18px 14px}
 .tvb h2{font-size:clamp(38px,10vw,56px);margin:0 0 2px;color:var(--accent)}
 .tvc{color:var(--on-primary-muted);font-size:17px;padding-bottom:10px}
+.tvc b{color:var(--ice);font-weight:700}
 .tvl{list-style:none;margin:0;padding:0}
 .tvl li{display:flex;align-items:baseline;gap:14px;padding:5px 8px;border-radius:10px;font-family:var(--display);font-weight:800;font-size:30px;line-height:1.15}
 .tvl li:nth-child(odd){background:#ffffff0f}

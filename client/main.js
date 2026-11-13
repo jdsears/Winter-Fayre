@@ -35,6 +35,7 @@ function setupPenalties() {
   enhanceShootout({
     options: {
       board,
+      prize: 'penalties',
       onEvent: (type) => {
         if (type === 'ready' || type === 'again') tally('penalties', 'play')
         else if (type === 'results') tally('penalties', 'done')

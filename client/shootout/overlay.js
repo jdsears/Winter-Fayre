@@ -92,8 +92,10 @@ export function buildOverlay(doc, config) {
   const leave2 = h(doc, 'button', { type: 'button', class: 'tso-btn tso-btn-quiet' }, 'Leave game')
   const shareNote = h(doc, 'p', { class: 'tso-share-note', role: 'status', 'aria-live': 'polite' })
   const shareLinkBox = h(doc, 'input', { class: 'tso-share-link', type: 'text', readonly: true, 'aria-label': 'Link to share', hidden: true })
-  // The score the leaderboard counts, and room for the leaderboard itself.
+  // The score the leaderboard counts, and room for the prize and for the
+  // leaderboard itself.
   const statPoints = h(doc, 'b')
+  const prize = h(doc, 'p', { class: 'gs-prize', hidden: true })
   const extra = h(doc, 'div', { class: 'tso-extra gs-extra' })
   const resultsEyebrow = h(doc, 'p', { class: 'tso-eyebrow', text: 'Shootout over' })
   const results = h(doc, 'section', { class: 'tso-results', 'aria-labelledby': 'tso-results-title', hidden: true },
@@ -107,6 +109,7 @@ export function buildOverlay(doc, config) {
         h(doc, 'div', {}, h(doc, 'dt', { text: 'Best on this device' }), h(doc, 'dd', {}, statBest)),
       ),
       newBest,
+      prize,
       extra,
       h(doc, 'div', { class: 'tso-actions' }, again, share, leave2),
       shareNote,
@@ -150,7 +153,7 @@ export function buildOverlay(doc, config) {
     root, stage, fx, prompt, promptEyebrow, promptTitle, hint, banner, bannerWord, bannerSub, power, powerFill,
     zones, diveButtons: [diveLeft, diveUp, diveRight], sound, soundState, music, musicState, leave, live, loading, wipe,
     tracker: { usDots, themDots, usScore, themScore, usRow, themRow, sudden },
-    results: { root: results, title: resultsTitle, eyebrow: resultsEyebrow, goals: statGoals, saves: statSaves, points: statPoints, extra, best: statBest, newBest, again, share, leave: leave2, note: shareNote, link: shareLinkBox },
+    results: { root: results, title: resultsTitle, eyebrow: resultsEyebrow, goals: statGoals, saves: statSaves, points: statPoints, prize, extra, best: statBest, newBest, again, share, leave: leave2, note: shareNote, link: shareLinkBox },
   }
 }
 
