@@ -40,5 +40,9 @@ export default defineConfig({
     environment: 'node',
     // A moment between tests, so a long file never looks hung (see the file).
     setupFiles: ['client/testing/yield.js'],
+    // Some of the shootout's tests play a dozen whole shootouts, kick by
+    // kick. On a slow machine one can take longer than the five seconds a
+    // test is given unless told otherwise.
+    testTimeout: 30000,
   },
 })
