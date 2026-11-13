@@ -8,6 +8,7 @@
 // small stand-in document the tests use as well as a real one.
 
 import { KICKS_EACH } from './rules.js'
+import { appealLine } from '../games/appeal.js'
 
 export function h(doc, tag, attrs = {}, ...children) {
   const el = doc.createElement(tag)
@@ -98,6 +99,8 @@ export function buildOverlay(doc, config) {
   const prize = h(doc, 'p', { class: 'gs-prize', hidden: true })
   const extra = h(doc, 'div', { class: 'tso-extra gs-extra' })
   const resultsEyebrow = h(doc, 'p', { class: 'tso-eyebrow', text: 'Shootout over' })
+  // What the games are in aid of, at the foot of the results.
+  const appeal = appealLine(doc)
   const results = h(doc, 'section', { class: 'tso-results', 'aria-labelledby': 'tso-results-title', hidden: true },
     h(doc, 'div', { class: 'tso-results-card' },
       resultsEyebrow,
@@ -114,6 +117,7 @@ export function buildOverlay(doc, config) {
       h(doc, 'div', { class: 'tso-actions' }, again, share, leave2),
       shareNote,
       shareLinkBox,
+      appeal.root,
     ))
 
   const presented = config.presentedBy
@@ -153,13 +157,13 @@ export function buildOverlay(doc, config) {
     root, stage, fx, prompt, promptEyebrow, promptTitle, hint, banner, bannerWord, bannerSub, power, powerFill,
     zones, diveButtons: [diveLeft, diveUp, diveRight], sound, soundState, music, musicState, leave, live, loading, wipe,
     tracker: { usDots, themDots, usScore, themScore, usRow, themRow, sudden },
-    results: { root: results, title: resultsTitle, eyebrow: resultsEyebrow, goals: statGoals, saves: statSaves, points: statPoints, prize, extra, best: statBest, newBest, again, share, leave: leave2, note: shareNote, link: shareLinkBox },
+    results: { root: results, title: resultsTitle, eyebrow: resultsEyebrow, goals: statGoals, saves: statSaves, points: statPoints, prize, extra, best: statBest, newBest, again, share, leave: leave2, note: shareNote, link: shareLinkBox, appeal: appeal.link },
   }
 }
 
 // What Tab may reach inside the overlay right now.
 export function focusables(ui) {
-  const candidates = [ui.stage, ui.sound, ui.music, ui.leave, ...ui.diveButtons, ui.results.again, ui.results.share, ui.results.leave, ui.results.link]
+  const candidates = [ui.stage, ui.sound, ui.music, ui.leave, ...ui.diveButtons, ui.results.again, ui.results.share, ui.results.leave, ui.results.link, ui.results.appeal]
   const visible = (el) => {
     for (let n = el; n && n !== ui.root.parentNode; n = n.parentNode) {
       if (n.hasAttribute?.('hidden')) return false
@@ -171,7 +175,7 @@ export function focusables(ui) {
   if (resultsUp) {
     // The leaderboard's box and buttons, when it is there, come first.
     const board = Array.from(ui.results.extra.querySelectorAll?.('input, button') ?? [])
-    return [...board, ui.results.again, ui.results.share, ui.results.leave, ui.results.link, ui.sound, ui.music, ui.leave].filter(visible)
+    return [...board, ui.results.again, ui.results.share, ui.results.leave, ui.results.link, ui.results.appeal, ui.sound, ui.music, ui.leave].filter(visible)
   }
   return candidates.filter(visible)
 }

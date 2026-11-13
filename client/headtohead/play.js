@@ -27,7 +27,8 @@ import { boardLogosFrom, loadBoardLogos, logoReady, logoBox, topSignFrom, loadTo
 import { boardsFrom, lockTouch } from '../games/stage.js'
 import { tally } from '../games/count.js'
 import { readRun, keepRun, placeOf } from './run.js'
-import { othersFor } from '../../shared/games.js'
+import { othersFor, MENU } from '../../shared/games.js'
+import { appealLine } from '../games/appeal.js'
 import { drawPrize, clearPrize } from '../games/prize.js'
 import { INITIALS_KEY, SAID, drawBoard, drawForm, fetchBoard, ordinal, sendGo, tidyInitials, wouldMake } from '../games/board.js'
 
@@ -171,7 +172,7 @@ export function playHeadToHead(root, win = window) {
   const sound = el(doc, 'button', { type: 'button', class: 'gs-b', role: 'switch', 'aria-checked': 'false' }, 'Sound ', soundState)
   const musicState = el(doc, 'span', { class: 'gs-on' }, 'On')
   const musicSwitch = el(doc, 'button', { type: 'button', class: 'gs-b', role: 'switch', 'aria-checked': 'true' }, 'Music ', musicState)
-  const leave = el(doc, 'a', { class: 'gs-b', href: '/' }, 'Leave')
+  const leave = el(doc, 'a', { class: 'gs-b', href: MENU }, 'Leave')
   const banner = el(doc, 'p', { class: 'gs-banner hh-banner', 'aria-hidden': 'true', hidden: true })
   const white = el(doc, 'div', { class: 'hh-flash', 'aria-hidden': 'true' })
   const prompt = el(doc, 'p', { class: 'gs-prompt hh-prompt', hidden: !picked }, 'Tap to kick off')
@@ -181,7 +182,7 @@ export function playHeadToHead(root, win = window) {
   const turn = el(doc, 'div', { class: 'hh-turn' },
     el(doc, 'div', { class: 'hh-phone', 'aria-hidden': 'true' }),
     el(doc, 'p', {}, 'Turn your phone sideways to play'),
-    el(doc, 'a', { class: 'btn o', href: '/' }, 'Back to the games'))
+    el(doc, 'a', { class: 'btn o', href: MENU }, 'Back to the games'))
   const endTitle = el(doc, 'h2', { class: 'gs-end-t' })
   const endLine = el(doc, 'p', { class: 'gs-end-l' })
   const endExtra = el(doc, 'div', { class: 'gs-extra' })
@@ -199,7 +200,9 @@ export function playHeadToHead(root, win = window) {
   const go = el(doc, 'button', { type: 'button', class: 'btn y' }, 'Kick off')
   const pick = el(doc, 'div', { class: 'hh-pick', hidden: Boolean(picked) }, el(doc, 'h2', { class: 'gs-end-t' }, 'Pick your player'), el(doc, 'div', { class: 'hh-faces', role: 'group', 'aria-label': 'Players' }, ...options), go)
   const end = el(doc, 'div', { class: 'gs-end hh-end', hidden: true }, endTitle, endLine, endPrize, again, change, endExtra,
-    el(doc, 'p', { class: 'gs-more' }, ...othersFor('headtohead').map(o => el(doc, 'a', { class: 'btn o', href: o.href }, o.label))))
+    el(doc, 'p', { class: 'gs-more' }, ...othersFor('headtohead').map(o => el(doc, 'a', { class: 'btn o', href: o.href }, o.label))),
+    // And, last, what the games are in aid of.
+    appealLine(doc).root)
   const status = el(doc, 'p', { class: 'vh', role: 'status' })
   const shell = el(doc, 'div', { class: 'gs hh', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Head to head' },
     pitch, el(doc, 'div', { class: 'gs-top hh-top' }, score, pows, el(doc, 'div', { class: 'gs-btns' }, sound, musicSwitch, leave)),
@@ -910,7 +913,7 @@ export function playHeadToHead(root, win = window) {
   for (const node of [pitch, padL, padR]) node.addEventListener('touchstart', (e) => { if (e.cancelable) e.preventDefault() }, { passive: false })
   const keys = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'jump', ' ': 'kick', ArrowDown: 'lob', x: 'lob', X: 'lob' }
   const onKey = (on) => (e) => {
-    if (e.key === 'Escape' && on) { win.location.assign('/'); return }
+    if (e.key === 'Escape' && on) { win.location.assign(MENU); return }
     if (e.target.closest?.('button, a, input')) return
     if (on && ['1', '2', '3'].includes(e.key)) { ask(powerButtons[Number(e.key) - 1].getAttribute('data-power')); return }
     const name = keys[e.key]

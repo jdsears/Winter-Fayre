@@ -66,7 +66,7 @@ export function renderShootoutSection(config, { id = 'shootout' } = {}) {
       <h2 id="${esc(id)}-title" class="rv">${emphasis(config.copy.heading)}</h2>
       <p class="lede rv">${esc(config.copy.line)}</p>
       ${presented}
-      <div class="cta"><button type="button" class="btn y shootout-play" data-shootout-play hidden>Play the shootout</button><a class="btn o" href="/">More games</a></div>
+      <div class="cta"><button type="button" class="btn y shootout-play" data-shootout-play hidden>Play the shootout</button><a class="btn o" href="/#games">More games</a></div>
       <p class="shootout-status" data-shootout-status role="status"></p>
       <noscript><p class="shootout-status">The shootout needs JavaScript switched on.</p></noscript>
     </div>

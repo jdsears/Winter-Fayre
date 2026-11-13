@@ -95,10 +95,15 @@ export const GAME_KEYS = GAMES.map(g => g.key)
 export const gameByKey = (key) => GAMES.find(g => g.key === key) || null
 export const GAME_NAMES = Object.fromEntries(GAMES.map(g => [g.key, g.title]))
 
+// Where the games menu is: on the arcade page, below the story of the
+// appeal. A link back from a game goes here and not to the top, so the
+// story is scrolled through once, on arrival.
+export const MENU = '/#games'
+
 // The other games offered when a go ends: the next one in the list, and
-// the arcade.
+// the games menu.
 export function othersFor(key) {
   const i = GAME_KEYS.indexOf(key)
   const next = GAMES[(i + 1) % GAMES.length]
-  return [{ href: next.href, label: next.title }, { href: '/', label: 'All games' }]
+  return [{ href: next.href, label: next.title }, { href: MENU, label: 'All games' }]
 }
