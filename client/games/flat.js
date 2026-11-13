@@ -204,8 +204,8 @@ export function createFlatView({ canvas, paint, colours, boards = [], sign = nul
       g.globalAlpha = 1
     }
 
-    // The line the goal, the posts or the hoop stand on.
-    line({ x: -34, y: 0, z: GOAL.lineZ }, { x: 34, y: 0, z: GOAL.lineZ }, 0.12, '#f4f7f2')
+    // The line the goal, the posts or the hoop stand on (cricket has none).
+    if (state.goalLine !== false) line({ x: -34, y: 0, z: GOAL.lineZ }, { x: 34, y: 0, z: GOAL.lineZ }, 0.12, '#f4f7f2')
 
     paint(g, { ...state, at, seen, line, disc, shade, quad, width, height, colours, now, reduce })
 

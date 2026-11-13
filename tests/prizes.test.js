@@ -32,6 +32,7 @@ describe('the sweets', () => {
     assert.equal(PRIZES.keepy.at, 20)
     if (PRIZES.rugby) assert.equal(PRIZES.rugby.at, 4)
     if (PRIZES.netball) assert.equal(PRIZES.netball.at, 8)
+    if (PRIZES.cricket) assert.equal(PRIZES.cricket.at, 28)
   })
 
   test('a score at the number wins, one under it does not, and nonsense never does', () => {

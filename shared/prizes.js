@@ -25,6 +25,9 @@ export const PRIZES = {
   rugby: { at: 4, target: 'kick 4 of your 5 conversions' },
   // Netball: goals in the thirty seconds.
   netball: { at: 8, target: 'score 8 goals in 30 seconds' },
+  // Cricket: runs from the six balls. 80% of the 36 there are is 28.8:
+  // 28 is the nearest score that can be made without a single.
+  cricket: { at: 28, target: 'score 28 runs from your six balls' },
 }
 
 // What the finish panel says to a winner. John's words.

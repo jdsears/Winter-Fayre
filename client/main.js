@@ -13,9 +13,11 @@
 //   head to head   drawn flat, full screen, with the phone held sideways
 //                  (./headtohead)
 //
-//   rugby, netball played on the same stage (./rugby, ./netball); where
-//                  the 3D will not run the stage draws the stadium flat,
-//                  so there is no second version on the page
+//   rugby, netball and cricket
+//                  played on the same stage (./rugby, ./netball,
+//                  ./cricket); where the 3D will not run the stage draws
+//                  the stadium flat, so there is no second version on
+//                  the page
 //
 // and on the stall's TV screen, the leaderboards taking turns and
 // refreshing themselves (./tv.js).
@@ -85,6 +87,8 @@ function setupStageGames() {
   if (rugby) stageGame(rugby, () => import('./rugby/play3d.js').then(m => m.playRugby3D(rugby)))
   const netball = document.querySelector('[data-netball]')
   if (netball) stageGame(netball, () => import('./netball/play3d.js').then(m => m.playNetball3D(netball)))
+  const cricket = document.querySelector('[data-cricket]')
+  if (cricket) stageGame(cricket, () => import('./cricket/play3d.js').then(m => m.playCricket3D(cricket)))
 }
 
 // The stall's TV screen.

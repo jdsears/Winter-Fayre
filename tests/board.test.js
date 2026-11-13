@@ -214,12 +214,14 @@ describe('every game has a board of its own', () => {
     const clock = { now: FAYRE }
     const boards = createBoards({ store: createStore({ log: quiet }), now: () => clock.now })
     assert.deepEqual(Object.keys(boards), GAMES.map(g => g.key))
-    for (const g of GAMES) {
+    const tickets = GAMES.map(g => [boards[g.key].ticket(), boards[g.key].ticket()])
+    // Two hours: long enough for a hundred of anything, honestly. One
+    // wait for them all, so that however many games there are the day
+    // does not turn before the last is added.
+    clock.now += 2 * 60 * 60 * 1000
+    for (const [i, g] of GAMES.entries()) {
       const b = boards[g.key]
-      const ticket = b.ticket()
-      const over = b.ticket()
-      // Two hours: long enough for a hundred of anything, honestly.
-      clock.now += 2 * 60 * 60 * 1000
+      const [ticket, over] = tickets[i]
       const score = Math.min(g.board.maxScore, 100)
       assert.equal((await b.add({ initials: 'ABC', score, ticket })).ok, true, g.key)
       assert.equal((await b.add({ initials: 'ABC', score: g.board.maxScore + 1, ticket: over })).reason, 'score', g.key)
