@@ -46,6 +46,13 @@ const WIDTHS = Object.fromEntries(Object.entries({ 360: 780, 375: 812, 390: 844 
 const SIDEWAYS = [[740, 360], [568, 320]]
 const PAGES = ['/', ...GAMES.map(g => g.path), '/tv', '/privacy', '/not-a-page']
 
+// The games played on the stage: the page, a name for its picture, and
+// whether it has a line under the top bar (the wind).
+const STAGE_GAMES = [['/keepy-uppies', 'keepy', false], ['/free-kicks', 'freekick', false], ['/rugby', 'rugby', true]]
+// The games made for the stage alone: with the 3D off, the stage draws
+// the stadium flat for them.
+const FLAT_STAGE_GAMES = ['/rugby']
+
 // A password for the numbers page, for this check's own copy of the site.
 const NUMBERS = 'for-the-check-only'
 
@@ -312,14 +319,14 @@ async function openTheGames(browser, base, width, height) {
     await page.close()
   }
 
-  // Keepy-uppies and free kicks: played on the stage.
-  for (const [p, name] of [['/keepy-uppies', 'keepy'], ['/free-kicks', 'freekick']]) {
+  // Keepy-uppies, free kicks and the games made for the stage: played on it.
+  for (const [p, name, note] of STAGE_GAMES) {
     const where = `${p} at ${width} (the game)`
     const page = await openPage(context, base, p, where)
     try {
       await page.waitForSelector('.gs', { state: 'visible', timeout: 45000 })
       await page.waitForTimeout(700)
-      reportStage(where, await page.evaluate(measureStage, ['.gs-hud', '.gs-btns', '.gs-prompt']))
+      reportStage(where, await page.evaluate(measureStage, ['.gs-hud', '.gs-btns', '.gs-prompt', ...(note ? ['.gs-note'] : [])]))
       report(where, await page.evaluate(measure))
       if (shot(name)) await page.screenshot(shot(name))
     } catch {
@@ -372,6 +379,20 @@ async function flatGames(browser, base) {
     await page.screenshot({ path: path.join(shots, `${p.slice(1)}-flat-375.png`) })
     await page.close()
   }
+  // A game made for the stage is played on it all the same, drawn flat.
+  for (const p of FLAT_STAGE_GAMES) {
+    const where = `${p} at 375 (3D off, drawn flat)`
+    const page = await openPage(context, base, p, where)
+    try {
+      await page.waitForSelector('.gs[data-renderer="2d"]', { state: 'visible', timeout: 45000 })
+      await page.waitForTimeout(600)
+      reportStage(where, await page.evaluate(measureStage, ['.gs-hud', '.gs-btns', '.gs-prompt']))
+      await page.screenshot({ path: path.join(shots, `${p.slice(1)}-flat-375.png`) })
+    } catch {
+      problem(where, 'the game did not open drawn flat')
+    }
+    await page.close()
+  }
   const where = '/penalties at 375 (3D off, the flat pitch)'
   const page = await openPage(context, base, '/penalties', where)
   await page.locator('.shootout-play').click()
@@ -397,7 +418,7 @@ async function sideways(browser, base, width, height) {
     report(where, await page.evaluate(measure))
     await page.close()
   }
-  for (const [p, groups] of [['/keepy-uppies', ['.gs-hud', '.gs-btns']], ['/free-kicks', ['.gs-hud', '.gs-btns']]]) {
+  for (const [p, groups] of STAGE_GAMES.map(([page, , note]) => [page, ['.gs-hud', '.gs-btns', ...(note ? ['.gs-note'] : [])]])) {
     const where = `${p} at ${width} by ${height} (the game)`
     const page = await openPage(context, base, p, where)
     try {

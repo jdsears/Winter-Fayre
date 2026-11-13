@@ -3,6 +3,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { tally, GAMES } from './count.js'
+import { GAME_KEYS } from '../../shared/games.js'
 
 describe('telling the site a game was played', () => {
   it('sends only the game and which of the two moments it is', () => {
@@ -23,7 +24,9 @@ describe('telling the site a game was played', () => {
     expect(tally('chess', 'play', win)).toBe(false)
     expect(tally('keepy', 'won', win)).toBe(false)
     expect(sent.length).toBe(0)
-    expect(GAMES).toEqual(['penalties', 'keepy', 'freekick', 'headtohead'])
+    // The games it knows are the arcade's, from the one list.
+    expect(GAMES).toEqual(GAME_KEYS)
+    expect(GAMES).toContain('penalties')
   })
 
   it('never stops a game when it cannot be sent', () => {

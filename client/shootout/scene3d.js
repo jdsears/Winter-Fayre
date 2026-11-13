@@ -4,6 +4,10 @@
 // fayre's name on them, a low-poly crowd in the site's colours, and the
 // taker and keeper in kit.
 //
+// The same stadium is dressed for other sports (sport): for rugby the
+// goal makes way for rugby posts with a flag on each, the pitch has
+// rugby's lines and the ball is a rugby ball on a tee.
+//
 // It is a winter night with a splash of Christmas: stars, falling snow,
 // snow lying on the boards, a string of fairy lights, a Christmas tree
 // either side of the goal and Christmas hats in the crowd and on the
@@ -99,6 +103,22 @@ function makeBall() {
   for (const g of caps) g.dispose()
   cap.dispose()
   group.add(new Mesh(merged, new MeshLambertMaterial({ color: 0x0b0c10 })))
+  return group
+}
+
+// A rugby ball: a long white ball with red ends, its long way up.
+function makeRugbyBall() {
+  const group = new Group()
+  const body = new Mesh(new SphereGeometry(0.105, 20, 14), new MeshLambertMaterial({ color: 0xf6f3ea }))
+  body.scale.set(1, 1.5, 1)
+  group.add(body)
+  const ends = new MeshLambertMaterial({ color: 0xc8102e })
+  for (const s of [-1, 1]) {
+    const end = new Mesh(new SphereGeometry(0.066, 14, 10), ends)
+    end.scale.set(1, 0.85, 1)
+    end.position.y = s * 0.108
+    group.add(end)
+  }
   return group
 }
 
@@ -254,7 +274,9 @@ function blobTexture(doc) {
   })
 }
 
-export async function createScene3D({ canvas, colours, kits, boards = [], boardLogos = {}, topSign = null, win = globalThis.window, doc = globalThis.document, onLost = () => {} }) {
+export async function createScene3D({ canvas, colours, kits, boards = [], boardLogos = {}, topSign = null, sport = 'football', win = globalThis.window, doc = globalThis.document, onLost = () => {} }) {
+  const football = sport === 'football'
+  const rugby = sport === 'rugby'
   const dpr = Math.min(2, win.devicePixelRatio || 1)
   const renderer = new WebGLRenderer({ canvas, antialias: dpr < 2, powerPreference: 'high-performance' })
   renderer.setPixelRatio(dpr)
@@ -338,11 +360,19 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
   }
   const L = GOAL.lineZ
   lines.push(strip(-34, L, 34, L))
-  lines.push(strip(-9.16, L, -9.16, L + 5.5), strip(9.16, L, 9.16, L + 5.5), strip(-9.16, L + 5.5, 9.16, L + 5.5))
-  lines.push(strip(-20.16, L, -20.16, L + 16.5), strip(20.16, L, 20.16, L + 16.5), strip(-20.16, L + 16.5, 20.16, L + 16.5))
-  lines.push(placed(new CircleGeometry(0.1, 20), { y: 0.007, rx: -PI / 2 }))
-  const arcFrom = Math.acos(5.5 / 9.15)
-  lines.push(placed(new RingGeometry(9.15 - lineW / 2, 9.15 + lineW / 2, 48, 1, -PI / 2 - arcFrom, 2 * arcFrom), { y: 0.006, rx: -PI / 2 }))
+  if (football) {
+    lines.push(strip(-9.16, L, -9.16, L + 5.5), strip(9.16, L, 9.16, L + 5.5), strip(-9.16, L + 5.5, 9.16, L + 5.5))
+    lines.push(strip(-20.16, L, -20.16, L + 16.5), strip(20.16, L, 20.16, L + 16.5), strip(-20.16, L + 16.5, 20.16, L + 16.5))
+    lines.push(placed(new CircleGeometry(0.1, 20), { y: 0.007, rx: -PI / 2 }))
+    const arcFrom = Math.acos(5.5 / 9.15)
+    lines.push(placed(new RingGeometry(9.15 - lineW / 2, 9.15 + lineW / 2, 48, 1, -PI / 2 - arcFrom, 2 * arcFrom), { y: 0.006, rx: -PI / 2 }))
+  }
+  if (rugby) {
+    // The try line is the one above. Then the dashes five metres out, the
+    // 22, and the dashes ten metres short of halfway.
+    for (let x = -33; x < 33; x += 6) lines.push(strip(x, L + 5, x + 3, L + 5), strip(x, L + 40, x + 3, L + 40))
+    lines.push(strip(-34, L + 22, 34, L + 22))
+  }
   const lineGeo = keep(mergeGeometries(lines.map((g) => g.toNonIndexed())))
   for (const g of lines) g.dispose()
   const lineMesh = new Mesh(lineGeo, keep(new MeshBasicMaterial({ color: 0xf4f7f2, polygonOffset: true, polygonOffsetFactor: -2 })))
@@ -352,7 +382,7 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
   const frameMat = keep(new MeshLambertMaterial({ color: 0xffffff, emissive: 0x2a2a2a }))
   const px = GOAL.halfWidth + GOAL.post
   const barY = GOAL.height + GOAL.post
-  const frameParts = [
+  const frameParts = !football ? [] : [
     placed(new CylinderGeometry(GOAL.post, GOAL.post, barY + GOAL.post, 16), { x: -px, y: (barY + GOAL.post) / 2, z: L }),
     placed(new CylinderGeometry(GOAL.post, GOAL.post, barY + GOAL.post, 16), { x: px, y: (barY + GOAL.post) / 2, z: L }),
     placed(new CylinderGeometry(GOAL.post, GOAL.post, px * 2 + GOAL.post * 2, 16), { y: barY, z: L, rz: PI / 2 }),
@@ -360,16 +390,51 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
   const backTop = L - GOAL.post - GOAL.depthTop
   const backBottom = L - GOAL.post - GOAL.depthBottom
   const stanchion = 0.03
-  for (const s of [-1, 1]) {
+  for (const s of football ? [-1, 1] : []) {
     frameParts.push(placed(new CylinderGeometry(stanchion, stanchion, GOAL.depthTop, 8), { x: s * px, y: barY, z: L - GOAL.depthTop / 2, rx: PI / 2 }))
     const len = Math.hypot(barY, backTop - backBottom)
     frameParts.push(placed(new CylinderGeometry(stanchion, stanchion, len, 8), { x: s * px, y: barY / 2, z: (backTop + backBottom) / 2, rx: -Math.atan2(backBottom - backTop, barY) }))
     frameParts.push(placed(new CylinderGeometry(stanchion, stanchion, GOAL.depthBottom, 8), { x: s * px, y: 0.03, z: L - GOAL.depthBottom / 2, rx: PI / 2 }))
   }
-  frameParts.push(placed(new CylinderGeometry(stanchion, stanchion, px * 2, 8), { y: 0.03, z: backBottom, rz: PI / 2 }))
-  const frameGeo = keep(mergeGeometries(frameParts.map((g) => g.toNonIndexed())))
-  for (const g of frameParts) g.dispose()
-  scene.add(new Mesh(frameGeo, frameMat))
+  if (football) {
+    frameParts.push(placed(new CylinderGeometry(stanchion, stanchion, px * 2, 8), { y: 0.03, z: backBottom, rz: PI / 2 }))
+    const frameGeo = keep(mergeGeometries(frameParts.map((g) => g.toNonIndexed())))
+    for (const g of frameParts) g.dispose()
+    scene.add(new Mesh(frameGeo, frameMat))
+  }
+
+  // Rugby posts in the goal's place: two uprights 5.6 metres apart, a bar
+  // three metres up, a pad round the foot of each and a flag on top that
+  // flies with the wind.
+  const POSTS = { halfWidth: 2.8, bar: 3, height: 11, radius: 0.09 }
+  const flags = []
+  if (rugby) {
+    const parts = [placed(new CylinderGeometry(0.075, 0.075, POSTS.halfWidth * 2, 12), { y: POSTS.bar, z: L, rz: PI / 2 })]
+    const pads = []
+    for (const s of [-1, 1]) {
+      parts.push(placed(new CylinderGeometry(POSTS.radius * 0.7, POSTS.radius, POSTS.height, 12), { x: s * POSTS.halfWidth, y: POSTS.height / 2, z: L }))
+      pads.push(placed(new BoxGeometry(0.46, 1.8, 0.46), { x: s * POSTS.halfWidth, y: 0.9, z: L }))
+    }
+    const merged = (list) => {
+      const geo = keep(mergeGeometries(list.map((g) => g.toNonIndexed())))
+      for (const g of list) g.dispose()
+      return geo
+    }
+    scene.add(new Mesh(merged(parts), frameMat))
+    scene.add(new Mesh(merged(pads), keep(new MeshLambertMaterial({ color: new Color(colours.accent) }))))
+    // A pennant: a triangle hung from the top of each upright.
+    const pennant = keep(new BufferGeometry())
+    pennant.setAttribute('position', new BufferAttribute(new Float32Array([0, 0, 0, 0, -0.42, 0, 0.9, -0.21, 0]), 3))
+    pennant.computeVertexNormals()
+    const cloth = keep(new MeshBasicMaterial({ color: 0xc8102e, side: DoubleSide }))
+    for (const s of [-1, 1]) {
+      const flag = new Group()
+      flag.position.set(s * POSTS.halfWidth, POSTS.height, L)
+      flag.add(new Mesh(pennant, cloth))
+      scene.add(flag)
+      flags.push(flag)
+    }
+  }
 
   // The net: four panels whose points move when the ball hits.
   const netTex = keep(canvasTexture(doc, 64, 64, (g, w, h) => {
@@ -406,7 +471,7 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     return { mesh, base: pos.slice(), normal }
   }
   const hw = GOAL.halfWidth + GOAL.post
-  const panels = [
+  const panels = !football ? [] : [
     netPanel(46, 16, (u, v) => {
       const y = GOAL.height + GOAL.post - v * (GOAL.height + GOAL.post)
       return { x: -hw + u * hw * 2, y, z: backZ(y), u: u * hw * 2, v: v * Math.hypot(GOAL.height, 1) }
@@ -593,8 +658,8 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
   }
 
   // Falling snow, from the stand to behind the furthest camera.
-  const FLAKES = 900
-  const SNOW = { x: 20, top: 14, near: 21, far: BOARDS_Z - 6 }
+  const FLAKES = 1100
+  const SNOW = { x: 20, top: 14, near: 34, far: BOARDS_Z - 6 }
   const flakeAt = new Float32Array(FLAKES * 3)
   const flakeFall = new Float32Array(FLAKES)
   const flakeDrift = new Float32Array(FLAKES)
@@ -613,16 +678,20 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
   snowfall.renderOrder = 3
   scene.add(snowfall)
   let snowedAt = -1
-  function snow(now) {
+  // wind is how hard it blows across the pitch, in metres a second, to
+  // the right when above nought: the snow goes with it.
+  function snow(now, wind = 0) {
     const dt = snowedAt < 0 ? 0 : clamp(now - snowedAt, 0, 0.05)
     snowedAt = now
     if (still || !dt) return
+    const across = 0.18 + wind * 0.55
     for (let i = 0; i < FLAKES; i++) {
       const k = i * 3
-      flakeAt[k] += (Math.sin(now * 0.9 + flakeDrift[i]) * 0.35 + 0.18) * dt
+      flakeAt[k] += (Math.sin(now * 0.9 + flakeDrift[i]) * 0.35 + across) * dt
       flakeAt[k + 1] -= flakeFall[i] * dt
       if (flakeAt[k + 1] < 0) flakeAt[k + 1] += SNOW.top
       if (flakeAt[k] > SNOW.x) flakeAt[k] -= SNOW.x * 2
+      else if (flakeAt[k] < -SNOW.x) flakeAt[k] += SNOW.x * 2
     }
     flakeGeo.attributes.position.needsUpdate = true
   }
@@ -731,8 +800,15 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
   const taker = makePlayer(doc, lookAt(0))
   const keeper = makePlayer(doc, { keeper: true, ...lookAt(3) })
   scene.add(taker.root, keeper.root)
-  const ball = makeBall()
+  const ball = rugby ? makeRugbyBall() : makeBall()
   scene.add(ball)
+  // A kicking tee for the rugby ball, where the game puts it.
+  let tee = null
+  if (rugby) {
+    tee = new Mesh(keep(new CylinderGeometry(0.05, 0.11, 0.07, 12)), keep(new MeshLambertMaterial({ color: new Color(colours.accent) })))
+    tee.visible = false
+    scene.add(tee)
+  }
   // A wall of defenders, for a game with free kicks: built the first
   // time one is asked for, in the other side's kit, facing the ball.
   const WALL_GAP = 0.62
@@ -934,6 +1010,7 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     return holding ? drop : 0
   }
 
+  const up3 = new Vector3(0, 1, 0)
   const prevBall = new Vector3(0, BALL_R, 0)
   const spinAxis = new Vector3()
   const spinQ = new Quaternion()
@@ -950,6 +1027,13 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
       }
     } else if (dist >= 2) {
       ball.quaternion.identity()
+    }
+    // A rugby ball does not roll: it stands on its tee leaning at the
+    // posts, and in the air turns end over end the way it is going
+    // (spin, in turns of the ball's own, and heading, the way it flies).
+    if (rugby) {
+      ball.rotation.set(-(b.spin ?? 0.35), 0, 0)
+      ball.rotateOnWorldAxis(up3, -(b.heading || 0))
     }
     prevBall.set(b.x, b.y, b.z)
     ballShadow.position.set(b.x, 0.01, b.z)
@@ -1001,8 +1085,21 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
       aimGroup.visible = false
     }
     updateNet(now)
-    snow(now)
+    snow(now, state.wind || 0)
     twinkle(now)
+    // The flags on the posts fly the way the wind blows, and hang in a calm.
+    if (flags.length) {
+      const wind = state.wind || 0
+      const flutter = still ? 0 : Math.sin(now * 9) * 0.16 * Math.min(1, Math.abs(wind) / 3 + 0.2)
+      for (const flag of flags) {
+        flag.rotation.set(0, (wind < 0 ? PI : 0) + flutter, wind ? -Math.max(0, 0.5 - Math.abs(wind) * 0.07) : -1.25)
+        flag.scale.x = wind ? 0.7 + Math.min(1, Math.abs(wind) / 8) * 0.5 : 0.8
+      }
+    }
+    if (tee) {
+      tee.visible = Boolean(state.tee)
+      if (state.tee) tee.position.set(state.tee.x, 0.035, state.tee.z)
+    }
     const cheering = now < cheerUntil
     if (cheering || wasCheering) placeCrowd(now, cheering)
     wasCheering = cheering

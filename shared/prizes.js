@@ -21,6 +21,8 @@ export const PRIZES = {
   freekick: { at: 8, target: 'score 8 of your 10 free kicks' },
   // Head to head: 1 is a win.
   headtohead: { at: 1, target: 'win your match' },
+  // Rugby: kicks over the bar and between the posts, of five.
+  rugby: { at: 4, target: 'kick 4 of your 5 conversions' },
 }
 
 // What the finish panel says to a winner. John's words.

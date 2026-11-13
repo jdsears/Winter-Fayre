@@ -5,7 +5,9 @@
 // A game opens the stage, hands it a function that says what to draw
 // each frame, and is told of touches and keys. The stage fills the
 // screen, so a game starts where the visitor's thumb is, with nothing to
-// scroll past. Where the 3D will not run, openStage resolves to null and
+// scroll past. Where the 3D will not run, a game that brings a painter
+// of its own (flat) is played on the same stage with the stadium drawn
+// flat (flat.js); for a game without one, openStage resolves to null and
 // the page's flat version of the game is played in its place.
 //
 // Nothing here asks anything of any other site, and nothing is sent
@@ -94,9 +96,12 @@ export function boardsFrom(root) {
 // onPoint   (x, y) a touch or click on the pitch, in the stage's pixels
 // onKey     (key) Space or Enter and the arrow keys
 // onLost    the 3D was lost after it opened
-export async function openStage({ name, hud = [], others = [], boards = [], onPoint = () => {}, onPointer = null, onKey = () => {}, onLost = () => {}, win = globalThis.window }) {
+// sport     which sport the stadium is dressed for: 'football' unless said
+// flat      (g, picture) paints the game on a flat stadium, where the 3D will not run
+export async function openStage({ name, hud = [], others = [], boards = [], sport = 'football', flat = null, onPoint = () => {}, onPointer = null, onKey = () => {}, onLost = () => {}, win = globalThis.window }) {
   const doc = win.document
-  if (!webglAvailable(doc)) return null
+  const can3d = webglAvailable(doc)
+  if (!can3d && !flat) return null
   const reduce = prefersReducedMotion(win)
   const fxOn = effects(reduce)
   const colours = themeColours(null, pageColours(doc))
@@ -115,6 +120,11 @@ export async function openStage({ name, hud = [], others = [], boards = [], onPo
   const musicState = el(doc, 'span', { class: 'gs-on' }, 'On')
   const musicSwitch = el(doc, 'button', { type: 'button', class: 'gs-b', role: 'switch', 'aria-checked': 'true' }, 'Music ', musicState)
   const leave = el(doc, 'a', { class: 'gs-b', href: '/' }, 'Leave')
+  // A line under the top bar for what a kick must reckon with: the wind,
+  // with an arrow for the way it blows.
+  const noteArrow = el(doc, 'span', { class: 'gs-arrow', 'aria-hidden': 'true', hidden: true })
+  const noteText = el(doc, 'span', {})
+  const note = el(doc, 'p', { class: 'gs-note', hidden: true }, noteArrow, noteText)
   const big = el(doc, 'p', { class: 'gs-big', 'aria-hidden': 'true' })
   const prompt = el(doc, 'p', { class: 'gs-prompt' })
   const banner = el(doc, 'p', { class: 'gs-banner', 'aria-hidden': 'true', hidden: true })
@@ -130,18 +140,31 @@ export async function openStage({ name, hud = [], others = [], boards = [], onPo
   const status = el(doc, 'p', { class: 'vh', role: 'status' })
   const root = el(doc, 'div', { class: 'gs', role: 'dialog', 'aria-modal': 'true', 'aria-label': name },
     pitch, el(doc, 'div', { class: 'gs-top' }, hudEl, el(doc, 'div', { class: 'gs-btns' }, sound, musicSwitch, leave)),
-    big, prompt, banner, end, status)
+    note, big, prompt, banner, end, status)
   if (reduce) root.setAttribute('data-reduced', 'true')
 
   let view = null
   let stopped = false
   let lost = false
-  try {
-    const { createScene3D } = await import('../shootout/scene3d.js')
-    view = await createScene3D({ canvas, colours, kits: allKits, boards, boardLogos: boardLogosFrom(doc), topSign: topSignFrom(doc), win, doc, onLost: () => { lost = true; close(); onLost() } })
-  } catch {
-    return null
+  if (can3d) {
+    try {
+      const { createScene3D } = await import('../shootout/scene3d.js')
+      view = await createScene3D({ canvas, colours, kits: allKits, boards, boardLogos: boardLogosFrom(doc), topSign: topSignFrom(doc), sport, win, doc, onLost: () => { lost = true; close(); onLost() } })
+    } catch {
+      view = null
+    }
   }
+  // No 3D here: the game's own painter, on a stadium drawn flat.
+  if (!view && flat) {
+    try {
+      const { createFlatView } = await import('./flat.js')
+      view = createFlatView({ canvas, paint: flat, colours, boards, sign: topSignFrom(doc), reduce })
+    } catch {
+      view = null
+    }
+  }
+  if (!view) return null
+  root.setAttribute('data-renderer', view.kind)
   view.setTeams({ taker: allKits.home, keeper: allKits.homeKeeper, keeperLook: HOME_KEEPER_LOOK, number: '9' })
 
   doc.body.append(root)
@@ -266,6 +289,15 @@ export async function openStage({ name, hud = [], others = [], boards = [], onPo
       prompt.hidden = !text
     },
     say(text) { status.textContent = text },
+    // The line under the top bar: its words, and the way its arrow points
+    // (to the right above nought, to the left below, none at nought; the
+    // further from nought, the longer the arrow, up to three).
+    note(text, way = 0) {
+      noteText.textContent = text
+      note.hidden = !text
+      noteArrow.hidden = !way
+      noteArrow.className = `gs-arrow ${way < 0 ? 'l' : 'r'} n${Math.min(3, Math.max(1, Math.ceil(Math.abs(way) / 3)))}`
+    },
     banner(text, ms = 1200) {
       banner.textContent = text
       banner.hidden = false

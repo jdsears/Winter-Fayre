@@ -56,6 +56,17 @@ export const GAMES = [
     scores: 'wins in a row',
     board: { maxScore: 200, perSecond: 1 / 58, slack: 2, runs: true },
   },
+  {
+    key: 'rugby',
+    path: '/rugby',
+    href: '/rugby',
+    title: 'Rugby conversion',
+    text: 'Five kicks at the posts, each further out and into more wind. Over the bar and between the posts.',
+    play: 'Play rugby',
+    scores: 'metres kicked over the posts',
+    // Five kicks take a quarter of a minute at the very least.
+    board: { maxScore: 130, perSecond: 6, slack: 18 },
+  },
 ]
 
 export const GAME_KEYS = GAMES.map(g => g.key)

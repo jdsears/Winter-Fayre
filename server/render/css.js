@@ -126,6 +126,14 @@ const STAGE_CSS = `.gs-open{overflow:hidden}
 .gs-on{padding:2px 7px;border-radius:999px;background:#ffffff26;font-size:16px}
 .gs-b[aria-checked=true] .gs-on{background:var(--accent);color:var(--ink)}
 .gs :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.gs-note{position:absolute;left:50%;top:calc(max(10px,env(safe-area-inset-top)) + 100px);transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:6px 14px;border-radius:999px;background:#0e1729cc;border:2px solid var(--ice);font:700 18px/1.2 var(--body);white-space:nowrap;pointer-events:none}
+.gs-arrow{position:relative;display:block;height:14px;width:26px}
+.gs-arrow.n2{width:40px}.gs-arrow.n3{width:54px}
+.gs-arrow::before{content:"";position:absolute;left:0;right:6px;top:5px;height:4px;border-radius:2px;background:var(--accent)}
+.gs-arrow::after{content:"";position:absolute;right:0;top:0;border-left:11px solid var(--accent);border-top:7px solid transparent;border-bottom:7px solid transparent}
+.gs-arrow.l{transform:scaleX(-1)}
+@media (min-width:560px){.gs-note{top:calc(max(10px,env(safe-area-inset-top)) + 56px)}}
+@media (max-height:520px){.gs-note{top:calc(max(10px,env(safe-area-inset-top)) + 54px);left:auto;right:max(12px,env(safe-area-inset-right));transform:none}}
 .gs-big{position:absolute;left:0;right:0;top:84px;text-align:center;font-family:var(--display);font-weight:800;font-size:120px;line-height:1;color:#fff;text-shadow:0 5px 0 var(--ink),0 8px 24px #0006;pointer-events:none}
 .gs-big.pop{animation:gs-pop .22s ease-out}
 @keyframes gs-pop{0%{transform:scale(1.28);color:var(--accent)}100%{transform:scale(1)}}

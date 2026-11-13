@@ -35,6 +35,7 @@ function tileArt(kind) {
     penalties: `${goal}${figure(160, 118, '#1e9e57', 38, true)}${ball(160, 158, 13)}`,
     keepy: `${goal}<path d="M160 150V70" stroke="#ffffff66" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/><ellipse cx="160" cy="160" rx="16" ry="4" fill="#0004"/>${ball(160, 62, 22)}<text x="250" y="52" class="gtx" fill="${COLOURS.accent}" text-anchor="middle">25</text>`,
     headtohead: `<path d="M24 118V70H50M296 118V70H270" fill="none" stroke="#fff" stroke-width="4"/><path d="M24 70H50V118H24ZM296 70H270V118H296ZM24 86H50M24 102H50M37 70V118M270 86H296M270 102H296M283 70V118" fill="none" stroke="#ffffff55" stroke-width="1"/><ellipse cx="112" cy="150" rx="26" ry="5" fill="#0004"/><ellipse cx="212" cy="150" rx="26" ry="5" fill="#0004"/><rect x="100" y="120" width="24" height="26" rx="7" fill="#c8102e"/><rect x="200" y="120" width="24" height="26" rx="7" fill="#f4f4f2"/><circle cx="112" cy="100" r="24" fill="#c98a5e"/><path d="M88 96a24 24 0 0 1 48 0c-10-9-38-9-48 0Z" fill="#3a2a1e"/><circle cx="122" cy="102" r="3" fill="${INK}"/><circle cx="212" cy="100" r="24" fill="#e8b48c"/><path d="M188 96a24 24 0 0 1 48 0c-10-9-38-9-48 0Z" fill="#1b1b22"/><circle cx="202" cy="102" r="3" fill="${INK}"/>${ball(162, 58, 15)}`,
+    rugby: `<path d="M128 118V34M192 118V34M128 80H192" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/><rect x="123" y="100" width="10" height="18" rx="2" fill="${COLOURS.accent}"/><rect x="187" y="100" width="10" height="18" rx="2" fill="${COLOURS.accent}"/><path d="M128 34l14 5-14 5ZM192 34l14 5-14 5Z" fill="#c8102e"/><path d="M168 150C178 110 172 74 160 56" fill="none" stroke="${COLOURS.accent}" stroke-width="3" stroke-dasharray="3 8" stroke-linecap="round"/><ellipse cx="160" cy="56" rx="5" ry="8" transform="rotate(-24 160 56)" fill="#f6f3ea" stroke="${INK}" stroke-width="1.2"/><ellipse cx="168" cy="160" rx="16" ry="4" fill="#0004"/><g transform="rotate(18 168 146)"><ellipse cx="168" cy="146" rx="10" ry="15" fill="#f6f3ea" stroke="${INK}" stroke-width="1.5"/><ellipse cx="168" cy="133.5" rx="5" ry="3.6" fill="#c8102e"/><ellipse cx="168" cy="158.5" rx="5" ry="3.6" fill="#c8102e"/></g>`,
     freekick: `${goal}${figure(196, 118, '#1e9e57', 38, true)}${[118, 132, 146, 160].map(x => figure(x, 142, '#f4f4f2', 40)).join('')}<path d="M150 166C86 150 70 96 104 72" fill="none" stroke="${COLOURS.accent}" stroke-width="3" stroke-dasharray="3 8" stroke-linecap="round"/>${ball(150, 166, 10)}${ball(104, 72, 7)}`,
   }[kind] || ''
   return `<svg viewBox="0 0 320 180" aria-hidden="true" focusable="false">${scene}${what}${snow}</svg>`
@@ -156,7 +157,34 @@ function headToHeadHtml({ ticket = null } = {}) {
 </div></section>`
 }
 
-const PAGES = { penalties: penaltiesHtml, keepy: keepyHtml, freekick: freeKickHtml, headtohead: headToHeadHtml }
+// A game played only on the stage (in 3D, or drawn flat where the 3D
+// will not run): its page is a heading, a line on how to play and the
+// place the page's script opens the game from.
+//   words  { first, second } the heading, the second word in the accent
+//   how    how it is played, by touch
+//   keys   how it is played on a keyboard
+function stageGameHtml(key, { first, second, how, keys }, { ticket = null } = {}) {
+  return `<section id="${key}" class="band deep game"><div class="wrap">
+  <div class="eyebrow">Winter Fayre Sports Arcade</div>
+  <h2>${esc(first)} <em>${esc(second)}</em></h2>
+  <p class="lede">${esc(how)}</p>
+  <div class="ku" data-${key}${stadiumAttrs(ticket)}>
+    <p class="ku-said" data-game-said role="status">The game is loading.</p>
+    <noscript><p class="ku-said">This game needs JavaScript switched on.</p></noscript>
+    <p class="hint left">${esc(keys)}</p>
+  </div>
+  ${more}
+</div></section>`
+}
+
+const rugbyHtml = (opts) => stageGameHtml('rugby', {
+  first: 'Rugby',
+  second: 'conversion',
+  how: 'Swipe up from the ball to kick it over the bar and between the posts. Mind the wind.',
+  keys: 'On a keyboard, the left and right arrows aim, up and down set the power, and Space kicks.',
+}, opts)
+
+const PAGES = { penalties: penaltiesHtml, keepy: keepyHtml, freekick: freeKickHtml, headtohead: headToHeadHtml, rugby: rugbyHtml }
 
 // A game's place on its own page, or '' for a game with none.
 export function gameHtml(key, opts = {}) {
