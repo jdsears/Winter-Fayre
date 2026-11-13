@@ -333,6 +333,10 @@ const GAME_CSS = `.ku{margin:10px 0 0}
 // letters are 48 pixels high. The appeal (.tvx) is a card in the PSA's
 // plum and gold: stacked on a phone with its Donate button, and on a
 // television the whole screen in its turn, with a code to scan.
+// Where the television draws 3D (.tvx.s3, set by client/story/screen.js)
+// the appeal's story is behind its words: the picture shows clear on
+// the left, between the headline at the top and one of the two lists at
+// the foot, and is darkened under the words and behind the code.
 const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);gap:28px;align-content:start;padding:28px max(22px,env(safe-area-inset-right)) 112px max(22px,env(safe-area-inset-left));background:linear-gradient(175deg,var(--primary-light) 0%,var(--primary) 40%,var(--primary-deep) 100%);overflow:hidden}
 .tv .snow{position:absolute;left:0;right:0;bottom:0;height:84px;margin:0;pointer-events:none}
 .tv p{margin:0;max-width:none}
@@ -379,6 +383,7 @@ const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display
 .tvx-s em{font-style:normal;color:var(--accent)}
 .tvx-b{display:flex;width:100%;min-height:58px;font-size:20px}
 .tvx-a{font-family:var(--display);font-weight:700;font-size:18px;line-height:1.2;letter-spacing:.02em;overflow-wrap:anywhere}
+.tvx-c{display:none}
 @media (min-width:1000px) and (orientation:landscape){
 .tv{grid-template-columns:38fr 62fr;gap:4vw;align-items:center;align-content:center;padding:3.4vh 4vw 9.4vh}
 .tv .snow{height:7.6vh}
@@ -428,6 +433,20 @@ const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display
 .tvx-a{font-size:min(1.9vw,3.4vh)}
 .js .tvx{position:absolute;inset:0;grid-column:auto;z-index:2;display:none;border:0;border-radius:0;padding:4.4vh 4vw 11vh}
 .js .tvx.on{display:grid;animation:tv-fade .7s ease both}
+.js .tvx.s3{align-items:stretch;background:#241524}
+.js .tvx.s3 .tvx-c{display:block;position:absolute;inset:0;width:100%;height:100%}
+.js .tvx.s3::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,#241524eb 0%,#241524d9 23%,#24152494 30%,#24152400 43%,#24152400 54%,#241524b8 70%,#241524f0 100%),linear-gradient(270deg,#241524eb 0%,#241524d1 26%,#24152400 50%)}
+.js .tvx.s3 .tvx-w,.js .tvx.s3 .tvx-q{position:relative;z-index:2;text-shadow:0 .1vh .4vh #1a0e19cc,0 .3vh 2vh #1a0e19}
+.js .tvx.s3 .tvx-w{display:flex;flex-direction:column}
+.js .tvx.s3 .tvx-eye .crest{width:min(10vh,5.6vw)}
+.js .tvx.s3 h2{font-size:min(3.5vw,6.3vh)}
+.js .tvx.s3 .tvx-g{display:block;margin-top:auto;padding:0}
+.js .tvx.s3 [data-tv-list]{display:none}
+.js .tvx.s3 [data-tv-list].now{display:block;animation:tv-in .6s ease both}
+.js .tvx.s3 .tvx-t{font-size:min(1.9vw,3.4vh)}
+.js .tvx.s3 .tvx-l li{font-size:min(2.6vw,4.7vh);gap:1.1vw}
+.js .tvx.s3 .tvx-l .beat-i{width:min(4.2vw,7.5vh);height:min(4.2vw,7.5vh)}
+.js .tvx.s3 .tvx-q{align-self:center}
 .tv .snow{z-index:3}
 }
 @keyframes tv-in{from{opacity:0;transform:translateY(1.2vh)}}

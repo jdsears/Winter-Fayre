@@ -8,7 +8,8 @@
 // again every minute. With the page's script (client/tv.js) the
 // leaderboards take turns on the screen and refresh themselves, with no
 // reload, and after every three of them the appeal fills the screen for
-// ten seconds or so (John, 13 November 2026).
+// ten seconds or so (John, 13 November 2026), with its story in 3D
+// behind its words where the television can draw it.
 //
 // It needs no touch and no keyboard, and is safe to leave running all
 // day. On a phone it stacks: the code, then each leaderboard in turn,
@@ -50,16 +51,22 @@ export function tvBoardHtml(board, { first = false } = {}) {
 // here, so the page still carries no address of another site to follow.
 // On a phone, where a code cannot be scanned, the Donate button stands
 // in its place.
+//
+// Where the television can draw 3D, the page's script puts the appeal's
+// story behind these words in its turn (client/story/screen.js), and of
+// the two lists shows the one its camera is at. The boards' words are
+// given here for the boards along the back of that field, as they are
+// on the arcade page.
 export function tvAppealHtml(origin) {
   const a = APPEAL
   const tile = (i) => `<li>${ICONS[i.key]}<span>${esc(i.what)}</span></li>`
-  return `<section class="tvx" data-tv-appeal aria-labelledby="tvx-h">
+  return `<section class="tvx" data-tv-appeal aria-labelledby="tvx-h" data-boards="${attr(JSON.stringify(SITE.boards))}">
     <div class="tvx-w">
       <p class="tvx-eye">${crestImg({ shown: 96 })}<span>${esc(a.name)}</span></p>
       <h2 id="tvx-h">${esc(a.headline[0])} <em>${esc(a.headline[1])}</em></h2>
       <div class="tvx-g">
-        <div><p class="tvx-t">${esc(a.raising.title)}</p><ul class="tvx-l">${a.raising.items.map(tile).join('')}</ul></div>
-        <div><p class="tvx-t">${esc(a.funded.title)}</p><ul class="tvx-l">${a.funded.items.map(tile).join('')}</ul></div>
+        <div data-tv-list="raising"><p class="tvx-t">${esc(a.raising.title)}</p><ul class="tvx-l">${a.raising.items.map(tile).join('')}</ul></div>
+        <div data-tv-list="funded"><p class="tvx-t">${esc(a.funded.title)}</p><ul class="tvx-l">${a.funded.items.map(tile).join('')}</ul></div>
       </div>
       <p class="tvx-ch">${esc(charityLine())}</p>
     </div>

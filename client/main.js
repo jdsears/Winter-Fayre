@@ -21,7 +21,8 @@
 //
 // on the arcade page, the appeal's story in 3D as it is scrolled through
 // (./story), and on the stall's TV screen, the leaderboards taking turns
-// and refreshing themselves (./tv.js).
+// and refreshing themselves (./tv.js) and the appeal's story in 3D in
+// the appeal's turn (./story/screen.js).
 //
 // No analytics, advertising or tracking of any kind. Built by Vite
 // (vite.config.js) into dist/assets.
@@ -127,10 +128,13 @@ function setupStory() {
   if (story) import('./story/index.js').then(m => m.startStory(story), () => {})
 }
 
-// The stall's TV screen.
+// The stall's TV screen: its turns, and the appeal's story in 3D behind
+// the appeal's words in its turn, where the television can draw it.
 function setupTv() {
   const tv = document.querySelector('[data-tv]')
-  if (tv) import('./tv.js').then(m => m.startTv(tv), () => {})
+  if (!tv) return
+  import('./tv.js').then(m => m.startTv(tv), () => {})
+  import('./story/screen.js').then(m => m.startTvStory(tv), () => {})
 }
 
 setupStory()

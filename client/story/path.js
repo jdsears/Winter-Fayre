@@ -129,6 +129,75 @@ export function cheerAt(t) {
   return smooth(clamp((t - from - 0.2) / 0.6, 0, 1))
 }
 
+// The story on the stall's TV (screen.js), where nothing is scrolled: one
+// shot of the camera each time the appeal has the screen. u is how far
+// through its turn the appeal is, from 0 to 1. The shot opens on the
+// whole row from one end and a little above, what has been funded
+// nearest, and drifts along it; then it comes down to the box goals and
+// rests there; then it draws back to show the two things being raised
+// for side by side, and rests again.
+//
+// Each step is [when it is reached, the view there, how the camera
+// travels to it]. A view is one of the story's stops, by name, or one
+// of the TV's own.
+export const TV_VIEWS = {
+  open: { pos: { x: -44, y: 9.5, z: 22 }, look: { x: -17, y: -0.5, z: -2 }, fov: 46 },
+  drift: { pos: { x: -42, y: 9.2, z: 21.7 }, look: { x: -15.6, y: -0.5, z: -2 }, fov: 46 },
+}
+export const TV_SHOT = [
+  [0, 'open'],
+  [0.3, 'drift', 'steady'],
+  [0.48, 'goals'],
+  [0.62, 'goals'],
+  [0.84, 'give'],
+  [1, 'give'],
+]
+// The shape the camera frames for on a television, sixteen wide to nine
+// high: the picture shows clear in a part of the screen about as wide
+// as it is tall, between the words. A squarer screen has less room
+// across, and is framed for as a narrower stage: tvShape gives the
+// shape to frame for, from the screen's width over its height.
+export const TV_ASPECT = 1
+export const tvShape = (aspect) => clamp((Number.isFinite(aspect) && aspect > 0 ? aspect : 16 / 9) / (16 / 9), 0.6, 1.4) * TV_ASPECT
+
+// One of the shot's views: a stop of the story, or one of the TV's own,
+// which stands further back on a squarer screen as the story's stops do.
+function tvView(name, shape) {
+  const own = TV_VIEWS[name]
+  if (!own) return viewOf(name, shape)
+  const back = shape < 1 ? 1 + (1 - shape) * 0.9 : 1
+  return { pos: mix3(own.look, own.pos, back), look: own.look, fov: own.fov }
+}
+
+export function tvViewAt(u, shape = TV_ASPECT) {
+  const at = clamp(Number.isFinite(u) ? u : 0, 0, 1)
+  let i = 0
+  while (i < TV_SHOT.length - 2 && at >= TV_SHOT[i + 1][0]) i++
+  const [from, a] = TV_SHOT[i]
+  const [to, b, how] = TV_SHOT[i + 1]
+  const part = clamp((at - from) / (to - from), 0, 1)
+  // A steady step is a drift at one speed; any other eases out of one
+  // view and into the next.
+  const k = how === 'steady' ? part : smooth(part)
+  const va = tvView(a, shape)
+  const vb = tvView(b, shape)
+  return { pos: mix3(va.pos, vb.pos, k), look: mix3(va.look, vb.look, k), fov: lerp(va.fov, vb.fov, k) }
+}
+
+// Which of the appeal's two lists the TV shows with the picture: what
+// has been funded while the camera is over it, and what is being raised
+// for from when it sets off for the box goals.
+export const TV_TURNS_AT = 0.36
+export const tvListAt = (u) => (u < TV_TURNS_AT ? 'funded' : 'raising')
+
+// Where in the story the TV's shot is, for the gold round the things
+// being raised for (cheerAt): quiet while the camera is over what has
+// been funded, and at its liveliest once the list has turned.
+export function tvPlaceAt(u) {
+  const give = STOPS.indexOf('give')
+  return give - 1 + smooth(clamp((u - TV_TURNS_AT) / 0.12, 0, 1))
+}
+
 // What the stage says as the story reaches the games menu: the menu's
 // own heading.
 export const THE_GAMES = 'The games'

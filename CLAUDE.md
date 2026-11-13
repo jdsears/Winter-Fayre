@@ -41,7 +41,8 @@ client/               the page script (Vite): main.js, tv.js (the TV screen's tu
                       stadium, which dresses for each sport), keepy/ (keepy-uppies), freekick/
                       (the free kick challenge), headtohead/ (head to head, drawn flat), rugby/
                       (rugby conversion), netball/ (netball shot), cricket/ (cricket smash),
-                      story/ (the appeal's story in 3D on the arcade page, scrolled through),
+                      story/ (the appeal's story in 3D on the arcade page, scrolled through, and behind
+                      the appeal's words in its turn on the stall's TV),
                       fonts/ (Barlow, OFL)
 tests/                node:test server, safety and writing-rule tests
 tools/check.mjs       npm run check: Playwright at 360, 375 and 390 wide, sideways, the 3D story, and the TV at 1920 by 1080
@@ -114,7 +115,7 @@ Most visitors play on a phone, so that is the main view.
 - No large picture downloads. The tiles are drawn (SVG). The one raster picture is the crest: WebP, 512 pixels square, about eighteen kilobytes, with its width and height set. Anything else raster would be WebP too, sized for its place, with width and height set, and lazy-loaded below the first screen.
 - The story's picture takes no more than half a phone's screen and leaves at least 320 pixels for the words under it. It is not filled with the 3D, and not pinned, where 3D will not run, with reduced motion, with no script, on a screen under 480 pixels high, or for a visitor sent straight to the games menu (`/#games`): there it stays the drawn night at the head of the page, and the story reads as its words. Nothing on the page may move when the 3D arrives. On a phone that draws it slowly (under twenty frames a second) the picture is drawn with fewer pixels from then on.
 - Barlow, served from the site itself. Body text no smaller than 16 pixels; headings scale with `clamp`.
-- The TV page is the one page made for a large screen (1920 by 1080, read from three metres): leaderboard rows' letters at least 40 pixels, the QR code at least 400 pixels square, sized by the screen so a smaller or larger television shows the same picture. After every three leaderboards the appeal fills the screen for ten seconds, with its own code to scan to donate, also at least 400 pixels square (John, 13 November 2026). It must still be usable, stacked, on a phone, and readable with no script.
+- The TV page is the one page made for a large screen (1920 by 1080, read from three metres): leaderboard rows' letters at least 40 pixels, the QR code at least 400 pixels square, sized by the screen so a smaller or larger television shows the same picture. After every three leaderboards the appeal fills the screen for ten seconds, with its own code to scan to donate, also at least 400 pixels square (John, 13 November 2026). It must still be usable, stacked, on a phone, and readable with no script. Where the television can draw 3D, the appeal's story is behind its words in that turn (John, 13 November 2026; `client/story/screen.js`): the camera flies down the row of things, the words and the code stay over it at the sizes the check measures, and of the appeal's two lists the one the camera is at is shown. It is drawn only while the appeal has the screen, and never more than 1920 pixels wide. The appeal's turn stays the screen of words it always was where 3D will not run, with reduced motion, with no script, on a screen that is not a television's shape, on a television that draws the picture too slowly, and when the page is opened as `/tv?plain`, which is the stall's way out on the day: keep all of those.
 
 ### Dependencies, services and secrets
 

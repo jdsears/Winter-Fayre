@@ -278,7 +278,7 @@ async function main() {
     for (const [w, h] of SIDEWAYS) await sideways(browsers.normal, base, w, h)
     await widerScreens(browsers.normal, base)
     await story(browsers, base)
-    await television(browsers.normal, base)
+    await television(browsers, base)
     await numbersPage(browsers.normal, base)
   } finally {
     await browsers.normal.close()
@@ -290,7 +290,7 @@ async function main() {
     for (const p of problems) console.error(`  ${p}`)
     process.exit(1)
   }
-  console.log(`npm run check: ${pagesChecked} page views at ${Object.keys(WIDTHS).join(', ')} wide, with the 3D on and off, reduced motion and no JavaScript, every game opened, head to head on its side at ${SIDEWAYS.map(s => s.join(' by ')).join(' and ')}, the appeal's 3D story scrolled through, and the TV screen at 1920 by 1080: no problems. Screenshots in ${shots}`)
+  console.log(`npm run check: ${pagesChecked} page views at ${Object.keys(WIDTHS).join(', ')} wide, with the 3D on and off, reduced motion and no JavaScript, every game opened, head to head on its side at ${SIDEWAYS.map(s => s.join(' by ')).join(' and ')}, the appeal's 3D story scrolled through, and the TV screen at 1920 by 1080, with the appeal's turn as words and in 3D: no problems. Screenshots in ${shots}`)
 }
 
 // Each game opened at a phone's width: its stage fills the screen, its
@@ -693,7 +693,11 @@ async function numbersPage(browser, base) {
 // The stall's TV screen, as a television shows it, with one leaderboard
 // full: ten invented goes of one or two keepy-uppies, which the site
 // takes at once.
-async function television(browser, base) {
+async function television(browsers, base) {
+  // The leaderboards, the code and the appeal's screen of words are
+  // measured where 3D is off, so the appeal's turn is that screen; the
+  // appeal's turn with its story in 3D is measured after, where it is on.
+  const browser = browsers.no3d
   for (let n = 0; n < 10; n++) {
     const { ticket } = await (await fetch(`${base}/api/board/keepy`)).json()
     const res = await fetch(`${base}/api/board/keepy`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initials: ['ABC', 'XYZ', 'LMN', 'QRS', 'TUV'][n % 5], score: n < 5 ? 2 : 1, ticket }) })
@@ -831,8 +835,10 @@ async function television(browser, base) {
     await turns.close()
   }
 
+  await television3d(browsers.normal, base)
+
   // With no script the code and every leaderboard are still there to read.
-  const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, javaScriptEnabled: false })
+  const context = await browsers.normal.newContext({ viewport: { width: 1920, height: 1080 }, javaScriptEnabled: false })
   const where = '/tv at 1920 by 1080 (no JavaScript)'
   const page = await openPage(context, base, '/tv', where)
   const m = await page.evaluate(() => ({
@@ -850,6 +856,155 @@ async function television(browser, base) {
   await page.screenshot({ path: path.join(shots, 'tv-1920x1080-no-js.png'), fullPage: true })
   await page.close()
   await context.close()
+}
+
+// The appeal's turn on the TV with its story in 3D behind its words
+// (client/story/screen.js), where the browser draws 3D. The page's clock
+// is held and moved on by hand: the appeal takes its own turn, and the
+// picture is drawn a frame at each step, so a machine that draws 3D
+// slowly sees the same turn as a television that draws it fast.
+async function television3d(browser, base) {
+  for (const [width, height, name] of [[1920, 1080, 'tv-1920x1080'], [1280, 720, 'tv-1280x720'], [3840, 2160, null], [1024, 768, 'tv-1024x768']]) {
+    const where = `/tv at ${width} by ${height} (the appeal in 3D)`
+    const context = await browser.newContext({ viewport: { width, height } })
+    await context.clock.install()
+    const page = await openPage(context, base, '/tv', where)
+    const draws = await page.evaluate(() => { try { const c = document.createElement('canvas'); return Boolean(c.getContext('webgl2') || c.getContext('webgl')) } catch { return false } })
+    if (!draws) {
+      // A machine whose browser draws no 3D shows the appeal's screen of words, which is measured above.
+      console.log(`  ${where}: this browser draws no 3D, so the picture was not seen`)
+      await page.close()
+      await context.close()
+      continue
+    }
+    try {
+      await page.waitForSelector('.tvx.s3', { state: 'attached', timeout: 60000 })
+    } catch {
+      problem(where, 'the 3D story did not come to the appeal\'s turn')
+      await page.close()
+      await context.close()
+      continue
+    }
+    // Before its turn the picture is made, and is not on the screen.
+    const before = await page.evaluate(() => ({
+      canvases: document.querySelectorAll('[data-tv-appeal] canvas').length,
+      shown: getComputedStyle(document.querySelector('[data-tv-appeal]')).display !== 'none',
+      boards: [...document.querySelectorAll('.tvb')].filter(b => getComputedStyle(b).display !== 'none').length,
+    }))
+    if (before.canvases !== 1) problem(where, `the appeal holds ${before.canvases} pictures, not one`)
+    if (before.shown) problem(where, 'the appeal is on the screen before its turn')
+    if (before.boards !== 1) problem(where, `${before.boards} leaderboards are on the screen at once, not one`)
+
+    // The clock is held and moved on until the appeal takes its turn.
+    await page.clock.pauseAt(new Date(await page.evaluate(() => Date.now()) + 500))
+    const on = () => page.evaluate(() => Boolean(document.querySelector('.tvx.on')))
+    for (let waited = 0; !(await on()) && waited < 60; waited++) await page.clock.fastForward(1000)
+    if (!(await on())) {
+      problem(where, 'the appeal does not take its turn')
+      await page.close()
+      await context.close()
+      continue
+    }
+    const measure3d = () => page.evaluate(() => {
+      const scene = document.querySelector('[data-tv-appeal]')
+      const snow = document.querySelector('.tv .snow').getBoundingClientRect()
+      const box = (el) => el.getBoundingClientRect()
+      const canvas = scene.querySelector('canvas')
+      const c = box(canvas)
+      const lists = [...scene.querySelectorAll('[data-tv-list]')].filter(l => getComputedStyle(l).display !== 'none')
+      const list = lists[0]
+      const inside = (el) => { const r = box(el); return r.width > 0 && r.height > 0 && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= snow.top + 1 }
+      const size = (el) => parseFloat(getComputedStyle(el).fontSize)
+      const words = box(scene.querySelector('.tvx-w'))
+      const side = box(scene.querySelector('.tvx-q'))
+      const code = box(scene.querySelector('.tvcode svg'))
+      const head = box(scene.querySelector('h2'))
+      const parts = { '.tvx-w': scene.querySelector('.tvx-w'), '.tvx-q': scene.querySelector('.tvx-q'), '.tvcode': scene.querySelector('.tvcode'), '.tvx-s': scene.querySelector('.tvx-s'), '.tvx-a': scene.querySelector('.tvx-a'), '.tvx-ch': scene.querySelector('.tvx-ch'), 'headline': scene.querySelector('h2') }
+      if (list) parts.list = list
+      return {
+        marked: scene.classList.contains('s3'),
+        fills: box(scene).left <= 0 && box(scene).top <= 0 && box(scene).right >= innerWidth && box(scene).bottom >= innerHeight,
+        picture: getComputedStyle(canvas).display !== 'none' && c.left <= 0 && c.top <= 0 && c.right >= innerWidth && c.bottom >= innerHeight,
+        drawnWide: canvas.width,
+        lists: lists.map(l => l.getAttribute('data-tv-list')),
+        code: Math.round(Math.min(code.width, code.height)),
+        outside: Object.entries(parts).filter(([, el]) => !inside(el)).map(([k]) => k),
+        apart: words.right <= side.left + 1,
+        // The room left clear for the picture, between the headline and the list.
+        room: list ? (box(list).top - head.bottom) / innerHeight : 0,
+        headline: size(scene.querySelector('h2')),
+        item: list ? size(list.querySelector('li')) : 0,
+        small: size(scene.querySelector('.tvx-ch')),
+        button: getComputedStyle(scene.querySelector('.tvx-b')).display,
+        scrolls: document.documentElement.scrollHeight > innerHeight + 1 || document.documentElement.scrollWidth > innerWidth + 1,
+      }
+    })
+    const scale = width / 1920
+    const judge = (a, list) => {
+      if (!a.marked) problem(where, 'the appeal\'s turn is not laid out round the picture')
+      if (!a.fills) problem(where, 'the appeal does not fill the screen in its turn')
+      if (!a.picture) problem(where, 'the picture does not fill the screen behind the appeal\'s words')
+      if (a.drawnWide < 640 || a.drawnWide > 1920) problem(where, `the picture is drawn ${a.drawnWide} pixels wide`)
+      if (a.lists.length !== 1 || a.lists[0] !== list) problem(where, `the appeal shows the lists "${a.lists.join(', ')}", not "${list}" alone`)
+      if (a.code < 400 * scale) problem(where, `the appeal's code to scan is ${a.code}px square, under ${Math.round(400 * scale)}`)
+      for (const o of a.outside) problem(where, `the appeal's ${o} is not wholly on the screen, clear of the snow`)
+      if (!a.apart) problem(where, 'the appeal\'s words run under its code')
+      if (a.room < 0.15) problem(where, `only ${Math.round(a.room * 100)} in a hundred of the screen's height is left clear for the picture`)
+      if (a.headline < 60 * scale) problem(where, `the appeal's headline is ${a.headline}px, under ${Math.round(60 * scale)}`)
+      if (a.item < 40 * scale) problem(where, `what the appeal is raising for is written at ${a.item}px, under ${Math.round(40 * scale)}`)
+      if (a.small < 20 * scale) problem(where, `the appeal's smallest words are ${a.small}px, under ${Math.round(20 * scale)}`)
+      if (a.button !== 'none') problem(where, 'the appeal shows a button on a television, where there is a code to scan')
+      if (a.scrolls) problem(where, 'the screen scrolls in the appeal\'s turn')
+    }
+    // The start of the turn: what has been funded.
+    judge(await measure3d(), 'funded')
+    await page.clock.fastForward(1500)
+    await page.waitForTimeout(900)
+    if (name) await page.screenshot({ path: path.join(shots, `${name}-appeal-3d-funded.png`) })
+    // Further on: what is being raised for, to the end of the turn.
+    await page.clock.fastForward(3500)
+    judge(await measure3d(), 'raising')
+    await page.clock.fastForward(4000)
+    judge(await measure3d(), 'raising')
+    await page.waitForTimeout(900)
+    if (name) await page.screenshot({ path: path.join(shots, `${name}-appeal-3d-raising.png`) })
+    // And the appeal gives the screen back, with its picture kept for its next turn.
+    await page.clock.fastForward(1500)
+    const after = await page.evaluate(() => ({
+      on: Boolean(document.querySelector('.tvx.on')),
+      boards: [...document.querySelectorAll('.tvb')].filter(b => getComputedStyle(b).display !== 'none').length,
+      kept: document.querySelectorAll('[data-tv-appeal].s3 canvas').length,
+    }))
+    if (after.on) problem(where, 'the appeal does not give the screen back')
+    if (after.boards !== 1) problem(where, `after the appeal ${after.boards} leaderboards are on the screen, not one`)
+    if (after.kept !== 1) problem(where, 'the picture is not kept for the appeal\'s next turn')
+    await page.close()
+    await context.close()
+  }
+
+  // A visitor who has asked for less motion has the appeal's screen of
+  // words, and so does the stall when it opens the page as /tv?plain.
+  for (const [mode, p, extra] of [['reduced motion', '/tv', { reducedMotion: 'reduce' }], ['asked for plain', '/tv?plain', {}]]) {
+    const where = `${p} at 1920 by 1080 (${mode})`
+    const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, ...extra })
+    const page = await openPage(context, base, p, where)
+    await page.waitForTimeout(2500)
+    const still = await page.evaluate(() => {
+      const scene = document.querySelector('[data-tv-appeal]')
+      scene.classList.add('on')
+      return {
+        canvases: document.querySelectorAll('canvas').length,
+        marked: scene.classList.contains('s3'),
+        lists: [...scene.querySelectorAll('[data-tv-list]')].filter(l => getComputedStyle(l).display !== 'none').length,
+        code: Math.round(scene.querySelector('.tvcode svg').getBoundingClientRect().width),
+      }
+    })
+    if (still.canvases || still.marked) problem(where, 'the 3D story is on the TV')
+    if (still.lists !== 2) problem(where, `${still.lists} of the appeal's two lists can be read`)
+    if (still.code < 400) problem(where, `the appeal's code to scan is ${still.code}px square, under 400`)
+    await page.close()
+    await context.close()
+  }
 }
 
 main().catch((err) => {

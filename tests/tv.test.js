@@ -15,6 +15,8 @@ import { shortAddress, tvBoardHtml, tvAppealHtml, TV_REFRESH_SECONDS } from '../
 import { APPEAL, charityLine } from '../shared/appeal.js'
 import { cspFor } from '../server/security.js'
 import { GAMES } from '../shared/games.js'
+import { SITE } from '../server/site.js'
+import { TV_WIDE } from '../client/story/screen.js'
 import { prizeLine } from '../shared/prizes.js'
 import { startApp, PERSON } from './support/helpers.js'
 
@@ -123,6 +125,38 @@ describe('the TV page', () => {
       assert.deepEqual(scene.match(/<a\b[^>]*>/g), ['<a class="btn y tvx-b" href="/donate" target="_blank" rel="noopener noreferrer">'])
       // It comes after the leaderboards, so with no script they are read first.
       assert.ok(html.indexOf('data-tv-appeal') > html.lastIndexOf('data-tv-board='))
+    } finally {
+      await app.close()
+    }
+  })
+
+  test('is ready for the appeal\'s story in 3D behind its words, which the page\'s script adds where a television can draw it', async () => {
+    const app = await startApp({ origin: 'https://arcade.example' })
+    try {
+      const html = await (await app.get('/tv', { headers: PERSON })).text()
+      const scene = /<section class="tvx" data-tv-appeal[\s\S]*?<\/section>/.exec(html)[0]
+      // The boards along the back of the field read as the boards round the games' pitch do.
+      assert.ok(scene.startsWith(`<section class="tvx" data-tv-appeal aria-labelledby="tvx-h" data-boards="${JSON.stringify(SITE.boards).replace(/"/g, '&quot;')}">`))
+      // The two lists are marked, so the script can show the one the camera is at.
+      assert.deepEqual([...scene.matchAll(/data-tv-list="([a-z]+)"/g)].map(m => m[1]), ['raising', 'funded'])
+      for (const [name, part] of [['raising', APPEAL.raising], ['funded', APPEAL.funded]]) {
+        assert.ok(scene.includes(`<div data-tv-list="${name}"><p class="tvx-t">${part.title}</p>`), name)
+      }
+      // The page itself carries no picture to draw on: with no script, or
+      // where 3D will not run, the appeal's turn is its words and its code.
+      const page = html.replace(/<style[\s\S]*?<\/style>/g, '')
+      assert.ok(!page.includes('<canvas'))
+      assert.ok(!/class="tvx[^"]*\bs3\b/.test(page))
+      // And a picture the script adds is not shown unless the screen is
+      // laid out for it, which it is only on a television's shape.
+      const href = /<link rel="stylesheet" href="(\/styles\/site\.[0-9a-f]{12}\.css)">/.exec(html)[1]
+      const css = await (await app.get(href)).text()
+      assert.ok(css.includes('.tvx-c{display:none}'))
+      // The script draws on the screens the stylesheet lays out as a television, and no others.
+      const television = `@media ${TV_WIDE}{`
+      assert.equal(css.split(television).length, 2, 'the television\'s layout is one block of the stylesheet')
+      assert.ok(css.indexOf('.js .tvx.s3') > css.indexOf(television), 'the 3D layout is for a television only')
+      assert.ok(css.slice(css.indexOf(television)).includes('.js .tvx.s3 .tvx-c{display:block;'))
     } finally {
       await app.close()
     }
