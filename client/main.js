@@ -119,10 +119,11 @@ function setupStageGames() {
   if (cricket) stageGame(cricket, () => import('./cricket/play3d.js').then(m => m.playCricket3D(cricket)))
 }
 
-// The appeal's story on the arcade page: a 3D stage pinned above its
-// words while they are scrolled through, where a phone can draw one.
+// The appeal's story on the arcade page: its picture, at the top of the
+// page, filled with the 3D and pinned there while the page is scrolled
+// through, where a phone can draw it.
 function setupStory() {
-  const story = document.querySelector('[data-story]')
+  const story = document.querySelector('[data-story-root]')
   if (story) import('./story/index.js').then(m => m.startStory(story), () => {})
 }
 

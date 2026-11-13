@@ -544,7 +544,7 @@ async function widerScreens(browser, base) {
 // read, under the stage, and the stage is measured there.
 async function story(browsers, base) {
   // What the stage should say at each stop: the appeal's own words.
-  const names = { why: APPEAL.why.title, give: APPEAL.give.title }
+  const names = { hello: '', why: APPEAL.why.title, give: APPEAL.give.title, games: 'The games' }
   for (const i of [...APPEAL.funded.items, ...APPEAL.raising.items]) names[i.key] = i.what
   // Brings an element's middle to where the words are read, and measures the stage there.
   const bring = (selector) => {
@@ -598,8 +598,8 @@ async function story(browsers, base) {
     const stops = await page.evaluate(() => [...document.querySelectorAll('[data-stop]')].map(e => e.dataset.stop))
     for (const stop of stops) {
       const m = await page.evaluate(bring, `[data-stop="${stop}"]`)
-      // The first words are read as the stage comes up the screen; from then on it is pinned.
-      if (stop !== stops[0] && m.top !== 0) problem(where, `at "${stop}" the stage is ${m.top}px from the top of the screen, not pinned to it`)
+      // The picture opens the page and is pinned to the top of the screen from there on.
+      if (m.top !== 0) problem(where, `at "${stop}" the stage is ${m.top}px from the top of the screen, not pinned to it`)
       if (!m.across) problem(where, `at "${stop}" the stage does not reach across the screen`)
       if (m.height > m.vh * 0.5) problem(where, `the stage is ${m.height}px tall, more than half the screen`)
       if (m.height < 220) problem(where, `the stage is only ${m.height}px tall`)
@@ -611,7 +611,7 @@ async function story(browsers, base) {
         const got = await page.evaluate(() => document.querySelector('.st-cap')?.textContent)
         problem(where, `as "${stop}" is read the stage says "${got}", not "${names[stop]}"`)
       }
-      if (width === 375 && ['tables', 'posts', 'goals', 'give'].includes(stop)) {
+      if (width === 375 && ['hello', 'tables', 'posts', 'goals', 'give', 'games'].includes(stop)) {
         await page.waitForTimeout(1500)
         await page.screenshot({ path: path.join(shots, `story-375-${stop}.png`) })
       }
@@ -641,12 +641,20 @@ async function story(browsers, base) {
     const where = `${p} (${mode}, the story)`
     const page = await openPage(context, base, p, where)
     await page.waitForTimeout(1500)
-    const m = await page.evaluate(() => ({
-      stage: Boolean(document.querySelector('.st-stage')),
-      marked: document.querySelector('[data-story]').classList.contains('s3d'),
-      parts: [...document.querySelectorAll('.beat')].filter(b => b.getBoundingClientRect().height > 60).length,
-    }))
-    if (m.stage || m.marked) problem(where, 'the 3D stage is on the page')
+    const m = await page.evaluate(() => {
+      const room = document.querySelector('.st-stage')
+      return {
+        stage: Boolean(document.querySelector('.st-stage canvas')),
+        marked: document.querySelector('[data-story-root]').classList.contains('s3d'),
+        pinned: getComputedStyle(room).position === 'sticky',
+        tall: room.getBoundingClientRect().height / innerHeight,
+        still: [...room.querySelectorAll('.st-still svg')].filter(i => i.getBoundingClientRect().width > 30).length,
+        parts: [...document.querySelectorAll('.beat')].filter(b => b.getBoundingClientRect().height > 60).length,
+      }
+    })
+    if (m.stage || m.marked || m.pinned) problem(where, 'the 3D stage is on the page')
+    if (m.tall > 0.5) problem(where, `the picture's room takes ${Math.round(m.tall * 100)} in a hundred of the screen's height`)
+    if (m.still !== 5) problem(where, `${m.still} of the five things are drawn in the picture's room`)
     if (m.parts !== 4) problem(where, `${m.parts} of the story's four parts can be read`)
     await page.close()
     await context.close()

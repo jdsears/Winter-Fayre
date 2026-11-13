@@ -10,7 +10,7 @@ import { esc, attr } from './html.js'
 import { snowBand } from './layout.js'
 import { SITE, COLOURS } from '../site.js'
 import { CREST, crestImg } from '../crest.js'
-import { appealHtml } from './appeal.js'
+import { appealHtml, ICONS } from './appeal.js'
 import { APPEAL } from '../../shared/appeal.js'
 import { GAMES } from '../../shared/games.js'
 import { prizeLine, FOOTBALL, ONE_EACH, footballWords } from '../../shared/prizes.js'
@@ -58,17 +58,32 @@ export function arcadeHtml({ football = null } = {}) {
   // The story of the appeal comes first: the games are in aid of it, and
   // a visitor scrolls through it on the way to them (John, 13 November
   // 2026). A link for a keyboard goes straight to the games.
+  //
+  // The page opens on the story's picture, with games and giving as its
+  // two points (John, 13 November 2026). The picture's room is here in
+  // the page from the start, so nothing moves when the page's script
+  // fills it with the 3D (client/story): until then, and where 3D will
+  // not run, it is a winter's night with the five things drawn in gold.
+  const still = ['tables', 'water', 'posts', 'goals', 'covers'].map(key => ICONS[key]).join('')
   return `<a class="skip" href="#games">Skip to the games</a>
-<header class="hero" id="top">
+<main>
+<div class="lead" data-story-root>
+<div class="st-stage" data-stage aria-hidden="true">
+  <div class="st-still">${still}</div>
+  ${snowBand({ w: 800, h: 90, count: 46, seed: 31 })}
+</div>
+<header class="hero" id="top" data-stop="hello">
   <div class="wrap">
     <div class="wm host">${crestImg({ shown: 96 })}<span>${esc(SITE.host)}</span></div>
     <h1>${esc(SITE.short)} <em>Sports Arcade</em></h1>
-    <p>Quick sports games to play on your phone, in aid of the PSA's ${esc(APPEAL.name)}. Beat a game's target and show your screen at the sports stall to claim a sweet. ${esc(ONE_EACH)}</p>
+    <p class="hero-two"><b>Play.</b> Quick sports games on your phone. Beat a game's target and show your screen at the sports stall to claim a sweet. ${esc(ONE_EACH)}</p>
+    <p class="hero-two"><b>Give.</b> Every game is in aid of the PSA's ${esc(APPEAL.name)}, which buys sports equipment for the College.</p>
+    <p class="hero-cue">Scroll down for the appeal's story, then the games.</p>
   </div>
   ${snowBand({ w: 1600, h: 90, count: 96 })}
 </header>
-<main>
 ${appealHtml()}
+</div>
 <section id="games" class="band deep arcade"><div class="wrap">
   <h2>The <em>games</em></h2>
   <p class="gs-prize mine" data-mine hidden></p>

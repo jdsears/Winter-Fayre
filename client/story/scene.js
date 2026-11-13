@@ -385,6 +385,20 @@ export function createStoryScene({ canvas, win = globalThis.window, words = 'Spo
     scene.add(sprite)
     hung.push({ sprite, y, size, star, beat: rnd() * 10 })
   }
+  // And a few large ones high over the field itself, for the sky of the
+  // wide views: too high to come into a close one.
+  const HIGH = 16
+  for (let i = 0; i < HIGH; i++) {
+    const star = i % 5 === 4
+    const mats = star ? sparkleMats : flakeMats
+    const sprite = new Sprite(mats[Math.floor(rnd() * mats.length)])
+    const size = star ? 1.6 + rnd() * 1.2 : 2.3 + rnd() * 1.6
+    const y = 10.5 + rnd() * 7
+    sprite.position.set(-44 + (i + rnd()) * (88 / HIGH), y, -15 + rnd() * 11)
+    sprite.scale.set(size, size, 1)
+    scene.add(sprite)
+    hung.push({ sprite, y, size, star, beat: rnd() * 10 })
+  }
 
   // Presents at the foot of the boards, wrapped in the fayre's colours.
   const WRAP = [FAYRE.red, FAYRE.teal, GOLD, '#ffffff', FAYRE.navy]

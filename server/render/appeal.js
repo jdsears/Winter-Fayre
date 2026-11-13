@@ -10,8 +10,10 @@
 //
 // Each part of the story is whole without the page's script and without
 // its pictures, which are drawn here. Where a phone can draw 3D, the
-// page's script pins a stage above these words as they are scrolled
-// through (client/story): the parts it stops at are marked data-stop.
+// page's script pins the picture at the top of the page above these
+// words as they are scrolled through (client/story): the parts it stops
+// at are marked data-stop, from the page's heading (in games.js) to the
+// button on to the games.
 
 import { esc, attr } from './html.js'
 import { APPEAL, charityLine } from '../../shared/appeal.js'
@@ -81,7 +83,7 @@ export function appealHtml() {
       <p class="st-small st-ch">${esc(charityLine())}</p>
     </li>
   </ol>
-  <p class="st-next"><a class="btn o" href="#games">On to the games</a></p>
+  <p class="st-next" data-stop="games"><a class="btn o" href="#games">On to the games</a></p>
   </div>
 </section>`
 }

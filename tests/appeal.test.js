@@ -56,6 +56,16 @@ describe('the appeal on the arcade', () => {
     assert.match(html, /<a class="btn o" href="#games">On to the games<\/a>/)
   })
 
+  test('says what the page is for at its head: playing, and giving', () => {
+    const said = words(html)
+    assert.ok(said.includes('Play. Quick sports games on your phone. Beat a game\'s target and show your screen at the sports stall to claim a sweet. One sweet each.'))
+    assert.ok(said.includes('Give. Every game is in aid of the PSA\'s Sports Fund Appeal, which buys sports equipment for the College.'))
+    assert.ok(said.includes('Scroll down for the appeal\'s story, then the games.'))
+    // No button at the head jumps to the games: a visitor scrolls through the story (John, 13 November 2026).
+    const head = html.slice(html.indexOf('<header class="hero"'), html.indexOf('</header>'))
+    assert.ok(!/<a\b/.test(head))
+  })
+
   test('tells the story in the PSA\'s words and figures', () => {
     const said = words(html)
     for (const part of [
@@ -77,18 +87,31 @@ describe('the appeal on the arcade', () => {
     ]) assert.ok(said.includes(part), part)
   })
 
-  test('marks each part the 3D story stops at, in the order the camera visits them, and draws no stage itself', () => {
+  test('opens on the room for the story\'s picture, and marks each part the 3D story stops at, in the order the camera visits them', () => {
     const stops = [...html.matchAll(/data-stop="([a-z]+)"/g)].map(m => m[1])
-    assert.deepEqual(stops, ['why', ...APPEAL.funded.items.map(i => i.key), ...APPEAL.raising.items.map(i => i.key), 'give'])
-    assert.deepEqual(stops, ['why', 'tables', 'water', 'posts', 'goals', 'covers', 'give'])
+    assert.deepEqual(stops, ['hello', 'why', ...APPEAL.funded.items.map(i => i.key), ...APPEAL.raising.items.map(i => i.key), 'give', 'games'])
+    assert.deepEqual(stops, ['hello', 'why', 'tables', 'water', 'posts', 'goals', 'covers', 'give', 'games'])
     assert.equal((html.match(/data-story-body/g) || []).length, 1)
+    // The first stop is the page's own heading and the last is the button on to the games.
+    assert.match(html, /<header class="hero" id="top" data-stop="hello">/)
+    assert.match(html, /<p class="st-next" data-stop="games"><a class="btn o" href="#games">On to the games<\/a><\/p>/)
+    // The picture's room comes first of all, before the heading, inside the
+    // page's lead with the heading and the story, and is not for a screen reader.
+    const lead = html.indexOf('<div class="lead" data-story-root>')
+    const room = html.indexOf('<div class="st-stage" data-stage aria-hidden="true">')
+    assert.ok(lead > 0 && room > lead && room < html.indexOf('<header class="hero"'))
+    assert.ok(html.indexOf('</div>\n<section id="games"') > html.indexOf('<section id="appeal"'))
+    assert.equal((html.match(/data-stage/g) || []).length, 1)
     // The boards in the 3D story read as the boards round the games' pitch do.
     assert.ok(html.includes(`<section id="appeal" class="story" aria-labelledby="appeal-h" data-story data-boards="${JSON.stringify(SITE.boards).replace(/"/g, '&quot;')}">`))
-    // The stage is the page script's to add, where a phone can draw 3D:
-    // with no script the story is its words alone, and nothing is empty.
+    // The 3D is the page script's to add, where a phone can draw it. With
+    // no script the room holds a drawn night: the five things in gold,
+    // in the story's order, and the poster's snowflakes.
     const page = html.replace(/<style[\s\S]*?<\/style>/g, '')
-    assert.ok(!page.includes('st-stage'))
     assert.ok(!page.includes('<canvas'))
+    const still = /<div class="st-still">([\s\S]*?)<\/div>/.exec(page)[1]
+    assert.equal((still.match(/<svg class="beat-i"/g) || []).length, 5)
+    assert.ok(page.slice(room, page.indexOf('<header class="hero"')).includes('<svg class="snow"'))
   })
 
   test('has one way to give: a Donate button to this site\'s own /donate, opened beside the arcade and saying nothing of where it came from', () => {
