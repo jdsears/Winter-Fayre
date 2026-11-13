@@ -32,7 +32,7 @@ client/               the page script (Vite): main.js, tv.js (the TV screen's tu
                       a stage game where the 3D will not run), shootout/ (penalties and the 3D
                       stadium, which dresses for each sport), keepy/ (keepy-uppies), freekick/
                       (the free kick challenge), headtohead/ (head to head, drawn flat), rugby/
-                      (rugby conversion), fonts/ (Barlow, OFL)
+                      (rugby conversion), netball/ (netball shot), fonts/ (Barlow, OFL)
 tests/                node:test server, safety and writing-rule tests
 tools/check.mjs       npm run check: Playwright at 360, 375 and 390 wide, sideways, and the TV at 1920 by 1080
 docs/HANDOVER.md      what is built, what John has decided, what is left

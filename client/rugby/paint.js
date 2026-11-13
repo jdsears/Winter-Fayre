@@ -8,9 +8,8 @@ import { GOAL } from '../shootout/physics.js'
 const LINE = GOAL.lineZ
 
 export function paintRugby(g, s) {
-  const near = s.view.pos.z - 1
-  // The 22, where it is in front of the camera.
-  if (LINE + 22 < near) s.line({ x: -34, y: 0, z: LINE + 22 }, { x: 34, y: 0, z: LINE + 22 }, 0.12, '#f4f7f2')
+  // The 22 (the brush leaves out whatever of it is behind the camera).
+  s.line({ x: -34, y: 0, z: LINE + 22 }, { x: 34, y: 0, z: LINE + 22 }, 0.12, '#f4f7f2')
 
   // The posts: two uprights, the bar, a pad at the foot of each.
   for (const side of [-1, 1]) {
@@ -18,6 +17,7 @@ export function paintRugby(g, s) {
     s.line({ x, y: 0, z: LINE }, { x, y: POSTS.height, z: LINE }, 0.2, '#ffffff')
     s.line({ x, y: 0.1, z: LINE }, { x, y: 1.8, z: LINE }, 0.5, s.colours.accent)
     // The flag flies the way the wind blows, and hangs in a calm.
+    if (!s.seen({ x, y: POSTS.height, z: LINE })) continue
     const top = s.at({ x, y: POSTS.height, z: LINE })
     const reach = top.scale * (s.wind ? 0.9 : 0.25) * (s.wind < 0 ? -1 : 1)
     const drop = top.scale * (s.wind ? 0.42 : 0.9)
@@ -27,7 +27,7 @@ export function paintRugby(g, s) {
   s.line({ x: -POSTS.halfWidth, y: POSTS.bar, z: LINE }, { x: POSTS.halfWidth, y: POSTS.bar, z: LINE }, 0.16, '#ffffff')
 
   // The keys' aim, when the keyboard is being used.
-  if (s.aim) {
+  if (s.aim && s.seen({ x: s.aim.x, y: s.aim.y, z: LINE })) {
     const a = s.at({ x: s.aim.x, y: s.aim.y, z: LINE })
     g.strokeStyle = s.colours.accent
     g.lineWidth = 3
@@ -36,6 +36,7 @@ export function paintRugby(g, s) {
 
   // The tee, and the ball: long, white, turning end over end as it flies.
   if (s.tee) s.disc({ x: s.tee.x, y: 0.03, z: s.tee.z }, 0.12, s.colours.accent, 0.4)
+  if (!s.seen(s.ball)) return
   s.shade(s.ball, 0.2)
   const b = s.at(s.ball)
   g.save()

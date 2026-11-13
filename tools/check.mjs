@@ -48,10 +48,10 @@ const PAGES = ['/', ...GAMES.map(g => g.path), '/tv', '/privacy', '/not-a-page']
 
 // The games played on the stage: the page, a name for its picture, and
 // whether it has a line under the top bar (the wind).
-const STAGE_GAMES = [['/keepy-uppies', 'keepy', false], ['/free-kicks', 'freekick', false], ['/rugby', 'rugby', true]]
+const STAGE_GAMES = [['/keepy-uppies', 'keepy', false], ['/free-kicks', 'freekick', false], ['/rugby', 'rugby', true], ['/netball', 'netball', false]]
 // The games made for the stage alone: with the 3D off, the stage draws
 // the stadium flat for them.
-const FLAT_STAGE_GAMES = ['/rugby']
+const FLAT_STAGE_GAMES = ['/rugby', '/netball']
 
 // A password for the numbers page, for this check's own copy of the site.
 const NUMBERS = 'for-the-check-only'

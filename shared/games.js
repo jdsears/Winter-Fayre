@@ -67,6 +67,17 @@ export const GAMES = [
     // Five kicks take a quarter of a minute at the very least.
     board: { maxScore: 130, perSecond: 6, slack: 18 },
   },
+  {
+    key: 'netball',
+    path: '/netball',
+    href: '/netball',
+    title: 'Netball shot',
+    text: 'Thirty seconds to score as many goals as you can. Every goal moves you further from the post.',
+    play: 'Play netball',
+    scores: 'goals in thirty seconds',
+    // A goal takes a second and a half at the very least.
+    board: { maxScore: 40, perSecond: 0.75, slack: 2 },
+  },
 ]
 
 export const GAME_KEYS = GAMES.map(g => g.key)

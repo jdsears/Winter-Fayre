@@ -6,7 +6,9 @@
 //
 // The same stadium is dressed for other sports (sport): for rugby the
 // goal makes way for rugby posts with a flag on each, the pitch has
-// rugby's lines and the ball is a rugby ball on a tee.
+// rugby's lines and the ball is a rugby ball on a tee. For netball it
+// makes way for a netball post with its ring and net, inside a goal
+// circle, and the ball is a netball.
 //
 // It is a winter night with a splash of Christmas: stars, falling snow,
 // snow lying on the boards, a string of fairy lights, a Christmas tree
@@ -25,7 +27,7 @@ import {
   BoxGeometry, CanvasTexture, CircleGeometry, Color, ConeGeometry, CylinderGeometry, DirectionalLight, DoubleSide, Fog, Group,
   HemisphereLight, IcosahedronGeometry, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial,
   Object3D, OctahedronGeometry, PerspectiveCamera, PlaneGeometry, Points, PointsMaterial, Quaternion, RepeatWrapping, RingGeometry, Scene,
-  SphereGeometry, SRGBColorSpace, Vector3, WebGLRenderer, BufferAttribute, BufferGeometry, Euler,
+  SphereGeometry, SRGBColorSpace, TorusGeometry, Vector3, WebGLRenderer, BufferAttribute, BufferGeometry, Euler,
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { BALL_R, BOARDS_Z, GOAL, KEEPER_Z } from './physics.js'
@@ -119,6 +121,18 @@ function makeRugbyBall() {
     end.position.y = s * 0.108
     group.add(end)
   }
+  return group
+}
+
+// A netball: a white ball with two bands round it, one ice blue and one gold.
+function makeNetball(accent) {
+  const group = new Group()
+  group.add(new Mesh(new SphereGeometry(BALL_R, 24, 18), new MeshLambertMaterial({ color: 0xfbfbf6 })))
+  const blue = new Mesh(new TorusGeometry(BALL_R * 1.004, 0.009, 6, 32), new MeshLambertMaterial({ color: 0x4bb8d6 }))
+  const gold = new Mesh(new TorusGeometry(BALL_R * 1.004, 0.009, 6, 32), new MeshLambertMaterial({ color: new Color(accent) }))
+  gold.rotation.set(PI / 2, 0.5, 0)
+  blue.rotation.set(0.3, 0, 0.9)
+  group.add(blue, gold)
   return group
 }
 
@@ -277,6 +291,7 @@ function blobTexture(doc) {
 export async function createScene3D({ canvas, colours, kits, boards = [], boardLogos = {}, topSign = null, sport = 'football', win = globalThis.window, doc = globalThis.document, onLost = () => {} }) {
   const football = sport === 'football'
   const rugby = sport === 'rugby'
+  const netball = sport === 'netball'
   const dpr = Math.min(2, win.devicePixelRatio || 1)
   const renderer = new WebGLRenderer({ canvas, antialias: dpr < 2, powerPreference: 'high-performance' })
   renderer.setPixelRatio(dpr)
@@ -367,6 +382,10 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     const arcFrom = Math.acos(5.5 / 9.15)
     lines.push(placed(new RingGeometry(9.15 - lineW / 2, 9.15 + lineW / 2, 48, 1, -PI / 2 - arcFrom, 2 * arcFrom), { y: 0.006, rx: -PI / 2 }))
   }
+  if (netball) {
+    // The goal circle: 4.9 metres round the post, in front of the line.
+    lines.push(placed(new RingGeometry(4.9 - lineW / 2, 4.9 + lineW / 2, 56, 1, PI, PI), { y: 0.006, z: L, rx: -PI / 2 }))
+  }
   if (rugby) {
     // The try line is the one above. Then the dashes five metres out, the
     // 22, and the dashes ten metres short of halfway.
@@ -434,6 +453,37 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
       scene.add(flag)
       flags.push(flag)
     }
+  }
+
+  // A netball post in the goal's place: a pole with a pad round it, and
+  // a ring 3.05 metres up, held out in front of the pole, with a short
+  // net hanging from it.
+  if (netball) {
+    const RING = { y: 3.05, z: L + 0.24, r: 0.19 }
+    const pole = [
+      placed(new CylinderGeometry(0.045, 0.045, RING.y, 12), { y: RING.y / 2, z: L }),
+      placed(new BoxGeometry(0.035, 0.035, 0.12), { y: RING.y, z: L + 0.06 }),
+    ]
+    const poleGeo = keep(mergeGeometries(pole.map((g) => g.toNonIndexed())))
+    for (const g of pole) g.dispose()
+    scene.add(new Mesh(poleGeo, frameMat))
+    const pad = new Mesh(keep(new CylinderGeometry(0.12, 0.12, 1.9, 14)), keep(new MeshLambertMaterial({ color: new Color(colours.accent) })))
+    pad.position.set(0, 0.95, L)
+    scene.add(pad)
+    const ring = new Mesh(keep(new TorusGeometry(RING.r, 0.016, 8, 32)), keep(new MeshLambertMaterial({ color: 0xe0263c, emissive: 0x3a0a10 })))
+    ring.rotation.x = PI / 2
+    ring.position.set(0, RING.y, RING.z)
+    scene.add(ring)
+    const mesh = keep(canvasTexture(doc, 64, 64, (g, w, h) => {
+      g.clearRect(0, 0, w, h)
+      g.strokeStyle = 'rgba(255,255,255,0.95)'
+      g.lineWidth = 6
+      g.strokeRect(0, 0, w, h)
+    }, { repeat: [12, 3] }))
+    const hoopNet = new Mesh(keep(new CylinderGeometry(RING.r, RING.r * 0.62, 0.38, 16, 1, true)), keep(new MeshBasicMaterial({ map: mesh, transparent: true, side: DoubleSide, depthWrite: false, alphaTest: 0.04 })))
+    hoopNet.position.set(0, RING.y - 0.19, RING.z)
+    hoopNet.renderOrder = 2
+    scene.add(hoopNet)
   }
 
   // The net: four panels whose points move when the ball hits.
@@ -800,7 +850,7 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
   const taker = makePlayer(doc, lookAt(0))
   const keeper = makePlayer(doc, { keeper: true, ...lookAt(3) })
   scene.add(taker.root, keeper.root)
-  const ball = rugby ? makeRugbyBall() : makeBall()
+  const ball = rugby ? makeRugbyBall() : netball ? makeNetball(colours.accent) : makeBall()
   scene.add(ball)
   // A kicking tee for the rugby ball, where the game puts it.
   let tee = null

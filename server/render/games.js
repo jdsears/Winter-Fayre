@@ -36,6 +36,7 @@ function tileArt(kind) {
     keepy: `${goal}<path d="M160 150V70" stroke="#ffffff66" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/><ellipse cx="160" cy="160" rx="16" ry="4" fill="#0004"/>${ball(160, 62, 22)}<text x="250" y="52" class="gtx" fill="${COLOURS.accent}" text-anchor="middle">25</text>`,
     headtohead: `<path d="M24 118V70H50M296 118V70H270" fill="none" stroke="#fff" stroke-width="4"/><path d="M24 70H50V118H24ZM296 70H270V118H296ZM24 86H50M24 102H50M37 70V118M270 86H296M270 102H296M283 70V118" fill="none" stroke="#ffffff55" stroke-width="1"/><ellipse cx="112" cy="150" rx="26" ry="5" fill="#0004"/><ellipse cx="212" cy="150" rx="26" ry="5" fill="#0004"/><rect x="100" y="120" width="24" height="26" rx="7" fill="#c8102e"/><rect x="200" y="120" width="24" height="26" rx="7" fill="#f4f4f2"/><circle cx="112" cy="100" r="24" fill="#c98a5e"/><path d="M88 96a24 24 0 0 1 48 0c-10-9-38-9-48 0Z" fill="#3a2a1e"/><circle cx="122" cy="102" r="3" fill="${INK}"/><circle cx="212" cy="100" r="24" fill="#e8b48c"/><path d="M188 96a24 24 0 0 1 48 0c-10-9-38-9-48 0Z" fill="#1b1b22"/><circle cx="202" cy="102" r="3" fill="${INK}"/>${ball(162, 58, 15)}`,
     rugby: `<path d="M128 118V34M192 118V34M128 80H192" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/><rect x="123" y="100" width="10" height="18" rx="2" fill="${COLOURS.accent}"/><rect x="187" y="100" width="10" height="18" rx="2" fill="${COLOURS.accent}"/><path d="M128 34l14 5-14 5ZM192 34l14 5-14 5Z" fill="#c8102e"/><path d="M168 150C178 110 172 74 160 56" fill="none" stroke="${COLOURS.accent}" stroke-width="3" stroke-dasharray="3 8" stroke-linecap="round"/><ellipse cx="160" cy="56" rx="5" ry="8" transform="rotate(-24 160 56)" fill="#f6f3ea" stroke="${INK}" stroke-width="1.2"/><ellipse cx="168" cy="160" rx="16" ry="4" fill="#0004"/><g transform="rotate(18 168 146)"><ellipse cx="168" cy="146" rx="10" ry="15" fill="#f6f3ea" stroke="${INK}" stroke-width="1.5"/><ellipse cx="168" cy="133.5" rx="5" ry="3.6" fill="#c8102e"/><ellipse cx="168" cy="158.5" rx="5" ry="3.6" fill="#c8102e"/></g>`,
+    netball: `<path d="M160 118V46" stroke="#fff" stroke-width="4" stroke-linecap="round"/><rect x="155" y="84" width="10" height="34" rx="3" fill="${COLOURS.accent}"/><path d="M132 60l5 26h20l5-26" fill="none" stroke="#ffffffcc" stroke-width="1.5"/><path d="M139 60l3 26M147 60v26M155 60l-3 26M134 70h26M136 79h22" fill="none" stroke="#ffffff88" stroke-width="1"/><ellipse cx="147" cy="60" rx="15" ry="4.5" fill="none" stroke="#e0263c" stroke-width="3.5"/><path d="M160 60h-4" stroke="#fff" stroke-width="3"/><path d="M96 118a64 20 0 0 0 128 0" fill="none" stroke="#ffffffaa" stroke-width="2"/><path d="M212 156C204 96 176 44 148 50" fill="none" stroke="${COLOURS.accent}" stroke-width="3" stroke-dasharray="3 8" stroke-linecap="round"/><ellipse cx="214" cy="166" rx="15" ry="4" fill="#0004"/><g><circle cx="212" cy="150" r="15" fill="#fbfbf6" stroke="${INK}" stroke-width="1.5"/><ellipse cx="212" cy="150" rx="14.4" ry="5.4" transform="rotate(28 212 150)" fill="none" stroke="#4bb8d6" stroke-width="2.6"/><ellipse cx="212" cy="150" rx="5.4" ry="14.4" transform="rotate(20 212 150)" fill="none" stroke="${COLOURS.accent}" stroke-width="2.6"/></g>`,
     freekick: `${goal}${figure(196, 118, '#1e9e57', 38, true)}${[118, 132, 146, 160].map(x => figure(x, 142, '#f4f4f2', 40)).join('')}<path d="M150 166C86 150 70 96 104 72" fill="none" stroke="${COLOURS.accent}" stroke-width="3" stroke-dasharray="3 8" stroke-linecap="round"/>${ball(150, 166, 10)}${ball(104, 72, 7)}`,
   }[kind] || ''
   return `<svg viewBox="0 0 320 180" aria-hidden="true" focusable="false">${scene}${what}${snow}</svg>`
@@ -184,7 +185,14 @@ const rugbyHtml = (opts) => stageGameHtml('rugby', {
   keys: 'On a keyboard, the left and right arrows aim, up and down set the power, and Space kicks.',
 }, opts)
 
-const PAGES = { penalties: penaltiesHtml, keepy: keepyHtml, freekick: freeKickHtml, headtohead: headToHeadHtml, rugby: rugbyHtml }
+const netballHtml = (opts) => stageGameHtml('netball', {
+  first: 'Netball',
+  second: 'shot',
+  how: 'Flick the ball up into the ring. A longer flick sends it further. Thirty seconds, as many as you can.',
+  keys: 'On a keyboard, the up and down arrows set how far the shot goes, left and right aim it, and Space shoots.',
+}, opts)
+
+const PAGES = { penalties: penaltiesHtml, keepy: keepyHtml, freekick: freeKickHtml, headtohead: headToHeadHtml, rugby: rugbyHtml, netball: netballHtml }
 
 // A game's place on its own page, or '' for a game with none.
 export function gameHtml(key, opts = {}) {
