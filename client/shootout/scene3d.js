@@ -12,7 +12,8 @@
 // the middle with a wicket at each end, a bowler runs in from the
 // stand's end and a batter waits at the near one, bat in hand.
 //
-// It is a winter night with a splash of Christmas: stars, falling snow,
+// It is a winter night with a splash of Christmas: stars, the fayre's
+// poster snowflakes hung in the sky, falling snow,
 // snow lying on the boards, a string of fairy lights, a Christmas tree
 // either side of the goal and Christmas hats in the crowd and on the
 // keeper. With reduced motion the snow hangs still and the lights do
@@ -29,7 +30,7 @@ import {
   BoxGeometry, CanvasTexture, CircleGeometry, Color, ConeGeometry, CylinderGeometry, DirectionalLight, DoubleSide, Fog, Group,
   HemisphereLight, IcosahedronGeometry, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial,
   Object3D, OctahedronGeometry, PerspectiveCamera, PlaneGeometry, Points, PointsMaterial, Quaternion, RepeatWrapping, RingGeometry, Scene,
-  SphereGeometry, SRGBColorSpace, TorusGeometry, Vector3, WebGLRenderer, BufferAttribute, BufferGeometry, Euler,
+  SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3, WebGLRenderer, BufferAttribute, BufferGeometry, Euler,
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { BALL_R, BOARDS_Z, GOAL, KEEPER_Z } from './physics.js'
@@ -41,6 +42,7 @@ import { LOOKS, SKINS, lookAt } from './looks.js'
 import { prefersReducedMotion } from './motion.js'
 import { GROUND as CRICKET, PITCH_LENGTH, BALL_R as CRICKET_BALL_R, BAT, strokeAt } from '../cricket/ground.js'
 import { armsAt } from '../netball/arms.js'
+import { drawFlake, drawSparkle, stadiumFlakes, swayAt, KINDS } from '../games/flakes.js'
 import { loadBoardLogos, logoReady, logoBox, BOARD_W, BOARD_COUNT, boardCentre, drawTopSign, loadTopSign } from './boards.js'
 
 const PI = Math.PI
@@ -357,6 +359,35 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     const g = keep(new BufferGeometry())
     g.setAttribute('position', new BufferAttribute(at, 3))
     scene.add(new Points(g, keep(new PointsMaterial({ map: dot, size: 2.6, sizeAttenuation: false, transparent: true, depthWrite: false, fog: false, opacity: 0.9 }))))
+  }
+
+  // The fayre's poster in the sky: its snowflakes and four-pointed stars,
+  // in its teal, ice blue and gold, hung above the stand and behind it
+  // (games/flakes.js). They sway a little and the stars twinkle.
+  const hung = stadiumFlakes(BOARDS_Z - 18).map((flake) => {
+    const art = hungArt(flake.kind)
+    const sprite = new Sprite(keep(new SpriteMaterial({ map: art, color: new Color(flake.ink), transparent: true, depthWrite: false, fog: false })))
+    sprite.position.set(flake.x, flake.y, flake.z)
+    sprite.scale.set(flake.size, flake.size, 1)
+    scene.add(sprite)
+    return { flake, sprite }
+  })
+  function hungArt(kind) {
+    hungArt.made ||= []
+    hungArt.made[kind] ||= keep(canvasTexture(doc, 128, 128, (g, w, h) => {
+      g.translate(w / 2, h / 2)
+      if (kind >= KINDS) drawSparkle(g, w)
+      else drawFlake(g, w, kind)
+    }))
+    return hungArt.made[kind]
+  }
+  function sway(now) {
+    if (still) return
+    for (const { flake, sprite } of hung) {
+      const at = swayAt(flake, now)
+      sprite.position.y = flake.y + at.lift
+      if (flake.star) sprite.scale.set(flake.size * at.scale, flake.size * at.scale, 1)
+    }
   }
 
   scene.add(new HemisphereLight(0xe2ecff, 0x35604a, 0.95 * LIGHT))
@@ -1397,6 +1428,7 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     }
     updateNet(now)
     snow(now, state.wind || 0)
+    sway(now)
     twinkle(now)
     // The flags on the posts fly the way the wind blows, and hang in a calm.
     if (flags.length) {

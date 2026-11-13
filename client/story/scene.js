@@ -27,6 +27,7 @@ import {
   SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3, WebGLRenderer,
 } from 'three'
 import { PLACES, RAISING, viewAt, cheerAt } from './path.js'
+import { drawFlake, drawSparkle } from '../games/flakes.js'
 
 const PI = Math.PI
 // three.js counts light a factor of pi higher than these numbers were
@@ -324,48 +325,16 @@ export function createStoryScene({ canvas, win = globalThis.window, words = 'Spo
   })
   baubles.geometry.setAttribute('color', new BufferAttribute(baubleTint, 3))
 
-  // The poster's snowflakes: six arms each, in three patterns, drawn in
-  // white so each can be given the poster's teal, ice blue or gold.
+  // The poster's snowflakes, in their three patterns, and its four-pointed
+  // stars (games/flakes.js): drawn in white so each can be given the
+  // poster's teal, ice blue or gold.
   const flakeArt = (kind) => drawn(128, 128, (g, w, h) => {
     g.translate(w / 2, h / 2)
-    g.strokeStyle = '#ffffff'
-    g.lineCap = 'round'
-    g.lineWidth = 5
-    const R = 54
-    const stroke = (x1, y1, x2, y2) => { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke() }
-    for (let i = 0; i < 6; i++) {
-      g.save()
-      g.rotate((i * PI) / 3)
-      stroke(0, 0, 0, -R)
-      if (kind === 0) {
-        // Two pairs of branches up each arm.
-        for (const [at, len] of [[0.42, 0.3], [0.7, 0.2]]) for (const side of [-1, 1]) stroke(0, -R * at, side * R * len * 0.87, -R * (at + len * 0.5))
-      } else if (kind === 1) {
-        // A diamond at each tip and a ring half way up.
-        g.beginPath(); g.moveTo(0, -R); g.lineTo(8, -R + 12); g.lineTo(0, -R + 24); g.lineTo(-8, -R + 12); g.closePath(); g.stroke()
-        g.beginPath(); g.arc(0, -R * 0.4, 5, 0, PI * 2); g.stroke()
-      } else {
-        // A short spoke between each pair of arms, and a fork at each tip.
-        for (const side of [-1, 1]) stroke(0, -R * 0.78, side * R * 0.16, -R)
-        g.rotate(PI / 6)
-        stroke(0, -R * 0.24, 0, -R * 0.56)
-      }
-      g.restore()
-    }
-    if (kind === 2) { g.beginPath(); g.arc(0, 0, R * 0.22, 0, PI * 2); g.stroke() }
+    drawFlake(g, w, kind)
   })
-  // And its four-pointed stars.
   const sparkleArt = drawn(128, 128, (g, w, h) => {
     g.translate(w / 2, h / 2)
-    g.fillStyle = '#ffffff'
-    g.beginPath()
-    for (let i = 0; i < 8; i++) {
-      const a = (i * PI) / 4
-      const far = i % 2 ? 8 : 60
-      g.lineTo(Math.sin(a) * far, -Math.cos(a) * far)
-    }
-    g.closePath()
-    g.fill()
+    drawSparkle(g, w)
   })
   const flakes = [0, 1, 2].map(flakeArt)
   const hang = (map, colour) => keep(new SpriteMaterial({ map, color: new Color(colour), transparent: true, depthWrite: false, fog: false }))
