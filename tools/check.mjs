@@ -19,7 +19,10 @@
 // The stall's TV screen is checked at 1920 by 1080 with a full
 // leaderboard: the QR code at least 400 pixels square, a leaderboard
 // row's letters at least 40 pixels, everything on the one screen, and
-// the leaderboards taking turns by themselves.
+// the leaderboards taking turns by themselves. The appeal's turn is
+// checked too: it fills the screen, its code to scan is at least 400
+// pixels square, and it comes round after three leaderboards and gives
+// the screen back.
 //
 // The numbers page, behind its password, is checked on a phone too: it
 // is where an entry is taken off a leaderboard at the stall.
@@ -609,6 +612,43 @@ async function television(browser, base) {
         if (name) await page.screenshot({ path: path.join(shots, `${name}.png`) })
       }
     }
+    // The appeal's turn: the whole screen in the PSA's plum and gold,
+    // with its own code to scan. The check gives it its turn here.
+    const a = await page.evaluate(() => {
+      const scene = document.querySelector('[data-tv-appeal]')
+      if (!scene) return null
+      scene.classList.add('on')
+      const snow = document.querySelector('.tv .snow').getBoundingClientRect()
+      const box = scene.getBoundingClientRect()
+      const code = scene.querySelector('.tvcode svg').getBoundingClientRect()
+      const inside = (sel) => { const r = scene.querySelector(sel).getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= snow.top + 1 }
+      const size = (sel) => parseFloat(getComputedStyle(scene.querySelector(sel)).fontSize)
+      return {
+        fills: box.left <= 0 && box.top <= 0 && box.right >= innerWidth && box.bottom >= innerHeight,
+        code: Math.round(Math.min(code.width, code.height)),
+        outside: ['.tvx-w', '.tvx-q', '.tvcode', '.tvx-s', '.tvx-a', '.tvx-ch'].filter(sel => !inside(sel)),
+        headline: size('h2'),
+        item: size('.tvx-l li'),
+        small: size('.tvx-ch'),
+        button: getComputedStyle(scene.querySelector('.tvx-b')).display,
+        scrolls: document.documentElement.scrollHeight > innerHeight + 1 || document.documentElement.scrollWidth > innerWidth + 1,
+      }
+    })
+    const scale = width / 1920
+    if (!a) problem(where, 'the appeal is not on the page')
+    else {
+      if (!a.fills) problem(where, 'the appeal does not fill the screen in its turn')
+      if (a.code < 400 * scale) problem(where, `the appeal's code to scan is ${a.code}px square, under ${Math.round(400 * scale)}`)
+      for (const o of a.outside) problem(where, `the appeal's ${o} is not wholly on the screen, clear of the snow`)
+      if (a.headline < 80 * scale) problem(where, `the appeal's headline is ${a.headline}px, under ${Math.round(80 * scale)}`)
+      if (a.item < 32 * scale) problem(where, `what the appeal is raising for is written at ${a.item}px, under ${Math.round(32 * scale)}`)
+      if (a.small < 20 * scale) problem(where, `the appeal's smallest words are ${a.small}px, under ${Math.round(20 * scale)}`)
+      if (a.button !== 'none') problem(where, 'the appeal shows a button on a television, where there is a code to scan')
+      if (a.scrolls) problem(where, 'the screen scrolls in the appeal\'s turn')
+      await page.waitForTimeout(800)
+      if (name) await page.screenshot({ path: path.join(shots, `${name}-appeal.png`) })
+      await page.evaluate(() => document.querySelector('[data-tv-appeal]').classList.remove('on'))
+    }
     // And left alone, the next board takes its turn by itself.
     if (width === 1920) {
       const was = await page.evaluate(() => document.querySelector('.tvb.on')?.getAttribute('data-tv-board'))
@@ -623,17 +663,55 @@ async function television(browser, base) {
     await context.close()
   }
 
+  // Left alone, the screen takes its turns by itself: three leaderboards,
+  // then the appeal for ten seconds or so, then the next leaderboard. The
+  // page's clock is held and run on here, so the check need not wait.
+  {
+    const where = '/tv at 1920 by 1080 (its turns)'
+    const turns = await browser.newContext({ viewport: { width: 1920, height: 1080 } })
+    await turns.clock.install()
+    const page = await openPage(turns, base, '/tv', where)
+    await page.clock.pauseAt(new Date(Date.now() + 1000))
+    const state = () => page.evaluate(() => ({ appeal: Boolean(document.querySelector('.tvx.on')), board: document.querySelector('.tvb.on')?.getAttribute('data-tv-board') }))
+    const before = []
+    let s = await state()
+    for (let waited = 0; !s.appeal && waited < 60; waited++) {
+      if (before[before.length - 1] !== s.board) before.push(s.board)
+      await page.clock.runFor(1000)
+      s = await state()
+    }
+    if (!s.appeal) problem(where, 'the appeal does not take its turn')
+    else {
+      if (before.length !== 3) problem(where, `${before.length} leaderboards were shown before the appeal, not 3`)
+      let on = 0
+      while (s.appeal && on < 30) {
+        await page.clock.runFor(1000)
+        on += 1
+        s = await state()
+      }
+      if (s.appeal) problem(where, 'the appeal does not give the screen back')
+      else {
+        if (on < 8 || on > 12) problem(where, `the appeal was on for ${on} seconds, not about 10`)
+        if (before.includes(s.board)) problem(where, 'after the appeal the leaderboards start again, not with the next one')
+      }
+    }
+    await page.close()
+    await turns.close()
+  }
+
   // With no script the code and every leaderboard are still there to read.
   const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, javaScriptEnabled: false })
   const where = '/tv at 1920 by 1080 (no JavaScript)'
   const page = await openPage(context, base, '/tv', where)
   const m = await page.evaluate(() => ({
     code: Math.round(document.querySelector('.tvcode svg').getBoundingClientRect().width),
+    appeal: Math.round(document.querySelector('.tvx .tvcode svg')?.getBoundingClientRect().width || 0),
     boards: [...document.querySelectorAll('.tvb')].filter(b => getComputedStyle(b).display !== 'none').length,
     rows: document.querySelectorAll('.tvb[data-tv-board="keepy"] .tvl li').length,
     wide: document.documentElement.scrollWidth > innerWidth + 1,
   }))
   if (m.code < 400) problem(where, `the QR code is ${m.code}px square, under 400`)
+  if (m.appeal < 400) problem(where, `the appeal's code to scan is ${m.appeal}px square, under 400`)
   if (m.boards !== GAMES.length) problem(where, `${m.boards} leaderboards can be read, not ${GAMES.length}`)
   if (m.rows !== 10) problem(where, 'the full leaderboard is not all there')
   if (m.wide) problem(where, 'the page scrolls sideways')

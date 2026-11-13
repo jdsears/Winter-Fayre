@@ -19,7 +19,8 @@ server/
   app.js              the routes: the pages, the TV screen (/tv) and its code (/qr.svg), the
                       leaderboards (/api/board/<game>, /api/boards), the numbers (/api/count,
                       /numbers), the crest (/media/badge/...), /donate (counts a tap and sends
-                      the visitor on to the PSA's page on JustGiving), /health, robots
+                      the visitor on to the PSA's page on JustGiving) and /donate/tv (the same
+                      for a scan of the code on the stall's TV, counted apart), /health, robots
   site.js             the site's names, the boards' words and the winter colours
   store.js            where the little the site keeps is kept: memory, and a small file if there is a folder
   board.js            the leaderboards: three letters, a score and the time, a board a game a day
@@ -29,7 +30,8 @@ server/
   crest.js            the PSA's crest, the one picture the site holds (crest/psa.webp)
   render/             the pages: games.js (the arcade and each game's page), appeal.js (the story
                       of the appeal on the arcade page), tv.js (the stall's TV
-                      screen), pages.js (privacy, not found), numbers.js, layout.js (head, top bar,
+                      screen, and the appeal's turn on it), pages.js (privacy, not found),
+                      numbers.js, layout.js (head, top bar,
                       snow, footer), css.js, html.js
 client/               the page script (Vite): main.js, tv.js (the TV screen's turns and refresh),
                       games/ (the full-screen stage the games share, the leaderboard in a finish
@@ -70,7 +72,7 @@ This is a school event and children will play.
 - The privacy page (`server/render/pages.js`) says, in a few plain sentences, exactly what the site does. If what the site keeps changes, the page changes in the same piece of work.
 - An entry that should not be on show is taken off from the numbers page (`/numbers`, behind `NUMBERS_PASSWORD`): each of today's entries has a Take off button. The button is a plain form, accepted only with the password and only when it comes from the numbers page itself.
 - Every page is noindex, and robots.txt turns search engines away.
-- The appeal is for parents and carers, and no money is taken on this site. Its one Donate button goes to this site's own `/donate`, which counts the tap as an anonymous total and sends the visitor on to the PSA's page on JustGiving, saying nothing of where they came from. No page carries the address of another site. Inside a game, the line about the appeal links to the appeal on the arcade page, never straight to `/donate`: a child with the phone in hand is one step further from where money is given.
+- The appeal is for parents and carers, and no money is taken on this site. Its one Donate button goes to this site's own `/donate`, which counts the tap as an anonymous total and sends the visitor on to the PSA's page on JustGiving, saying nothing of where they came from. The stall's TV shows a code to scan in the button's place, which leads to this site's own `/donate/tv`: the same, counted apart. No page carries the address of another site to follow. Inside a game, the line about the appeal links to the appeal on the arcade page, never straight to `/donate`: a child with the phone in hand is one step further from where money is given.
 
 ### Security
 
@@ -107,7 +109,7 @@ Most visitors play on a phone, so that is the main view.
 - Where 3D cannot run, a game falls back to its flat version. The four games from the base each have a flat version of their own. A game made for the stage (rugby and after) hands the stage a small painter, and the stage draws the whole stadium flat for it (`client/games/flat.js`), so it plays the same: the same rules, swipes, finish panel and leaderboard. With reduced motion the snow hangs still and nothing shakes or sweeps.
 - No large picture downloads. The tiles are drawn (SVG). The one raster picture is the crest: WebP, 512 pixels square, about eighteen kilobytes, with its width and height set. Anything else raster would be WebP too, sized for its place, with width and height set, and lazy-loaded below the first screen.
 - Barlow, served from the site itself. Body text no smaller than 16 pixels; headings scale with `clamp`.
-- The TV page is the one page made for a large screen (1920 by 1080, read from three metres): leaderboard rows' letters at least 40 pixels, the QR code at least 400 pixels square, sized by the screen so a smaller or larger television shows the same picture. It must still be usable, stacked, on a phone, and readable with no script.
+- The TV page is the one page made for a large screen (1920 by 1080, read from three metres): leaderboard rows' letters at least 40 pixels, the QR code at least 400 pixels square, sized by the screen so a smaller or larger television shows the same picture. After every three leaderboards the appeal fills the screen for ten seconds, with its own code to scan to donate, also at least 400 pixels square (John, 13 November 2026). It must still be usable, stacked, on a phone, and readable with no script.
 
 ### Dependencies, services and secrets
 

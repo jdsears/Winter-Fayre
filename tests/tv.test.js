@@ -4,12 +4,15 @@
 //   so it is right whatever address the site is on.
 //   The TV page is whole without JavaScript: the code and every game's
 //   leaderboard are in its HTML, and it asks for itself again.
+//   It carries the appeal the stall is in aid of, with a code to scan to
+//   donate that leads to this site's own path for it.
 //   It carries the same strict browser rules as every other page.
 
 import { test, describe } from 'node:test'
 import assert from 'node:assert/strict'
 import { qrMatrix, qrSvg } from '../server/qr.js'
-import { shortAddress, tvBoardHtml, TV_REFRESH_SECONDS } from '../server/render/tv.js'
+import { shortAddress, tvBoardHtml, tvAppealHtml, TV_REFRESH_SECONDS } from '../server/render/tv.js'
+import { APPEAL, charityLine } from '../shared/appeal.js'
 import { cspFor } from '../server/security.js'
 import { GAMES } from '../shared/games.js'
 import { prizeLine } from '../shared/prizes.js'
@@ -82,13 +85,59 @@ describe('the TV page', () => {
       assert.match(html, /<p class="tva">arcade\.example<\/p>/)
       assert.match(html, /<span>Wymondham College PSA<br>Winter Fayre<\/span>/)
       // No picture is fetched for the code: it is in the page. The one
-      // picture is the PSA's crest, from this site.
+      // picture is the PSA's crest, from this site: by the code to play,
+      // and again at the head of the appeal.
       const pictures = html.match(/<img\b[^>]*>/g) || []
-      assert.equal(pictures.length, 1)
-      assert.match(pictures[0], /^<img class="crest" src="\/media\/badge\/[0-9a-f]{16}\.webp" width="96" height="96" alt="Wymondham College Parent Staff Association" decoding="async">$/)
+      assert.equal(pictures.length, 2)
+      for (const picture of pictures) assert.match(picture, /^<img class="crest" src="\/media\/badge\/[0-9a-f]{16}\.webp" width="96" height="96" alt="Wymondham College Parent Staff Association" decoding="async">$/)
+      assert.equal(new Set(pictures).size, 1)
     } finally {
       await app.close()
     }
+  })
+
+  test('carries the appeal the stall is in aid of, in the PSA\'s own words, with a code to scan to donate', async () => {
+    const app = await startApp({ origin: 'https://arcade.example' })
+    try {
+      const html = await (await app.get('/tv', { headers: PERSON })).text()
+      const scenes = html.match(/<section class="tvx" data-tv-appeal[\s\S]*?<\/section>/g) || []
+      assert.equal(scenes.length, 1)
+      const scene = scenes[0]
+      assert.equal(scene, tvAppealHtml('https://arcade.example'))
+      assert.ok(scene.includes(`<span>${APPEAL.name}</span>`))
+      assert.ok(scene.includes(`<h2 id="tvx-h">${APPEAL.headline[0]} <em>${APPEAL.headline[1]}</em></h2>`))
+      for (const part of [APPEAL.raising, APPEAL.funded]) {
+        assert.ok(scene.includes(`<p class="tvx-t">${part.title}</p>`), part.title)
+        for (const i of part.items) assert.ok(scene.includes(`<span>${i.what}</span></li>`), i.what)
+      }
+      assert.ok(scene.includes(`<p class="tvx-ch">${charityLine()}</p>`))
+      assert.match(scene, /<p class="tvx-s">Scan to <em>donate<\/em><\/p>/)
+      // The code leads to this site's own path for it, which counts the
+      // scan and sends the visitor on: the page carries no address of
+      // another site to follow.
+      assert.ok(scene.includes(qrSvg('https://arcade.example/donate/tv', { label: 'A QR code that opens the Sports Fund Appeal\'s page on JustGiving, to donate', ink: '#241524' })))
+      assert.ok(!/(?:href|src|action)="[^"]*justgiving/i.test(html))
+      // Where it leads is there to read. On a phone, where a code cannot
+      // be scanned, the site's own Donate button stands in its place.
+      assert.ok(scene.includes(`<p class="tvx-a">${APPEAL.shown}</p>`))
+      assert.deepEqual(scene.match(/<a\b[^>]*>/g), ['<a class="btn y tvx-b" href="/donate" target="_blank" rel="noopener noreferrer">'])
+      // It comes after the leaderboards, so with no script they are read first.
+      assert.ok(html.indexOf('data-tv-appeal') > html.lastIndexOf('data-tv-board='))
+    } finally {
+      await app.close()
+    }
+  })
+
+  test('the appeal\'s code follows the site\'s address too, and is a different code from the one to play', () => {
+    const play = qrSvg('https://winter.example/', { label: 'x' })
+    const scene = tvAppealHtml('https://winter.example')
+    assert.ok(scene.includes(qrSvg('https://winter.example/donate/tv', { label: 'A QR code that opens the Sports Fund Appeal\'s page on JustGiving, to donate', ink: '#241524' })))
+    assert.ok(!scene.includes(play.slice(play.indexOf('<path'))))
+    // Its ink is a deep plum, as dark against white as the code to play.
+    const m = qrMatrix('https://winter.example/donate/tv')
+    assert.ok(finderAt(m, 0, 0) && finderAt(m, 0, m.size - 7) && finderAt(m, m.size - 7, 0))
+    // A short address: few squares, so each is large on the screen.
+    assert.ok(m.size <= 33, `${m.size} squares a side`)
   })
 
   test('the address in the code follows the site\'s address, whatever it is', async () => {
