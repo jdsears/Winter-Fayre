@@ -330,9 +330,19 @@ const GAME_CSS = `.ku{margin:10px 0 0}
 // television the code is on the left and one leaderboard at a time is on
 // the right, sized by the screen so it reads from across a hall: at 1920
 // by 1080 the code is about 500 pixels square and a leaderboard row's
-// letters are 48 pixels high. The appeal (.tvx) is a card in the PSA's
+// letters are 45 pixels high. The appeal (.tvx) is a card in the PSA's
 // plum and gold: stacked on a phone with its Donate button, and on a
 // television the whole screen in its turn, with a code to scan.
+// The football's line on the keepy-uppies board (.tvf) is never cut
+// short: where its words are too long for one line (a winner with wide
+// letters or a score in the hundreds) they go on to a second, evenly,
+// and the board still fits with its ten rows.
+// The screen is exactly the television's height and never taller
+// (.js .tv is not let grow with what is in it, as other pages' main part
+// is), so the snow at its foot and the appeal's turn are always where
+// they belong. A leaderboard's rows are sized so that all ten fit under
+// a line of what its scores count that has run on to a second line, as
+// four of the seven do at 1920 wide: their letters are 44 pixels there.
 // Where the television draws 3D (.tvx.s3, set by client/story/screen.js)
 // the appeal's story is behind its words: the picture shows clear on
 // the left, between the headline at the top and one of the two lists at
@@ -387,7 +397,7 @@ const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display
 @media (min-width:1000px) and (orientation:landscape){
 .tv{grid-template-columns:38fr 62fr;gap:4vw;align-items:center;align-content:center;padding:3.4vh 4vw 9.4vh}
 .tv .snow{height:7.6vh}
-.js .tv{height:100vh;height:100dvh;min-height:0}
+.js .tv{flex:none;height:100vh;height:100dvh;min-height:0}
 .tvq{gap:1.6vh}
 .tvq .wm{font-size:min(1.6vw,2.9vh);gap:1.2vw}
 .tvq .crest{width:min(15vh,8.6vw)}
@@ -408,8 +418,8 @@ const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display
 .js .tvb h2{font-size:min(5vw,9vh)}
 .js .tvc{font-size:min(1.7vw,3vh);padding-bottom:1.2vh}
 .tvf{font-size:min(1.25vw,2.3vh);padding:.6vh 1vw;border-radius:1.4vh;margin-bottom:1vh}
-.js .tvf{font-size:min(1.8vw,3.2vh);padding:.8vh 1.2vw;margin-bottom:1.2vh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.js .tvl li{font-size:min(2.5vw,4.45vh);padding:.35vh 1vw;gap:1.4vw}
+.js .tvf{font-size:min(1.8vw,3.2vh);padding:.8vh 1.2vw;margin-bottom:1.2vh;text-wrap:balance}
+.js .tvl li{font-size:min(2.334vw,4.15vh);padding:.28vh 1vw;gap:1.4vw}
 .js .tvb.fb .tvl li{font-size:min(2.3vw,4.05vh);padding:.2vh 1vw}
 .js .tve{font-size:min(2.1vw,3.8vh)}
 .js .tvp{display:flex;justify-content:center;gap:1vw}
