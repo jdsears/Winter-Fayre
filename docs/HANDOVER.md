@@ -27,10 +27,12 @@ The repository is **jdsears/Winter-Fayre**. Work only in it. It was built from `
 16. **More of the Winter Fayre's colours and decorations in the scenes** (13 November 2026). John sent the fayre's poster and asked for more of its colours and decorations. The games' stadiums already had them (decision 4). The 3D story's field now has them too: a deep navy night in place of plum, the poster's teal and gold snowflakes and four-pointed stars hung among the trees, navy boards reading "Wymondham College PSA" and "Winter Fayre" beside the appeal's plum one, snow under the Christmas trees and lights on them, presents, and snowmen in Christmas hats. The equipment keeps its real colours.
 17. **The landing page opens on the 3D story, with playing and giving as its two points** (13 November 2026). John asked for a 3D animated story landing page made from the JustGiving page's words and picture, with games and giving as the focus. He chose for the 3D picture to open the page at the very top, and for visitors still to scroll through the story to reach the games, with no button that jumps to them.
 18. **A teaser film for the College's sports socials** (13 November 2026). John asked for a fun teaser for the arcade and the stall, and chose a tall film (9:16) with a jingle made for it.
+19. **Monthly giving stays in the appeal's words** (13 November 2026). John confirmed that the PSA's page on JustGiving offers a monthly gift, so "A single donation or a monthly contribution: both help." stands.
+20. **The football is at the head of the page** (13 November 2026). John asked for the hero to say that there is a FIFA approved football for the best keepy-uppies score of the day. It is a line of its own, "Win.", between "Play." and "Give.".
 
 ## What is built
 
-- **The arcade** at `/`, the site's landing page: the story's picture at the very top, the heading under it with what the page is for ("Play." and "Give."), the story of the appeal, then the games menu, a picture tile for each game with a Play button. This is where the QR code lands.
+- **The arcade** at `/`, the site's landing page: the story's picture at the very top, the heading under it with what the page is for ("Play." and "Give.") and, between them, the football ("Win.": the best keepy-uppies score on the leaderboard by 1:30pm wins a FIFA approved football; after 13:30, who has won it), the story of the appeal, then the games menu, a picture tile for each game with a Play button. This is where the QR code lands.
 - **Seven games**, each on a page of its own and played full screen:
   1. Penalties (`/penalties`): five kicks each, always all five, then sudden death if it is level.
   2. Keepy-uppies (`/keepy-uppies`).
@@ -75,9 +77,7 @@ The leaderboards and the numbers are kept in the service's memory. If a Railway 
 
 ## What is left
 
-Everything in the brief, and everything John has asked for since, is built and live. One point is open, for John:
-
-- **Monthly giving.** The appeal says "A single donation or a monthly contribution: both help." Those are John's words for what the PSA hopes for. If the PSA's page on JustGiving does not offer a monthly gift, that one line should change (`give.ways` in `shared/appeal.js`).
+Everything in the brief, and everything John has asked for since, is built and live. Nothing is open.
 
 Things that can be changed quickly if the day shows a need, each in one place:
 
