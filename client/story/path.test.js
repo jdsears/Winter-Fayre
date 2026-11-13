@@ -2,7 +2,8 @@
 // camera is for each, and how far through it a scroll is.
 
 import { describe, it, expect } from 'vitest'
-import { STOPS, PLACES, RAISING, GAP, THE_GAMES, viewOf, viewAt, progressAt, cheerAt, stopAt, captionFor } from './path.js'
+import { STOPS, PLACES, RAISING, GAP, THE_GAMES, viewOf, viewAt, progressAt, cheerAt, stopAt, captionFor, TV_SHOT, TV_VIEWS, TV_ASPECT, TV_TURNS_AT, tvViewAt, tvListAt, tvPlaceAt, tvShape } from './path.js'
+import { TV_MIDDLE } from './screen.js'
 import { APPEAL } from '../../shared/appeal.js'
 import { project } from '../shootout/camera.js'
 
@@ -223,5 +224,123 @@ describe('the words on the stage', () => {
     expect(captionFor('tables', APPEAL)).toEqual({ label: 'Already funded', amount: '£8,500', name: 'Table tennis tables' })
     expect(captionFor('goals', APPEAL)).toEqual({ label: 'Now raising for', amount: '', name: 'Football box goals' })
     expect(captionFor('something else', APPEAL)).toEqual({ label: '', amount: '', name: '' })
+  })
+})
+
+// The story on the stall's TV, where nothing is scrolled: one shot of
+// the camera each time the appeal has the screen.
+describe('the camera\'s shot on the stall\'s TV', () => {
+  // Where a point falls on a television, whose picture has its middle
+  // to the left of the screen's, between the headline and the list.
+  const onTv = (cam, p, w = 1920, h = 1080) => {
+    const at = project(cam, p, w, h)
+    return { x: at.x - (0.5 - TV_MIDDLE.x) * w, y: at.y - (0.5 - TV_MIDDLE.y) * h, depth: at.depth }
+  }
+  const far = (v) => Math.hypot(v.pos.x - v.look.x, v.pos.y - v.look.y, v.pos.z - v.look.z)
+  // The part of a 1920 by 1080 screen where the picture shows clear:
+  // left of the code, under the headline and above the list.
+  const clear = (at, low) => at.depth > 0 && at.x > 60 && at.x < 1150 && at.y > 300 && at.y < low
+
+  it('is told in steps, in the order of the turn, from its start to its end', () => {
+    expect(TV_SHOT[0][0]).toBe(0)
+    expect(TV_SHOT.at(-1)[0]).toBe(1)
+    for (let i = 1; i < TV_SHOT.length; i++) expect(TV_SHOT[i][0]).toBeGreaterThan(TV_SHOT[i - 1][0])
+    for (const [, name] of TV_SHOT) expect(Boolean(TV_VIEWS[name]) || STOPS.includes(name), name).toBe(true)
+  })
+
+  it('opens over what has been funded, comes down to the box goals and rests, and ends on the two things being raised for', () => {
+    expect(tvViewAt(0)).toEqual(TV_VIEWS.open)
+    for (const u of [0.5, 0.55, 0.6]) expect(tvViewAt(u)).toEqual(viewOf('goals', TV_ASPECT))
+    for (const u of [0.86, 0.95, 1]) expect(tvViewAt(u)).toEqual(viewOf('give', TV_ASPECT))
+    // Anything that is not a place in the turn is read as its start or its end.
+    expect(tvViewAt(NaN)).toEqual(tvViewAt(0))
+    expect(tvViewAt(-3)).toEqual(tvViewAt(0))
+    expect(tvViewAt(7)).toEqual(tvViewAt(1))
+  })
+
+  it('shows the three things already funded in the clear part of the screen while their list is up', () => {
+    for (const u of [0, 0.1, 0.2, 0.3]) {
+      const cam = tvViewAt(u)
+      for (const name of ['tables', 'water', 'posts']) {
+        const at = onTv(cam, { x: PLACES[name].x, y: 0.5, z: PLACES[name].z })
+        expect(clear(at, 580), `${name} at ${u}: ${Math.round(at.x)}, ${Math.round(at.y)}`).toBe(true)
+      }
+    }
+  })
+
+  it('and both things being raised for at its end, the box goals large on the way', () => {
+    const end = tvViewAt(1)
+    for (const name of RAISING) {
+      const at = onTv(end, { x: PLACES[name].x, y: 1, z: PLACES[name].z })
+      expect(clear(at, 660), `${name}: ${Math.round(at.x)}, ${Math.round(at.y)}`).toBe(true)
+    }
+    const goals = tvViewAt(0.55)
+    expect(clear(onTv(goals, { x: PLACES.goals.x, y: 1, z: 0 }), 660)).toBe(true)
+    expect(far(goals)).toBeLessThan(far(end))
+  })
+
+  it('keeps the camera above the field and on the near side of the row, and never jumps', () => {
+    let was = tvViewAt(0)
+    for (let u = 0; u <= 1.0001; u += 0.002) {
+      const v = tvViewAt(u)
+      expect(v.pos.y).toBeGreaterThan(1.5)
+      expect(v.pos.z).toBeGreaterThan(8)
+      expect(v.fov).toBeGreaterThan(30)
+      expect(v.fov).toBeLessThan(60)
+      const moved = Math.hypot(v.pos.x - was.pos.x, v.pos.y - was.pos.y, v.pos.z - was.pos.z)
+      expect(moved, `at ${u.toFixed(3)}`).toBeLessThan(1.2)
+      was = v
+    }
+  })
+
+  it('drifts along the row from the first moment, so the picture is never still', () => {
+    const a = tvViewAt(0)
+    const b = tvViewAt(0.1)
+    const c = tvViewAt(0.2)
+    expect(b.pos.x).toBeGreaterThan(a.pos.x)
+    // At one speed: as far in the second tenth of the turn as in the first.
+    expect(c.pos.x - b.pos.x).toBeCloseTo(b.pos.x - a.pos.x, 6)
+  })
+
+  it('shows the list of what has been funded first, and what is being raised for from when the camera sets off for the goals', () => {
+    expect(tvListAt(0)).toBe('funded')
+    expect(tvListAt(TV_TURNS_AT - 0.001)).toBe('funded')
+    expect(tvListAt(TV_TURNS_AT)).toBe('raising')
+    expect(tvListAt(1)).toBe('raising')
+    // The list turns while the camera is on its way down to the goals.
+    const drift = TV_SHOT.find(s => s[1] === 'drift')[0]
+    const goals = TV_SHOT.find(s => s[1] === 'goals')[0]
+    expect(TV_TURNS_AT).toBeGreaterThan(drift)
+    expect(TV_TURNS_AT).toBeLessThan(goals)
+    // What is being raised for has the screen for most of the turn.
+    expect(1 - TV_TURNS_AT).toBeGreaterThan(0.6)
+  })
+
+  it('the gold is quiet over what has been funded and at its liveliest once the list has turned', () => {
+    for (let u = 0; u < TV_TURNS_AT; u += 0.02) expect(cheerAt(tvPlaceAt(u))).toBe(0)
+    for (let u = 0.5; u <= 1; u += 0.05) expect(cheerAt(tvPlaceAt(u))).toBe(1)
+    let was = 0
+    for (let u = TV_TURNS_AT; u <= 0.5; u += 0.005) {
+      expect(cheerAt(tvPlaceAt(u))).toBeGreaterThanOrEqual(was)
+      was = cheerAt(tvPlaceAt(u))
+    }
+  })
+
+  it('frames for a television as it is, and stands further back on a squarer screen', () => {
+    expect(tvShape(16 / 9)).toBe(TV_ASPECT)
+    expect(tvShape(1920 / 1080)).toBe(1)
+    expect(tvShape(4 / 3)).toBeCloseTo(0.75, 9)
+    expect(tvShape(0.2)).toBe(0.6)
+    expect(tvShape(9)).toBe(1.4)
+    for (const odd of [NaN, 0, -1, undefined]) expect(tvShape(odd)).toBe(1)
+    for (const u of [0, 0.2, 0.55, 1]) expect(far(tvViewAt(u, tvShape(4 / 3))), `at ${u}`).toBeGreaterThan(far(tvViewAt(u, tvShape(16 / 9))))
+    // On a squarer screen the things already funded are still in the picture's clear part.
+    const cam = tvViewAt(0.15, tvShape(4 / 3))
+    for (const name of ['tables', 'water', 'posts']) {
+      const at = project(cam, { x: PLACES[name].x, y: 0.5, z: 0 }, 1024, 768)
+      const x = at.x - (0.5 - TV_MIDDLE.x) * 1024
+      expect(x, name).toBeGreaterThan(20)
+      expect(x, name).toBeLessThan(620)
+    }
   })
 })

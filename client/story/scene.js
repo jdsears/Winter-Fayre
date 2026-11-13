@@ -67,7 +67,7 @@ function seeded(seed) {
 // boards  the words on all the boards, turn and turn about, as round the
 //         games' pitch; the appeal's own board is plum, the rest navy
 // college the name up the post protectors, as on the College's own
-export function createStoryScene({ canvas, win = globalThis.window, words = 'Sports Fund Appeal', boards = [], college = 'Wymondham College' }) {
+export function createStoryScene({ canvas, win = globalThis.window, words = 'Sports Fund Appeal', boards = [], college = 'Wymondham College', least = 1 }) {
   const doc = win.document
   const dpr = Math.min(2, win.devicePixelRatio || 1)
   const renderer = new WebGLRenderer({ canvas, antialias: dpr < 2, powerPreference: 'high-performance' })
@@ -824,19 +824,33 @@ export function createStoryScene({ canvas, win = globalThis.window, words = 'Spo
   }
 
   let ratio = dpr
+  // The camera looks at the middle of the picture, or to one side of it.
+  let middle = { x: 0.5, y: 0.5 }
+  function aim() {
+    if (middle.x === 0.5 && middle.y === 0.5) camera.clearViewOffset()
+    else camera.setViewOffset(width, height, (0.5 - middle.x) * width, (0.5 - middle.y) * height, width, height)
+    camera.updateProjectionMatrix()
+  }
   return {
     // How many of the screen's own pixels are drawn to each of the page's:
     // two on most phones. Fewer is quicker, and a little softer.
     get ratio() { return ratio },
     setRatio(next) {
-      ratio = Math.max(1, Math.min(dpr, next))
+      ratio = Math.max(Math.min(least, dpr), Math.min(dpr, next))
       renderer.setPixelRatio(ratio)
       renderer.setSize(width, height, false)
     },
+    // Where on the picture its middle falls, as parts of its width and
+    // height from the top left: the middle itself unless it is said. The
+    // stall's TV puts it to one side, clear of the words over it.
+    centre(x = 0.5, y = 0.5) {
+      middle = { x, y }
+      aim()
+    },
     // Draws the story at t (0 at its first stop, as path.js counts) and
-    // at now seconds on the clock.
-    render(t, now) {
-      const view = viewAt(t, width / height)
+    // at now seconds on the clock, from where the story's camera is at t
+    // unless another view is given: { pos, look, fov }.
+    render(t, now, view = viewAt(t, width / height)) {
       // The camera is never quite still: it breathes a little.
       camera.position.set(view.pos.x + Math.sin(now * 0.27) * 0.3, view.pos.y + Math.sin(now * 0.33) * 0.12, view.pos.z)
       if (Math.abs(camera.fov - view.fov) > 0.01) {
@@ -852,7 +866,7 @@ export function createStoryScene({ canvas, win = globalThis.window, words = 'Spo
       height = Math.max(1, h)
       renderer.setSize(width, height, false)
       camera.aspect = width / height
-      camera.updateProjectionMatrix()
+      aim()
     },
     dispose() {
       for (const x of kept) x.dispose?.()
