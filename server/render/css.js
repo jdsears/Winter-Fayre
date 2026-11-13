@@ -229,4 +229,65 @@ const GAME_CSS = `.ku{margin:10px 0 0}
 .ku-said{margin:8px 0 12px;max-width:none;color:#fff;font-weight:700}
 .ku .btn{border:0}`
 
-export const SITE_CSS = [BASE_CSS, TILES_CSS, STAGE_CSS, HEADS_CSS, GAME_CSS, SHOOTOUT_CSS].join('\n')
+// The stall's TV screen (server/render/tv.js). Stacked on a phone; on a
+// television the code is on the left and one leaderboard at a time is on
+// the right, sized by the screen so it reads from across a hall: at 1920
+// by 1080 the code is about 500 pixels square and a leaderboard row's
+// letters are 48 pixels high.
+const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);gap:28px;align-content:start;padding:28px max(22px,env(safe-area-inset-right)) 112px max(22px,env(safe-area-inset-left));background:linear-gradient(175deg,var(--primary-light) 0%,var(--primary) 40%,var(--primary-deep) 100%);overflow:hidden}
+.tv .snow{position:absolute;left:0;right:0;bottom:0;height:84px;margin:0;pointer-events:none}
+.tv p{margin:0;max-width:none}
+.tvq{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;min-width:0}
+.tvh{font-family:var(--display);font-weight:800;text-transform:uppercase;line-height:.9;font-size:clamp(56px,17vw,96px)}
+.tvh em{font-style:normal;color:var(--accent)}
+.tvcode{width:min(100%,420px);padding:14px;border-radius:26px;background:#fff;box-shadow:0 18px 50px #0006}
+.tvcode svg{display:block;width:100%;height:auto}
+.tva{font-family:var(--display);font-weight:700;font-size:clamp(20px,5.4vw,30px);line-height:1.15;letter-spacing:.02em;overflow-wrap:anywhere;color:var(--on-primary-soft)}
+.tvr{display:flex;flex-direction:column;gap:14px;min-width:0}
+.tvd{font-family:var(--display);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:18px;line-height:1.3;color:var(--ice)}
+.tvd b{color:#fff;font-weight:700}
+.tvbs{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.tvb{min-width:0;background:#0e1729cc;border:2px solid #ffffff2e;border-radius:22px;padding:18px 18px 14px}
+.tvb h2{font-size:clamp(38px,10vw,56px);margin:0 0 2px;color:var(--accent)}
+.tvc{color:var(--on-primary-muted);font-size:17px;padding-bottom:10px}
+.tvl{list-style:none;margin:0;padding:0}
+.tvl li{display:flex;align-items:baseline;gap:14px;padding:5px 8px;border-radius:10px;font-family:var(--display);font-weight:800;font-size:30px;line-height:1.15}
+.tvl li:nth-child(odd){background:#ffffff0f}
+.tvl .n{width:1.5em;text-align:right;color:var(--ice)}
+.tvl li:nth-child(-n+3) .n{color:var(--accent)}
+.tvl .i{letter-spacing:.14em}
+.tvl .s{margin-left:auto;font-variant-numeric:tabular-nums}
+.tve{font-size:19px;color:var(--on-primary-soft)}
+.tvp{display:none}
+@media (min-width:1000px) and (orientation:landscape){
+.tv{grid-template-columns:38fr 62fr;gap:4vw;align-items:center;align-content:center;padding:3.4vh 4vw 9.4vh}
+.tv .snow{height:7.6vh}
+.js .tv{height:100vh;height:100dvh;min-height:0}
+.tvq{gap:1.6vh}
+.tvq .wm{font-size:min(1.5vw,2.6vh)}
+.tvh{font-size:min(7.4vw,13.5vh)}
+.tvcode{width:min(100%,50vh,30vw);padding:1.6vh;border-radius:3vh}
+.tva{font-size:min(2.1vw,3.8vh)}
+.tvr{gap:1.6vh}
+.tvd{font-size:min(1.5vw,2.7vh)}
+.tvbs{grid-template-columns:repeat(2,minmax(0,1fr));gap:2vh 1.4vw}
+.tvb{padding:2.2vh 2vw 1.8vh;border-radius:3vh}
+.tvb h2{font-size:min(3vw,5.4vh)}
+.tvc{font-size:min(1.2vw,2.2vh);padding-bottom:1vh}
+.tvl li{font-size:min(1.7vw,3vh);padding:.2vh .8vw;gap:1vw}
+.tve{font-size:min(1.4vw,2.6vh)}
+.js .tvbs{grid-template-columns:minmax(0,1fr)}
+.js .tvb{display:none}
+.js .tvb.on{display:block;animation:tv-in .6s ease both}
+.js .tvb h2{font-size:min(5vw,9vh)}
+.js .tvc{font-size:min(1.7vw,3vh);padding-bottom:1.2vh}
+.js .tvl li{font-size:min(2.5vw,4.45vh);padding:.35vh 1vw;gap:1.4vw}
+.js .tve{font-size:min(2.1vw,3.8vh)}
+.js .tvp{display:flex;justify-content:center;gap:1vw}
+.tvp i{width:1.1vw;height:1.1vw;border-radius:50%;background:#ffffff40}
+.tvp i.on{background:var(--accent)}
+}
+@keyframes tv-in{from{opacity:0;transform:translateY(1.2vh)}}
+@media (prefers-reduced-motion:reduce){.js .tvb.on{animation:none}}`
+
+export const SITE_CSS = [BASE_CSS, TILES_CSS, STAGE_CSS, HEADS_CSS, GAME_CSS, SHOOTOUT_CSS, TV_CSS].join('\n')

@@ -22,6 +22,8 @@ The repository is **jdsears/Winter-Fayre**. Work only in it. It was built from `
   3. Free kick challenge (`/free-kicks`): ten kicks.
   4. Head to head (`/head-to-head`): one against one for sixty seconds, with the phone held sideways.
 - **A leaderboard for the day for every game**: three letters and a score, the top ten shown and the top fifty one tap away. Penalties counts goals and saves; keepy-uppies counts touches; free kicks counts goals; head to head counts wins in a row.
+- **The stall's TV screen** at `/tv`, made for a 1920 by 1080 television: a large QR code and the words "Scan to play", with the site's address under it to type, and beside it the day's leaderboards. Each game's leaderboard has the screen for nine seconds in turn, and they are asked for again every fifteen seconds. If the wifi drops, what is on the screen stays. If the site is deployed again, the screen reloads itself. It needs no touch or keyboard. On a phone it stacks, and with no script it shows every leaderboard and asks for itself again each minute.
+- **The QR code alone** at `/qr.svg`, to print for the stall. It is drawn by the server from the site's own address, so it is right whatever address the site is on.
 - **The privacy page** at `/privacy`.
 - **The numbers** at `/numbers`, behind `NUMBERS_PASSWORD`: anonymous daily totals of page views and games started and finished.
 
@@ -34,16 +36,16 @@ The leaderboards and the numbers are kept in the service's memory. If a Railway 
 - **Railway**, a new project from this repository. `railway.toml` installs with `npm ci`, builds with `npm run build`, starts with `npm start` and checks `/health`.
 - **Variables:** `NODE_ENV=production`, `NUMBERS_PASSWORD` (John chooses it and sets it himself) and `SITE_ORIGIN` (the site's full address, for the QR code). If `SITE_ORIGIN` is left out, the address Railway gave the service is used.
 - **Optional:** a volume, mounted anywhere (for example `/data`). The service finds it by itself.
+- **On the day:** open `/tv` on the television's browser and leave it. Print `/qr.svg` for the stall table if a paper copy is wanted.
 
 ## What is left
 
 In the order John asked for, each shipped before the next is started:
 
-1. The `/tv` page and the QR code.
-2. Prize messages on each finish panel, and a way to take a leaderboard entry off from the numbers page.
-3. Rugby conversion.
-4. Netball shot.
-5. Cricket smash.
+1. Prize messages on each finish panel, and a way to take a leaderboard entry off from the numbers page.
+2. Rugby conversion.
+3. Netball shot.
+4. Cricket smash.
 
 Also waiting on John: the crest file, if he wants it on the big sign and the arcade page.
 

@@ -128,7 +128,7 @@ describe('the repository', () => {
   }
 
   test('holds no photo or film of anyone: no picture, film or sound file at all', () => {
-    const media = files().map(f => path.relative(ROOT, f)).filter(f => /\.(jpe?g|png|gif|webp|avif|heic|bmp|tiff?|mp4|mov|webm|m4v|mp3|wav|ogg|m4a)$/i.test(f))
+    const media = files().map(f => path.relative(ROOT, f)).filter(f => /\.(jpe?g|png|gif|webp|avif|heic|bmp|tiff?|svg|mp4|mov|webm|m4v|mp3|wav|ogg|m4a)$/i.test(f))
     assert.deepEqual(media, [])
   })
 

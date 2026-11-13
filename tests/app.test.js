@@ -26,6 +26,7 @@ describe('the pages', () => {
       assert.match(html, /^<!DOCTYPE html>\n<html lang="en-GB">/)
       assert.match(html, /<title>[^<]*Winter Fayre Sports Arcade<\/title>/, p)
       assert.equal((html.match(/<h1[ >]/g) || []).length, 1, `${p} has one h1`)
+      assert.ok(html.includes('<link rel="icon" type="image/svg+xml" href="/icon.svg">'), p)
     }
   })
 
@@ -86,7 +87,7 @@ describe('what every answer carries', () => {
       assert.match(csp, /style-src-attr 'none'/)
       assert.match(csp, /form-action 'none'/)
       assert.match(csp, /frame-ancestors 'none'/)
-      assert.ok(!/unsafe-inline|unsafe-eval|\*|https?:/.test(csp), p)
+      assert.ok(!/unsafe-inline|unsafe-eval|\*|https?:|data:/.test(csp), p)
       // One style block, no inline script, no style attribute, no handler.
       assert.equal((html.match(/<style\b/g) || []).length, 1, p)
       assert.ok(!/\sstyle\s*=/.test(html.replace(/<style[\s\S]*?<\/style>/, '')), `${p} has a style attribute`)

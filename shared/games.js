@@ -33,7 +33,7 @@ export const GAMES = [
     title: 'Keepy-uppies',
     text: 'Tap the ball to keep it off the snow. How many can you do?',
     play: 'Play keepy-uppies',
-    scores: 'keepy-uppies',
+    scores: 'keepy-uppies in a row',
     board: { maxScore: 1000, perSecond: 2.5, slack: 2 },
   },
   {

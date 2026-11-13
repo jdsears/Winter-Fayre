@@ -15,7 +15,7 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 export const quiet = { log() {}, warn() {}, error() {} }
 
 // Every page a visitor can ask for.
-export const PAGES = ['/', ...GAMES.map(g => g.path), '/privacy']
+export const PAGES = ['/', ...GAMES.map(g => g.path), '/tv', '/privacy']
 
 // Saturday 14 November 2026, ten in the morning: the fayre opens.
 export const FAYRE = Date.UTC(2026, 10, 14, 10, 0, 0)
