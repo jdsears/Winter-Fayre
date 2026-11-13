@@ -24,6 +24,14 @@
 // pixels square, and it comes round after three leaderboards and gives
 // the screen back.
 //
+// The appeal's 3D story on the arcade page is scrolled through on a
+// phone: its stage is pinned to the top of the screen, takes no more
+// than half of it, names each thing as its words are read and never
+// lies over the Donate button. Where 3D will not run, with reduced
+// motion, with no script, with a phone on its side and for a visitor
+// sent straight to the games menu there is no stage and the story's
+// words are as they always were.
+//
 // The numbers page, behind its password, is checked on a phone too: it
 // is where an entry is taken off a leaderboard at the stall.
 //
@@ -38,6 +46,7 @@ import net from 'node:net'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { GAMES } from '../shared/games.js'
+import { APPEAL } from '../shared/appeal.js'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
@@ -268,6 +277,7 @@ async function main() {
     await flatGames(browsers.no3d, base)
     for (const [w, h] of SIDEWAYS) await sideways(browsers.normal, base, w, h)
     await widerScreens(browsers.normal, base)
+    await story(browsers, base)
     await television(browsers.normal, base)
     await numbersPage(browsers.normal, base)
   } finally {
@@ -280,7 +290,7 @@ async function main() {
     for (const p of problems) console.error(`  ${p}`)
     process.exit(1)
   }
-  console.log(`npm run check: ${pagesChecked} page views at ${Object.keys(WIDTHS).join(', ')} wide, with the 3D on and off, reduced motion and no JavaScript, every game opened, head to head on its side at ${SIDEWAYS.map(s => s.join(' by ')).join(' and ')}, and the TV screen at 1920 by 1080: no problems. Screenshots in ${shots}`)
+  console.log(`npm run check: ${pagesChecked} page views at ${Object.keys(WIDTHS).join(', ')} wide, with the 3D on and off, reduced motion and no JavaScript, every game opened, head to head on its side at ${SIDEWAYS.map(s => s.join(' by ')).join(' and ')}, the appeal's 3D story scrolled through, and the TV screen at 1920 by 1080: no problems. Screenshots in ${shots}`)
 }
 
 // Each game opened at a phone's width: its stage fills the screen, its
@@ -524,6 +534,120 @@ async function widerScreens(browser, base) {
     const m = await page.evaluate(measure)
     if (m.scrollWidth > m.vw + 1) problem(where, 'the page scrolls sideways')
     if (width === 1280) await page.screenshot({ path: path.join(shots, 'arcade-1280.png'), fullPage: true })
+    await page.close()
+    await context.close()
+  }
+}
+
+// The appeal's 3D story on the arcade page, scrolled through on a phone
+// (client/story). The words of each stop are brought to where they are
+// read, under the stage, and the stage is measured there.
+async function story(browsers, base) {
+  // What the stage should say at each stop: the appeal's own words.
+  const names = { why: APPEAL.why.title, give: APPEAL.give.title }
+  for (const i of [...APPEAL.funded.items, ...APPEAL.raising.items]) names[i.key] = i.what
+  // Brings an element's middle to where the words are read, and measures the stage there.
+  const bring = (selector) => {
+    const el = document.querySelector(selector)
+    const stage = document.querySelector('.st-stage')
+    const off = () => {
+      const s = stage.getBoundingClientRect()
+      const under = Math.max(0, Math.min(innerHeight, s.bottom))
+      const r = el.getBoundingClientRect()
+      return (r.top + r.bottom) / 2 - (under + (innerHeight - under) * 0.42)
+    }
+    for (let i = 0; i < 6; i++) scrollBy({ top: off(), behavior: 'instant' })
+    const s = stage.getBoundingClientRect()
+    const r = el.getBoundingClientRect()
+    const mid = { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2 }
+    const hit = document.elementFromPoint(mid.x, mid.y)
+    return {
+      top: Math.round(s.top),
+      height: Math.round(s.height),
+      across: s.left <= 0.5 && s.right >= innerWidth - 0.5,
+      room: Math.round(innerHeight - s.bottom),
+      under: Math.round(r.top - s.bottom),
+      onScreen: r.bottom <= innerHeight,
+      hit: Boolean(hit && (hit === el || el.contains(hit))),
+      vh: innerHeight,
+      sideways: document.documentElement.scrollWidth > innerWidth + 1,
+    }
+  }
+
+  for (const [w, h] of Object.entries(WIDTHS)) {
+    const width = Number(w)
+    const context = await browsers.normal.newContext({ viewport: { width, height: h }, deviceScaleFactor: 1, isMobile: true, hasTouch: true })
+    const where = `/ at ${width} (the 3D story)`
+    const page = await openPage(context, base, '/', where)
+    const draws = await page.evaluate(() => { try { const c = document.createElement('canvas'); return Boolean(c.getContext('webgl2') || c.getContext('webgl')) } catch { return false } })
+    if (!draws) {
+      // A machine whose browser draws no 3D shows the story as words, which is checked below.
+      console.log(`  ${where}: this browser draws no 3D, so the stage was not seen`)
+      await page.close()
+      await context.close()
+      continue
+    }
+    try {
+      await page.waitForSelector('.st-stage.on', { timeout: 45000 })
+    } catch {
+      problem(where, 'the 3D story did not start')
+      await page.close()
+      await context.close()
+      continue
+    }
+    const stops = await page.evaluate(() => [...document.querySelectorAll('[data-stop]')].map(e => e.dataset.stop))
+    for (const stop of stops) {
+      const m = await page.evaluate(bring, `[data-stop="${stop}"]`)
+      // The first words are read as the stage comes up the screen; from then on it is pinned.
+      if (stop !== stops[0] && m.top !== 0) problem(where, `at "${stop}" the stage is ${m.top}px from the top of the screen, not pinned to it`)
+      if (!m.across) problem(where, `at "${stop}" the stage does not reach across the screen`)
+      if (m.height > m.vh * 0.5) problem(where, `the stage is ${m.height}px tall, more than half the screen`)
+      if (m.height < 220) problem(where, `the stage is only ${m.height}px tall`)
+      if (m.room < 320) problem(where, `at "${stop}" only ${m.room}px is left under the stage for the words`)
+      if (m.sideways) problem(where, `at "${stop}" the page scrolls sideways`)
+      try {
+        await page.waitForFunction((want) => document.querySelector('.st-cap .n')?.textContent === want, names[stop], { timeout: 30000 })
+      } catch {
+        const got = await page.evaluate(() => document.querySelector('.st-cap')?.textContent)
+        problem(where, `as "${stop}" is read the stage says "${got}", not "${names[stop]}"`)
+      }
+      if (width === 375 && ['tables', 'posts', 'goals', 'give'].includes(stop)) {
+        await page.waitForTimeout(1500)
+        await page.screenshot({ path: path.join(shots, `story-375-${stop}.png`) })
+      }
+    }
+    // The Donate button is under the stage, whole, and can be tapped.
+    const give = await page.evaluate(bring, '.beat.give a.btn')
+    if (give.under < 0 || !give.onScreen) problem(where, 'the Donate button is not whole on the screen under the stage')
+    if (!give.hit) problem(where, 'the Donate button is covered and cannot be tapped')
+    // And the way on to the games.
+    const on = await page.evaluate(bring, '.st-next a')
+    if (on.under < 0 || !on.hit) problem(where, 'the button on to the games is covered by the stage')
+    await page.close()
+    await context.close()
+  }
+
+  // Where there is no stage, the story is its words, as it always was.
+  const plain = [
+    ['3D off', browsers.no3d, {}, '/'],
+    ['reduced motion', browsers.normal, { reducedMotion: 'reduce' }, '/'],
+    ['no JavaScript', browsers.normal, { javaScriptEnabled: false }, '/'],
+    ['a phone on its side', browsers.normal, { viewport: { width: 740, height: 360 } }, '/'],
+    // A visitor sent back to the games menu from a game has scrolled through the story already.
+    ['opened at the games menu', browsers.normal, {}, '/#games'],
+  ]
+  for (const [mode, browser, extra, p] of plain) {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, ...extra })
+    const where = `${p} (${mode}, the story)`
+    const page = await openPage(context, base, p, where)
+    await page.waitForTimeout(1500)
+    const m = await page.evaluate(() => ({
+      stage: Boolean(document.querySelector('.st-stage')),
+      marked: document.querySelector('[data-story]').classList.contains('s3d'),
+      parts: [...document.querySelectorAll('.beat')].filter(b => b.getBoundingClientRect().height > 60).length,
+    }))
+    if (m.stage || m.marked) problem(where, 'the 3D stage is on the page')
+    if (m.parts !== 4) problem(where, `${m.parts} of the story's four parts can be read`)
     await page.close()
     await context.close()
   }

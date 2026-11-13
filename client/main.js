@@ -19,8 +19,9 @@
 //                  the stadium flat, so there is no second version on
 //                  the page
 //
-// and on the stall's TV screen, the leaderboards taking turns and
-// refreshing themselves (./tv.js).
+// on the arcade page, the appeal's story in 3D as it is scrolled through
+// (./story), and on the stall's TV screen, the leaderboards taking turns
+// and refreshing themselves (./tv.js).
 //
 // No analytics, advertising or tracking of any kind. Built by Vite
 // (vite.config.js) into dist/assets.
@@ -118,12 +119,20 @@ function setupStageGames() {
   if (cricket) stageGame(cricket, () => import('./cricket/play3d.js').then(m => m.playCricket3D(cricket)))
 }
 
+// The appeal's story on the arcade page: a 3D stage pinned above its
+// words while they are scrolled through, where a phone can draw one.
+function setupStory() {
+  const story = document.querySelector('[data-story]')
+  if (story) import('./story/index.js').then(m => m.startStory(story), () => {})
+}
+
 // The stall's TV screen.
 function setupTv() {
   const tv = document.querySelector('[data-tv]')
   if (tv) import('./tv.js').then(m => m.startTv(tv), () => {})
 }
 
+setupStory()
 setupMine()
 setupPenalties()
 setupGames()

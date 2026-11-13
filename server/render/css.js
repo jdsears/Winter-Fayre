@@ -97,7 +97,10 @@ footer .fl{display:flex;flex-wrap:wrap;gap:0 22px}
 
 // The Sports Fund Appeal on the arcade page (render/appeal.js): the PSA's
 // own plum and gold, a part of the story to a card, one column on a
-// phone and two from 900. Every line is 16 pixels or more.
+// phone and two from 900. Every line is 16 pixels or more. Where the
+// page's script can draw the story in 3D (client/story) it adds a stage
+// (.st-stage) and marks the section .s3d: the stage is pinned to the top
+// of the screen and the cards scroll by beneath it, in one column.
 const APPEAL_CSS = `.story{position:relative;background:linear-gradient(178deg,#2f1a2c 0%,#5c3351 22%,#4b2a43 68%,#241524 100%);color:#fff;padding:44px 0 40px;overflow:hidden}
 .story .wrap{position:relative;z-index:1}
 .st-eye{display:flex;align-items:center;justify-content:center;gap:14px;margin:0;font-family:var(--display);font-weight:700;letter-spacing:.3em;font-size:16px;text-transform:uppercase;color:var(--accent);text-align:center}
@@ -130,7 +133,21 @@ const APPEAL_CSS = `.story{position:relative;background:linear-gradient(178deg,#
 .gs-appeal a{display:flex;align-items:center;justify-content:center;min-height:44px;width:max-content;max-width:100%;margin:0 auto;padding:0 12px;color:var(--accent);font-weight:700}
 .appeal-line{margin:18px 0 0;font-size:16px;line-height:1.5;color:var(--on-primary-soft)}
 .appeal-line a{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);font-weight:700}
-@media (min-width:900px){.beats{max-width:1040px;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}.st-lede{font-size:21px}}`
+.st-stage{display:none}
+.story.s3d{overflow:visible}
+.s3d .st-stage{display:block;position:sticky;top:0;z-index:3;height:44vh;height:44svh;min-height:230px;max-height:440px;margin:26px 0 20px;background:#24152a;overflow:hidden;box-shadow:0 16px 28px #150b18e6}
+.s3d .st-stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(#150b1800,#150b18d9);pointer-events:none}
+.st-canvas{display:block;width:100%;height:100%}
+.st-cap{position:absolute;z-index:1;left:max(14px,env(safe-area-inset-left));right:max(14px,env(safe-area-inset-right));bottom:12px;margin:0;max-width:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:26px;line-height:1.05;color:#fff;text-shadow:0 2px 10px #000c}
+.st-cap .k{flex-basis:100%;font-weight:700;font-size:16px;line-height:1.3;letter-spacing:.18em;color:var(--accent)}
+.st-cap .am{color:var(--accent)}
+.st-cap .k:empty,.st-cap .am:empty{display:none}
+.s3d .beats{margin-top:0}
+@media (max-height:480px){.s3d .st-stage{position:relative;height:200px;min-height:0}}
+@media (min-width:900px){.beats{max-width:1040px;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}.st-lede{font-size:21px}
+.s3d .beats{max-width:560px;grid-template-columns:minmax(0,1fr)}
+.s3d .st-stage{top:12px;max-width:1040px;margin-left:auto;margin-right:auto;border-radius:22px}
+.st-cap{font-size:32px;left:22px;right:22px;bottom:18px}}`
 
 // The arcade's tiles: one column on a phone, two from 560 and three from 900.
 const TILES_CSS = `.gts{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:18px}

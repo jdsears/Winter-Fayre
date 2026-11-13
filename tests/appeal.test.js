@@ -1,7 +1,8 @@
 // The Sports Fund Appeal (shared/appeal.js, server/render/appeal.js): what
 // the stall and its games are in aid of.
 //
-//   The arcade tells the appeal's story before the games menu.
+//   The arcade tells the appeal's story before the games menu, and marks
+//   the parts the 3D story stops at (client/story).
 //   Donate goes to the PSA's page on JustGiving by this site's own
 //   /donate, which counts the tap and nothing else.
 //   No page carries an address of another site, and no money is taken here.
@@ -74,6 +75,19 @@ describe('the appeal on the arcade', () => {
       'Thank you for supporting Wymondham College sport.',
       'Wymondham College Parent Staff Association. Registered charity 273057.',
     ]) assert.ok(said.includes(part), part)
+  })
+
+  test('marks each part the 3D story stops at, in the order the camera visits them, and draws no stage itself', () => {
+    const stops = [...html.matchAll(/data-stop="([a-z]+)"/g)].map(m => m[1])
+    assert.deepEqual(stops, ['why', ...APPEAL.funded.items.map(i => i.key), ...APPEAL.raising.items.map(i => i.key), 'give'])
+    assert.deepEqual(stops, ['why', 'tables', 'water', 'posts', 'goals', 'covers', 'give'])
+    assert.equal((html.match(/data-story-body/g) || []).length, 1)
+    assert.match(html, /<section id="appeal" class="story" aria-labelledby="appeal-h" data-story>/)
+    // The stage is the page script's to add, where a phone can draw 3D:
+    // with no script the story is its words alone, and nothing is empty.
+    const page = html.replace(/<style[\s\S]*?<\/style>/g, '')
+    assert.ok(!page.includes('st-stage'))
+    assert.ok(!page.includes('<canvas'))
   })
 
   test('has one way to give: a Donate button to this site\'s own /donate, opened beside the arcade and saying nothing of where it came from', () => {
