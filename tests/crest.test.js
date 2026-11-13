@@ -27,7 +27,7 @@ describe('the crest', () => {
     assert.match(CREST.path, /^\/media\/badge\/[0-9a-f]{16}\.webp$/)
     assert.equal(CREST.alt, 'Wymondham College Parent Staff Association')
     assert.equal(CREST_ALT, CREST.alt)
-    assert.equal(CREST.size, 256)
+    assert.equal(CREST.size, 512)
   })
 
   test('is served as a WebP picture a browser may keep for good, with the site\'s usual headers', async () => {
@@ -66,7 +66,7 @@ describe('the crest', () => {
   })
 
   test('is on the arcade and the stall\'s TV, with its size and what it shows, and on no other page', async () => {
-    for (const [p, shown] of [['/', 72], ['/tv', 96]]) {
+    for (const [p, shown] of [['/', 96], ['/tv', 96]]) {
       const html = await (await app.get(p, { headers: PERSON })).text()
       assert.ok(html.includes(`<img class="crest" src="${CREST.path}" width="${shown}" height="${shown}" alt="Wymondham College Parent Staff Association" decoding="async">`), p)
       // It is at the top of the page, so it is not held back.

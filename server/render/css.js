@@ -285,10 +285,10 @@ const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display
 .tv .snow{height:7.6vh}
 .js .tv{height:100vh;height:100dvh;min-height:0}
 .tvq{gap:1.6vh}
-.tvq .wm{font-size:min(1.5vw,2.6vh);gap:1.2vw}
-.tvq .crest{width:min(8.6vh,5vw)}
-.tvh{font-size:min(6.8vw,12.4vh)}
-.tvcode{width:min(100%,45.5vh,30vw);padding:1.6vh;border-radius:3vh}
+.tvq .wm{font-size:min(1.6vw,2.9vh);gap:1.2vw}
+.tvq .crest{width:min(15vh,8.6vw)}
+.tvh{font-size:min(5.2vw,9.6vh);white-space:nowrap}
+.tvcode{width:min(100%,50vh,30vw);padding:1.6vh;border-radius:3vh}
 .tva{font-size:min(2.1vw,3.8vh)}
 .tvr{gap:1.6vh}
 .tvd{font-size:min(1.5vw,2.7vh)}

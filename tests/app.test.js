@@ -44,7 +44,7 @@ describe('the pages', () => {
     // site, with its size given so the page does not jump as it loads.
     const pictures = html.match(/<img\b[^>]*>/g) || []
     assert.equal(pictures.length, 1)
-    assert.match(pictures[0], /^<img class="crest" src="\/media\/badge\/[0-9a-f]{16}\.webp" width="72" height="72" alt="Wymondham College Parent Staff Association" decoding="async">$/)
+    assert.match(pictures[0], /^<img class="crest" src="\/media\/badge\/[0-9a-f]{16}\.webp" width="96" height="96" alt="Wymondham College Parent Staff Association" decoding="async">$/)
     assert.match(html, /<a class="mail" href="\/privacy">Privacy<\/a>/)
   })
 

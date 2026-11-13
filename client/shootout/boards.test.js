@@ -2,7 +2,7 @@
 // taken from the page, and a logo is fitted inside its board.
 
 import { describe, it, expect } from 'vitest'
-import { boardLogosFrom, logoBox, logoReady, topSignFrom, drawTopSign, loadTopSign, boardCentre, BOARD_COUNT, BOARD_W } from './boards.js'
+import { boardLogosFrom, logoBox, logoReady, topSignFrom, drawTopSign, loadTopSign, boardCentre, BADGE_TALL, BOARD_COUNT, BOARD_W } from './boards.js'
 
 const page = (value) => ({ querySelector: () => (value === null ? null : { getAttribute: () => value }) })
 const ID = '6a284285-7904-46b2-b25c-2b7196350d6b'
@@ -74,15 +74,19 @@ describe('the big sign with a badge', () => {
     }
     return { g, seen }
   }
-  const loaded = { complete: true, naturalWidth: 256, naturalHeight: 256 }
+  const loaded = { complete: true, naturalWidth: 512, naturalHeight: 512 }
 
-  it('draws the badge square, two thirds of the sign\'s height, with the words beside it and nothing over it', () => {
+  it('draws the badge square, as tall as the sign\'s gold edges allow, with the words beside it and nothing over it', () => {
     const { g, seen } = canvas()
     drawTopSign(g, 1152, 320, sign, { badge: loaded, colours })
     expect(seen.pictures.length).toBe(1)
     const pic = seen.pictures[0]
     expect(pic.img).toBe(loaded)
-    expect(pic.w).toBeCloseTo(320 * 0.66, 6)
+    expect(pic.w).toBeCloseTo(320 * BADGE_TALL, 6)
+    // Large enough to be made out, and clear of the gold edge above and below.
+    expect(BADGE_TALL).toBeGreaterThanOrEqual(0.75)
+    expect(pic.y).toBeGreaterThan(320 * 0.06 + 8)
+    expect(pic.y + pic.h).toBeLessThan(320 * 0.94 - 8)
     expect(pic.h).toBeCloseTo(pic.w, 6)
     expect(pic.y).toBeCloseTo((320 - pic.h) / 2, 6)
     expect(pic.x).toBeGreaterThan(0)
