@@ -23,6 +23,8 @@ export const PRIZES = {
   headtohead: { at: 1, target: 'win your match' },
   // Rugby: kicks over the bar and between the posts, of five.
   rugby: { at: 4, target: 'kick 4 of your 5 conversions' },
+  // Netball: goals in the thirty seconds.
+  netball: { at: 8, target: 'score 8 goals in 30 seconds' },
 }
 
 // What the finish panel says to a winner. John's words.
