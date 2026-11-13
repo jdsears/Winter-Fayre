@@ -2,7 +2,7 @@
 // the small sums it scrolls by.
 
 import { describe, it, expect } from 'vitest'
-import { canDraw3d, focusLine, follow, startStory, keepPlace, pastTheStory, boardWords, SHORT } from './index.js'
+import { canDraw3d, focusLine, follow, startStory, pastTheStory, boardWords, SHORT } from './index.js'
 
 describe('where the words are being read', () => {
   it('is a little above the middle of the room under the stage', () => {
@@ -34,24 +34,6 @@ describe('the camera following the scroll', () => {
   it('stays where it is when no time has passed, or the clock has gone back', () => {
     expect(follow(1.5, 4, 0)).toBe(1.5)
     expect(follow(1.5, 4, -1)).toBe(1.5)
-  })
-})
-
-describe('keeping a visitor\'s place as the stage goes into the page', () => {
-  it('scrolls by as much as their reading was moved, when the stage went in above the screen', () => {
-    expect(keepPlace(120, 537, true)).toBe(417)
-    expect(keepPlace(-40, 377, true)).toBe(417)
-    // A browser that kept their place by itself has moved nothing.
-    expect(keepPlace(120, 120, true)).toBe(0)
-  })
-
-  it('does nothing when the stage arrives on the screen or below it: they see it come', () => {
-    expect(keepPlace(500, 917, false)).toBe(0)
-  })
-
-  it('does nothing with a measure that is not a number', () => {
-    expect(keepPlace(undefined, 400, true)).toBe(0)
-    expect(keepPlace(100, NaN, true)).toBe(0)
   })
 })
 
@@ -123,8 +105,12 @@ describe('where the story is left as words alone', () => {
   it('nor a page whose words are not marked with every stop', async () => {
     const win = { innerHeight: 844, document: draws, matchMedia: () => ({ matches: false }) }
     const changed = []
-    const page = { querySelector: (sel) => (sel.includes('data-stop="give"') ? null : {}), classList: { add: (c) => changed.push(c) }, insertBefore: () => changed.push('stage') }
+    const page = { querySelector: (sel) => (sel.includes('data-stop="give"') ? null : { append: () => changed.push('filled') }), classList: { add: (c) => changed.push(c) } }
     expect(await startStory(page, win)).toBe(null)
+    expect(changed).toEqual([])
+    // Nor one with no room for the picture.
+    const roomless = { querySelector: (sel) => (sel === '[data-stage]' ? null : {}), classList: { add: (c) => changed.push(c) } }
+    expect(await startStory(roomless, win)).toBe(null)
     expect(changed).toEqual([])
   })
 })

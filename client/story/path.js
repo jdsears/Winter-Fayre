@@ -3,18 +3,21 @@
 // each part of the story, and how far through the story a scroll is.
 //
 // The story is the one the page already tells in words (shared/appeal.js
-// and server/render/appeal.js). As a visitor scrolls through those words
-// the camera flies over a snowy field at night, from a wide view down to
-// each thing in turn: what the PSA has funded, then what it is raising
-// for now, which stand in a ring of gold with sparks rising round them.
-// At the last part, "Your part", the two are seen side by side and the
-// sparks are at their liveliest.
+// and server/render/appeal.js). The picture opens the page, above its
+// heading. As a visitor scrolls on through the appeal's words the camera
+// flies over a snowy field at night, from a wide view down to each thing
+// in turn: what the PSA has funded, then what it is raising for now,
+// which stand in a ring of gold with sparks rising round them. At "Your
+// part" the two are seen side by side and the sparks are at their
+// liveliest, and at the button on to the games the camera lifts to take
+// in the whole field.
 //
 // Nothing here draws: these are the numbers, so they can be tested.
 
 // The stops, in the order the page's words come: each is an element of
-// the page marked data-stop with one of these names.
-export const STOPS = ['why', 'tables', 'water', 'posts', 'goals', 'covers', 'give']
+// the page marked data-stop with one of these names. The first is the
+// page's own heading and the last is the button on to the games.
+export const STOPS = ['hello', 'why', 'tables', 'water', 'posts', 'goals', 'covers', 'give', 'games']
 
 // Where each thing stands on the field, in metres: a row from left to
 // right, the camera on the near side looking across it.
@@ -49,6 +52,18 @@ const NEAR = {
 // what it is looking at is still whole.
 export function viewOf(stop, aspect = 1.25) {
   const back = aspect < 1.2 ? 1 + (1.2 - Math.max(0.5, aspect)) * 0.9 : 1
+  if (stop === 'hello') {
+    // The page opens low down beside the tables, looking along the row:
+    // the tables close by, and the rest going away to the covers.
+    const off = 1 + (back - 1) * 0.5
+    return { pos: { x: -24 - 9.4 * off, y: 2.9, z: 8.4 * off }, look: { x: -4, y: 2.1, z: -2.5 }, fov: 50 }
+  }
+  if (stop === 'games') {
+    // And closes on the whole field, from above and in front.
+    const half = Math.tan((46 * Math.PI) / 360) * Math.max(0.5, aspect)
+    const away = clamp(27 / half, 34, 86)
+    return { pos: { x: 0, y: away * 0.42, z: away }, look: { x: 0, y: 0, z: -3 }, fov: 46 }
+  }
   if (stop === 'why') {
     // The whole row from one end and a little above: the nearest things
     // large, the furthest small.
@@ -107,11 +122,16 @@ export function progressAt(focus, centres) {
 }
 
 // How lively the gold round the things being raised for is: quiet (0)
-// until the story reaches its last part, then rising (to 1).
+// until the story comes to "Your part", rising to it (to 1), and lively
+// from there to the end.
 export function cheerAt(t) {
-  const from = STOPS.length - 2
+  const from = STOPS.indexOf('give') - 1
   return smooth(clamp((t - from - 0.2) / 0.6, 0, 1))
 }
+
+// What the stage says as the story reaches the games menu: the menu's
+// own heading.
+export const THE_GAMES = 'The games'
 
 // Which stop the story is at, for the words on the stage.
 export const stopAt = (t) => STOPS[clamp(Math.round(Number.isFinite(t) ? t : 0), 0, STOPS.length - 1)]
@@ -120,6 +140,9 @@ export const stopAt = (t) => STOPS[clamp(Math.round(Number.isFinite(t) ? t : 0),
 // (shared/appeal.js): { label, amount, name }. label and amount may be
 // empty.
 export function captionFor(stop, appeal) {
+  // The heading under the picture says all there is to say at the start.
+  if (stop === 'hello') return { label: '', amount: '', name: '' }
+  if (stop === 'games') return { label: '', amount: '', name: THE_GAMES }
   if (stop === 'why') return { label: '', amount: '', name: appeal.why.title }
   if (stop === 'give') return { label: '', amount: '', name: appeal.give.title }
   for (const part of [appeal.funded, appeal.raising]) {
