@@ -40,9 +40,10 @@ client/               the page script (Vite): main.js, tv.js (the TV screen's tu
                       stadium, which dresses for each sport), keepy/ (keepy-uppies), freekick/
                       (the free kick challenge), headtohead/ (head to head, drawn flat), rugby/
                       (rugby conversion), netball/ (netball shot), cricket/ (cricket smash),
+                      story/ (the appeal's story in 3D on the arcade page, scrolled through),
                       fonts/ (Barlow, OFL)
 tests/                node:test server, safety and writing-rule tests
-tools/check.mjs       npm run check: Playwright at 360, 375 and 390 wide, sideways, and the TV at 1920 by 1080
+tools/check.mjs       npm run check: Playwright at 360, 375 and 390 wide, sideways, the 3D story, and the TV at 1920 by 1080
 docs/HANDOVER.md      what is built, what John has decided, what is left
 ```
 
@@ -85,6 +86,7 @@ This is a school event and children will play.
 - The site is called "Winter Fayre Sports Arcade". The boards round the pitch read "Wymondham College PSA", "Winter Fayre" and "Sports Fund Appeal", and the big sign carries the first two: John's instructions, 13 November 2026.
 - The appeal's words and figures are the PSA's own, from its JustGiving page and the slide John supplied, kept in one place (`shared/appeal.js`). Do not add to them or round them up. The appeal is shown in the PSA's plum and gold; the rest of the site keeps the winter palette.
 - On the arcade page the story of the appeal comes before the games menu, so a visitor scrolls through it on the way (John, 13 November 2026). Links back from a game go to the games menu (`/#games`), so it is scrolled through once, on arrival.
+- Where a phone can draw 3D, the story is also told in 3D as it is scrolled through (John, 13 November 2026; `client/story/`): a stage pinned to the top of the screen, whose camera flies to each thing as its words are read. The words are the story: they are whole without the stage, and it must never change, move, hide or cover them, or the Donate button. The things on the stage are drawn from plain shapes to look as the College's own do in the slide John supplied, in their own colours (dark blue tables on white frames, white and blue post protectors with the College's name up them, a white box goal on wheels with a square net, blue covers): no photograph, no maker's name, and not the crest.
 - The crest of the College's Parent Staff Association is the one picture on the site. John supplied it and has said he has permission to use it (13 November 2026). It is used whole, as he sent it, on its own plum background: on the arcade page, on the TV screen and on the big sign in the stadium (`server/crest.js`). The picture he had was a soft one and he asked for it to be sharpened, so its blur has been undone as far as it can be without leaving marks; nothing was redrawn. Do not crop, recolour or redraw it, and do not put it anywhere else or use the College's colours for the site unless John asks.
 - A winter palette after the fayre's poster: deep navy, ice blue, white and a warm gold (`server/site.js`). Every game is winter themed with a splash of Christmas, as John asked: snow, fairy lights, Christmas trees and Christmas hats.
 - The games are original, in this site's own drawn style. Do not copy the name, look, characters or layout of any existing commercial game.
@@ -108,6 +110,7 @@ Most visitors play on a phone, so that is the main view.
 - Head to head asks for the phone to be turned, and locks the touches that would zoom or drag the page.
 - Where 3D cannot run, a game falls back to its flat version. The four games from the base each have a flat version of their own. A game made for the stage (rugby and after) hands the stage a small painter, and the stage draws the whole stadium flat for it (`client/games/flat.js`), so it plays the same: the same rules, swipes, finish panel and leaderboard. With reduced motion the snow hangs still and nothing shakes or sweeps.
 - No large picture downloads. The tiles are drawn (SVG). The one raster picture is the crest: WebP, 512 pixels square, about eighteen kilobytes, with its width and height set. Anything else raster would be WebP too, sized for its place, with width and height set, and lazy-loaded below the first screen.
+- The 3D story's stage takes no more than half a phone's screen and leaves at least 320 pixels for the words under it. There is no stage where 3D will not run, with reduced motion, with no script, on a screen under 480 pixels high, or for a visitor sent straight to the games menu (`/#games`): the story reads as its words alone. When the stage arrives it must not move what a visitor is already reading.
 - Barlow, served from the site itself. Body text no smaller than 16 pixels; headings scale with `clamp`.
 - The TV page is the one page made for a large screen (1920 by 1080, read from three metres): leaderboard rows' letters at least 40 pixels, the QR code at least 400 pixels square, sized by the screen so a smaller or larger television shows the same picture. After every three leaderboards the appeal fills the screen for ten seconds, with its own code to scan to donate, also at least 400 pixels square (John, 13 November 2026). It must still be usable, stacked, on a phone, and readable with no script.
 

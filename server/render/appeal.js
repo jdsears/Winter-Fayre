@@ -9,7 +9,9 @@
 // another site, and nothing about the visitor is sent with them.
 //
 // Each part of the story is whole without the page's script and without
-// its pictures, which are drawn here.
+// its pictures, which are drawn here. Where a phone can draw 3D, the
+// page's script pins a stage above these words as they are scrolled
+// through (client/story): the parts it stops at are marked data-stop.
 
 import { esc, attr } from './html.js'
 import { APPEAL, charityLine } from '../../shared/appeal.js'
@@ -37,7 +39,8 @@ export const ICONS = {
 // so a game in hand is not lost, with nothing said of where it came from.
 export const donateButton = (cls = 'btn y') => `<a class="${attr(cls)}" href="${attr(APPEAL.path)}" target="_blank" rel="noopener noreferrer">${esc(APPEAL.button)}</a>`
 
-const item = (i) => `<li><span class="fund-i">${ICONS[i.key]}</span><span class="fund-t">${i.amount ? `<b class="am">${esc(i.amount)}</b>` : ''}<b>${esc(i.what)}</b><span>${esc(i.text)}</span></span></li>`
+// Each thing is a stop on the 3D story (client/story), where it is drawn.
+const item = (i) => `<li data-stop="${attr(i.key)}"><span class="fund-i">${ICONS[i.key]}</span><span class="fund-t">${i.amount ? `<b class="am">${esc(i.amount)}</b>` : ''}<b>${esc(i.what)}</b><span>${esc(i.text)}</span></span></li>`
 
 export function appealHtml() {
   const a = APPEAL
@@ -47,9 +50,9 @@ export function appealHtml() {
     <h2 id="appeal-h">${esc(a.headline[0])} <em>${esc(a.headline[1])}</em></h2>
     <p class="st-lede">${esc(a.lede)}</p>
   </div>
-  <div class="wrap">
+  <div class="wrap" data-story-body>
   <ol class="beats">
-    <li class="beat" data-beat="why">
+    <li class="beat" data-beat="why" data-stop="why">
       ${ICONS.why}
       <h3>${esc(a.why.title)}</h3>
       <p>${esc(a.why.text)}</p>
@@ -65,7 +68,7 @@ export function appealHtml() {
       <h3>${esc(a.raising.title)}</h3>
       <ul class="fund">${a.raising.items.map(item).join('')}</ul>
     </li>
-    <li class="beat give" data-beat="give">
+    <li class="beat give" data-beat="give" data-stop="give">
       ${ICONS.give}
       <h3>${esc(a.give.title)}</h3>
       <p>${esc(a.give.text)}</p>
