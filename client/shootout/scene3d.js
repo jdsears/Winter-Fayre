@@ -8,7 +8,9 @@
 // goal makes way for rugby posts with a flag on each, the pitch has
 // rugby's lines and the ball is a rugby ball on a tee. For netball it
 // makes way for a netball post with its ring and net, inside a goal
-// circle, and the ball is a netball.
+// circle, and the ball is a netball. For cricket a pitch is laid down
+// the middle with a wicket at each end, a bowler runs in from the
+// stand's end and a batter waits at the near one, bat in hand.
 //
 // It is a winter night with a splash of Christmas: stars, falling snow,
 // snow lying on the boards, a string of fairy lights, a Christmas tree
@@ -37,6 +39,7 @@ import { mix } from './colour.js'
 import { makeRng } from './rng.js'
 import { LOOKS, SKINS, lookAt } from './looks.js'
 import { prefersReducedMotion } from './motion.js'
+import { GROUND as CRICKET, PITCH_LENGTH, BALL_R as CRICKET_BALL_R, BAT, strokeAt } from '../cricket/ground.js'
 import { loadBoardLogos, logoReady, logoBox, BOARD_W, BOARD_COUNT, boardCentre, drawTopSign, loadTopSign } from './boards.js'
 
 const PI = Math.PI
@@ -133,6 +136,17 @@ function makeNetball(accent) {
   gold.rotation.set(PI / 2, 0.5, 0)
   blue.rotation.set(0.3, 0, 0.9)
   group.add(blue, gold)
+  return group
+}
+
+// A cricket ball: red, with a white seam round it. Bigger than a real
+// one, to be seen on a phone.
+function makeCricketBall() {
+  const group = new Group()
+  group.add(new Mesh(new SphereGeometry(CRICKET_BALL_R, 20, 14), new MeshLambertMaterial({ color: 0xc8102e, emissive: 0x3a0508 })))
+  const seam = new Mesh(new TorusGeometry(CRICKET_BALL_R * 1.01, 0.008, 6, 28), new MeshLambertMaterial({ color: 0xffffff }))
+  seam.rotation.y = PI / 2
+  group.add(seam)
   return group
 }
 
@@ -292,6 +306,7 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
   const football = sport === 'football'
   const rugby = sport === 'rugby'
   const netball = sport === 'netball'
+  const cricket = sport === 'cricket'
   const dpr = Math.min(2, win.devicePixelRatio || 1)
   const renderer = new WebGLRenderer({ canvas, antialias: dpr < 2, powerPreference: 'high-performance' })
   renderer.setPixelRatio(dpr)
@@ -374,7 +389,15 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     return placed(g, { x: (x1 + x2) / 2, y: 0.006, z: (z1 + z2) / 2, rx: -PI / 2, rz: -Math.atan2(z2 - z1, x2 - x1) })
   }
   const L = GOAL.lineZ
-  lines.push(strip(-34, L, 34, L))
+  if (!cricket) lines.push(strip(-34, L, 34, L))
+  if (cricket) {
+    // The creases at each end of the pitch: the one the stumps stand on,
+    // the popping crease in front of it, and the two that join them.
+    for (const [stumps, crease] of [[CRICKET.stumps, CRICKET.crease], [CRICKET.far, CRICKET.far + 1.22]]) {
+      lines.push(strip(-1.32, stumps, 1.32, stumps), strip(-1.83, crease, 1.83, crease))
+      for (const s of [-1, 1]) lines.push(strip(s * 1.32, stumps, s * 1.32, crease))
+    }
+  }
   if (football) {
     lines.push(strip(-9.16, L, -9.16, L + 5.5), strip(9.16, L, 9.16, L + 5.5), strip(-9.16, L + 5.5, 9.16, L + 5.5))
     lines.push(strip(-20.16, L, -20.16, L + 16.5), strip(20.16, L, 20.16, L + 16.5), strip(-20.16, L + 16.5, 20.16, L + 16.5))
@@ -850,7 +873,61 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
   const taker = makePlayer(doc, lookAt(0))
   const keeper = makePlayer(doc, { keeper: true, ...lookAt(3) })
   scene.add(taker.root, keeper.root)
-  const ball = rugby ? makeRugbyBall() : netball ? makeNetball(colours.accent) : makeBall()
+  const ball = rugby ? makeRugbyBall() : netball ? makeNetball(colours.accent) : cricket ? makeCricketBall() : makeBall()
+
+  // ── Cricket ───────────────────────────────────────────────────────────
+  // The pitch, a wicket at each end, and the batter with a bat. The
+  // bowler is the taker, in the other side's kit.
+  let wicket = null
+  let batter = null
+  let bat = null
+  if (cricket) {
+    const turf = new Mesh(keep(new PlaneGeometry(CRICKET.half * 2, PITCH_LENGTH + 2.6)), keep(new MeshLambertMaterial({ color: 0xcfbf8c })))
+    turf.rotation.x = -PI / 2
+    turf.position.set(0, 0.004, (CRICKET.stumps + CRICKET.far) / 2)
+    scene.add(turf)
+    const wood = keep(new MeshLambertMaterial({ color: 0xf0e2b6, emissive: 0x2a2416 }))
+    const stumpGeo = keep(new CylinderGeometry(0.022, 0.022, CRICKET.stumpHeight, 8))
+    const bailGeo = keep(new CylinderGeometry(0.013, 0.013, CRICKET.stumpGap * 0.96, 6))
+    const makeWicket = (z) => {
+      const group = new Group()
+      // Each stump turns about its foot, so it can be knocked back.
+      const stumps = [-1, 0, 1].map((k) => {
+        const foot = new Group()
+        foot.position.set(k * CRICKET.stumpGap, 0, 0)
+        const s = new Mesh(stumpGeo, wood)
+        s.position.y = CRICKET.stumpHeight / 2
+        foot.add(s)
+        group.add(foot)
+        return foot
+      })
+      const bails = [-1, 1].map((k) => {
+        const b = new Mesh(bailGeo, wood)
+        b.rotation.z = PI / 2
+        b.position.set(k * CRICKET.stumpGap / 2, CRICKET.stumpHeight + 0.013, 0)
+        group.add(b)
+        return b
+      })
+      group.position.z = z
+      scene.add(group)
+      return { group, stumps, bails }
+    }
+    makeWicket(CRICKET.far)
+    wicket = makeWicket(CRICKET.stumps)
+
+    batter = makePlayer(doc, lookAt(1))
+    batter.setKit(kits.home, '')
+    scene.add(batter.root)
+    // The bat: a blade and a handle, held in both hands. It hangs from
+    // where the hands hold it, its face to the bowler.
+    bat = new Group()
+    const blade = new Mesh(keep(new BoxGeometry(BAT.width, BAT.blade, 0.04)), keep(new MeshLambertMaterial({ color: 0xc4893f, emissive: 0x2a1c0a })))
+    blade.position.y = BAT.top - BAT.handle - BAT.blade / 2 + 0.01
+    const handle = new Mesh(keep(new CylinderGeometry(0.02, 0.02, BAT.handle, 8)), keep(new MeshLambertMaterial({ color: 0xc8102e })))
+    handle.position.y = BAT.top - BAT.handle / 2
+    bat.add(blade, handle)
+    batter.root.add(bat)
+  }
   scene.add(ball)
   // A kicking tee for the rugby ball, where the game puts it.
   let tee = null
@@ -1060,6 +1137,135 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     return holding ? drop : 0
   }
 
+  // Puts a hand on a place: turns an arm at the shoulder and bends it at
+  // the elbow so that the hand comes to `to`, a place in the torso's own
+  // space. An arm too short for it reaches as far as it can.
+  const UPPER_ARM = 0.3
+  const FOREARM = 0.32
+  const DOWN = new Vector3(0, -1, 0)
+  const X_AXIS = new Vector3(1, 0, 0)
+  const Y_AXIS = new Vector3(0, 1, 0)
+  const Z_AXIS = new Vector3(0, 0, 1)
+  const armTo = new Vector3()
+  const armTurn = new Quaternion()
+  const armTip = new Quaternion()
+  function reachFor(arm, to) {
+    armTo.copy(to).sub(arm.shoulder.position)
+    const d = clamp(armTo.length(), 0.1, UPPER_ARM + FOREARM - 0.004)
+    // How far the elbow bends, and how far the upper arm is tipped back
+    // off the line to the hand to allow for it.
+    const bend = PI - Math.acos(clamp((UPPER_ARM ** 2 + FOREARM ** 2 - d * d) / (2 * UPPER_ARM * FOREARM), -1, 1))
+    const tip = Math.acos(clamp((UPPER_ARM ** 2 + d * d - FOREARM ** 2) / (2 * UPPER_ARM * d), -1, 1))
+    armTurn.setFromUnitVectors(DOWN, armTo.normalize())
+    arm.shoulder.quaternion.copy(armTurn).multiply(armTip.setFromAxisAngle(X_AXIS, -tip))
+    arm.elbow.rotation.set(bend, 0, 0)
+  }
+
+  // The bowler (the taker's figure, turned to face the batter): running
+  // in, then the bowling arm coming over the top.
+  //   bowler: { x, z, stride, run (0 to 1: how hard he is running), bowl
+  //   (0 to 1: the arm's way over; the ball is let go as it passes the
+  //   top), turn (0 to 1: turned away from the batter, as he goes back
+  //   to his mark) }
+  function poseBowler(b) {
+    const run = b.run || 0
+    const bowl = clamp(b.bowl || 0, 0, 1)
+    const over = Math.sin(bowl * PI)
+    taker.root.position.set(b.x, Math.abs(Math.sin(b.stride)) * 0.06 * run, b.z)
+    taker.root.rotation.set(0, PI * (1 - clamp(b.turn || 0, 0, 1)), 0)
+    // He leans into his run, and further as the arm comes over.
+    taker.torso.rotation.set(-(0.12 + 0.3 * smooth(0.2, 0.75, bowl)) * run, 0, 0)
+    taker.hips.rotation.set(0, 0, 0)
+    taker.neck.rotation.set(0, 0, 0)
+    const [left, right] = taker.legs
+    left.thigh.rotation.set(Math.sin(b.stride) * 0.8 * run, 0, 0)
+    left.knee.rotation.x = -Math.max(0, Math.sin(b.stride + 1.2)) * 1.1 * run
+    right.thigh.rotation.set(-Math.sin(b.stride) * 0.8 * run, 0, 0)
+    right.knee.rotation.x = -Math.max(0, -Math.sin(b.stride + 1.2)) * 1.1 * run
+    const [la, ra] = taker.arms
+    // The front arm reaches up as the bowling arm comes round, then drops.
+    la.shoulder.rotation.set(-Math.sin(b.stride) * 0.6 * run * (1 - over) + over * 2.2, 0, -0.15)
+    la.elbow.rotation.set(0.5 * run * (1 - over), 0, 0)
+    // The bowling arm swings with his stride until he bowls; then it
+    // goes back, up and over, and hangs again once he has pulled up.
+    const round = bowl < 1 ? bowl * 1.75 : 1.75 + 0.25 * (1 - run)
+    ra.shoulder.rotation.set(bowl > 0 ? -round * PI : Math.sin(b.stride) * 0.6 * run, 0, 0.12 * (1 - over))
+    ra.elbow.rotation.set(bowl > 0 ? 0 : 0.5 * run, 0, 0)
+    takerShadow.position.set(b.x, 0.012, b.z)
+  }
+
+  // The ball in the bowler's hand, as he runs in.
+  const heldAt = new Vector3()
+  function ballInHand() {
+    taker.root.updateMatrixWorld(true)
+    return taker.arms[1].elbow.localToWorld(heldAt.set(0, -0.4, 0))
+  }
+
+  // The batter: side on, as a right-hander stands, the bat lifted
+  // behind; the swing brings it down through the ball and up past the
+  // front shoulder (cricket/ground.js, strokeAt, which the flat painter
+  // draws from too). Both hands are on the handle all the way.
+  const batFace = new Quaternion().setFromAxisAngle(Y_AXIS, PI / 2)
+  const hand = new Vector3()
+  let batterLook = 0
+  function poseBatter(s) {
+    const stroke = strokeAt(s || {})
+    const { down, through } = stroke
+    // A new batter comes in after a wicket: the same kit, another look.
+    if ((s?.look || 0) !== batterLook) {
+      batterLook = s?.look || 0
+      batter.setLook((1 + batterLook) % LOOKS.length)
+    }
+    // He stands side on, his chest to the off side: the figure's own
+    // right is back towards his stumps, and its front is the off side.
+    batter.root.position.set(stroke.stand.x, 0, stroke.stand.z)
+    batter.root.rotation.set(0, -PI / 2, 0)
+    batter.lean.position.y = -0.03 - 0.05 * down
+    // The shoulders turn back with the bat, and open to the bowler as it
+    // comes through; he leans over the ball.
+    batter.torso.rotation.set(-0.28 - 0.06 * down + 0.2 * through, -0.3 + 0.45 * down + 0.4 * through, 0)
+    batter.neck.rotation.set(0, 1.0 - 0.3 * down - 0.2 * through, 0)
+    // The feet apart along the pitch, the knees a little bent; the front
+    // leg strides to the ball.
+    const [front, back] = batter.legs
+    const stride = 0.34 + 0.22 * down
+    front.thigh.rotation.set(0.22 + 0.25 * down, 0, -stride)
+    front.knee.rotation.set(-0.4 - 0.25 * down, 0, stride)
+    back.thigh.rotation.set(0.22 + 0.3 * down, 0, 0.3)
+    back.knee.rotation.set(-0.4 - 0.6 * down, 0, -0.3)
+
+    // The bat, in the batter's own space.
+    bat.position.set(stroke.grip.z - stroke.stand.z, stroke.grip.y, stroke.stand.x - stroke.grip.x)
+    bat.quaternion.setFromAxisAngle(Z_AXIS, -stroke.angle).multiply(batFace)
+    // The left hand is the top one on the handle, as a right-hander holds it.
+    batter.root.updateMatrixWorld(true)
+    for (const a of batter.arms) {
+      hand.set(0, a.side < 0 ? 0.03 : -0.1, 0)
+      batter.torso.worldToLocal(bat.localToWorld(hand))
+      reachFor(a, hand)
+    }
+  }
+
+  // The near wicket: standing, or broken by a ball (broken is how many
+  // seconds ago it was hit): the middle stump knocked back and the bails
+  // in the air.
+  const BAILS_LAND = 0.73
+  function poseWicket(broken) {
+    const [leg, mid, off] = wicket.stumps
+    const t = broken === null || broken === undefined ? -1 : Math.max(0, broken)
+    const k = t < 0 ? 0 : Math.min(1, t * 8)
+    mid.rotation.set(k * 0.85, 0, 0)
+    leg.rotation.set(k * 0.25, 0, k * 0.3)
+    off.rotation.set(k * 0.3, 0, -k * 0.38)
+    wicket.bails.forEach((b, i) => {
+      const side = i ? 1 : -1
+      // The bails fly off and lie where they land.
+      const fly = clamp(t, 0, BAILS_LAND)
+      b.position.set(side * CRICKET.stumpGap / 2 + side * fly * 0.7, Math.max(0.02, CRICKET.stumpHeight + 0.013 + (t < 0 ? 0 : 2.6 * fly - 4.9 * fly * fly)), fly * 0.9)
+      b.rotation.set(fly * 9 * side, 0, PI / 2 + fly * 7)
+    })
+  }
+
   const up3 = new Vector3(0, 1, 0)
   const prevBall = new Vector3(0, BALL_R, 0)
   const spinAxis = new Vector3()
@@ -1102,11 +1308,16 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     camera.position.set(cam.pos.x, cam.pos.y, cam.pos.z)
     camera.lookAt(cam.look.x, cam.look.y, cam.look.z)
     camera.updateProjectionMatrix()
-    // A game with no taker (keepy-uppies) leaves the taker out.
-    const solo = state.taker === null
+    // A game with no taker (keepy-uppies) leaves the taker out. In cricket
+    // the taker's figure is the bowler.
+    const solo = state.taker === null && !cricket
     taker.root.visible = !solo
     takerShadow.visible = !solo
-    if (!solo) poseTaker(state, now)
+    if (cricket) {
+      poseBowler(state.bowler || { x: CRICKET.bowlerX, z: CRICKET.runFrom, stride: 0, run: 0, bowl: 0 })
+      poseBatter(state.batter)
+      poseWicket(state.wicket)
+    } else if (!solo) poseTaker(state, now)
     // A wall stands where the game puts it (wall: { x, z, n }), or not at all.
     if (state.wall && !wall) wall = makeWall(state.wall.n || 5)
     if (wall) {
@@ -1121,7 +1332,12 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
     keeperShadow.visible = !keeperless
     const dropped = keeperless ? 0 : poseKeeper(state.keeper, now, state.holding)
     // A ball in her hands comes down with her as she lands.
-    poseBall(dropped ? { ...state.ball, y: Math.max(BALL_R + 0.12, state.ball.y - dropped) } : state.ball)
+    // A ball the bowler has not let go of yet is in his hand.
+    const held = cricket && state.ball.held ? ballInHand() : null
+    poseBall(held ? { x: held.x, y: held.y, z: held.z } : dropped ? { ...state.ball, y: Math.max(BALL_R + 0.12, state.ball.y - dropped) } : state.ball)
+    // A ball that has gone by is not drawn.
+    ball.visible = !state.ball.hidden
+    ballShadow.visible = !state.ball.hidden
     // A ball just touched swells for a moment (squash is 0 to 1).
     const sq = clamp(state.squash || 0, 0, 1)
     ball.scale.setScalar(1 + sq * 0.16)
@@ -1171,7 +1387,7 @@ export async function createScene3D({ canvas, colours, kits, boards = [], boardL
       else if (m) m.dispose()
     })
     for (const d of disposables) d.dispose?.()
-    for (const p of [taker, keeper, ...(wall || [])]) {
+    for (const p of [taker, keeper, ...(batter ? [batter] : []), ...(wall || [])]) {
       for (const mat of Object.values(p.mats)) mat.dispose()
       p.numberTex?.dispose()
     }

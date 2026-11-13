@@ -7,6 +7,9 @@ import { cameraFor as rugbyCamera, teeAt } from '../rugby/play3d.js'
 import { cameraFor as netballCamera, HOOP } from '../netball/play3d.js'
 import { paintRugby } from '../rugby/paint.js'
 import { paintNetball } from '../netball/paint.js'
+import { cameraFor as cricketCamera } from '../cricket/ground.js'
+import { ballIn, bowlerAt } from '../cricket/play3d.js'
+import { paintCricket } from '../cricket/paint.js'
 
 // A camera at the origin looking down the z axis: depth is z.
 const depth = (p) => p.z
@@ -64,6 +67,13 @@ describe('the flat stadium, drawn from wherever a game stands', () => {
     ...[[1.3, 0], [3.7, 0.95], [3.7, -0.95], [2.5, 0.6]].map(([d, turn]) => {
       const spot = { d, turn }
       return { name: `netball from ${d} metres, turned ${turn}`, paint: paintNetball, state: { view: netballCamera(spot), ball: { x: HOOP.x, y: 1.15, z: HOOP.z + d }, hoop: HOOP } }
+    }),
+    // Cricket: the bowler running in with the ball, the ball at the bat
+    // as the bat comes down to it, and a broken wicket with the ball gone by.
+    ...[[-1, 0, null], [1.2, 0.3, null], [1.4, 1, 0.2]].map(([t, swing, wicket]) => {
+      const d = { ball: 0, time: 1.2, straight: true, slower: false, line: 0.36, length: 0.64, height: 0.5, runup: 1.7 }
+      const ball = t < 0 ? { ...ballIn(d, 0), held: true } : ballIn(d, t)
+      return { name: `cricket ${t} seconds after the ball is let go`, paint: paintCricket, state: { view: cricketCamera(), goalLine: false, ball, bowler: bowlerAt(d, t), batter: { swing, line: d.line, meet: 0.3, look: 2 }, wicket } }
     }),
   ]
 

@@ -78,6 +78,17 @@ export const GAMES = [
     // A goal takes a second and a half at the very least.
     board: { maxScore: 40, perSecond: 0.75, slack: 2 },
   },
+  {
+    key: 'cricket',
+    path: '/cricket',
+    href: '/cricket',
+    title: 'Cricket smash',
+    text: 'An over of six balls. Tap as the ball reaches the bat: time it well for a four or a six.',
+    play: 'Play cricket',
+    scores: 'runs from six balls',
+    // An over takes twenty-five seconds at the very least.
+    board: { maxScore: 36, perSecond: 1.6, slack: 6 },
+  },
 ]
 
 export const GAME_KEYS = GAMES.map(g => g.key)
