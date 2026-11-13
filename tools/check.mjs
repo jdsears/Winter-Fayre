@@ -279,7 +279,7 @@ async function openTheGames(browser, base, width, height) {
     const page = await openPage(context, base, '/penalties', where)
     await page.locator('.shootout-play').click()
     try {
-      await page.waitForSelector('.tso:not([data-phase="loading"])', { state: 'visible', timeout: 15000 })
+      await page.waitForSelector('.tso:not([data-phase="loading"])', { state: 'visible', timeout: 45000 })
       await page.waitForTimeout(900)
       const styled = await page.evaluate(() => getComputedStyle(document.querySelector('.tso')).position === 'fixed')
       if (!styled) problem(where, 'the game opened without its styles')
@@ -298,7 +298,7 @@ async function openTheGames(browser, base, width, height) {
     const where = `/penalties#play at ${width}`
     const page = await openPage(context, base, '/penalties#play', where)
     try {
-      await page.waitForSelector('.tso', { state: 'visible', timeout: 15000 })
+      await page.waitForSelector('.tso', { state: 'visible', timeout: 45000 })
     } catch {
       problem(where, 'the game did not open from the arcade\'s link')
     }
@@ -310,7 +310,7 @@ async function openTheGames(browser, base, width, height) {
     const where = `${p} at ${width} (the game)`
     const page = await openPage(context, base, p, where)
     try {
-      await page.waitForSelector('.gs', { state: 'visible', timeout: 15000 })
+      await page.waitForSelector('.gs', { state: 'visible', timeout: 45000 })
       await page.waitForTimeout(700)
       reportStage(where, await page.evaluate(measureStage, ['.gs-hud', '.gs-btns', '.gs-prompt']))
       report(where, await page.evaluate(measure))
@@ -325,13 +325,15 @@ async function openTheGames(browser, base, width, height) {
 }
 
 // Keepy-uppies played until the ball drops: the finish panel, with the
-// day's leaderboard and the box for three letters in it.
+// day's leaderboard and the box for three letters in it. The wait is a
+// long one: a machine with no graphics card draws the stadium a few
+// frames a second, and the ball falls a frame at a time.
 async function finishPanel(page, where, shot) {
   try {
     await page.locator('.gs-pitch').focus()
     await page.keyboard.press('Space')
-    await page.waitForSelector('.gs-end:not([hidden])', { timeout: 15000 })
-    await page.waitForSelector('.gs-lbw', { timeout: 8000 })
+    await page.waitForSelector('.gs-end:not([hidden])', { timeout: 120000 })
+    await page.waitForSelector('.gs-lbw', { timeout: 30000 })
     await page.waitForTimeout(400)
     const fits = await page.evaluate(() => {
       const end = document.querySelector('.gs-end')
@@ -367,7 +369,7 @@ async function flatGames(browser, base) {
   const page = await openPage(context, base, '/penalties', where)
   await page.locator('.shootout-play').click()
   try {
-    await page.waitForSelector('.tso[data-renderer="2d"]', { state: 'visible', timeout: 15000 })
+    await page.waitForSelector('.tso[data-renderer="2d"]', { state: 'visible', timeout: 45000 })
     await page.waitForTimeout(600)
     await page.screenshot({ path: path.join(shots, 'penalties-flat-375.png') })
   } catch {
@@ -392,7 +394,7 @@ async function sideways(browser, base, width, height) {
     const where = `${p} at ${width} by ${height} (the game)`
     const page = await openPage(context, base, p, where)
     try {
-      await page.waitForSelector('.gs', { state: 'visible', timeout: 15000 })
+      await page.waitForSelector('.gs', { state: 'visible', timeout: 45000 })
       await page.waitForTimeout(500)
       reportStage(where, await page.evaluate(measureStage, groups))
       report(where, await page.evaluate(measure))
@@ -406,7 +408,7 @@ async function sideways(browser, base, width, height) {
     const page = await openPage(context, base, '/penalties', where)
     await page.locator('.shootout-play').click()
     try {
-      await page.waitForSelector('.tso:not([data-phase="loading"])', { state: 'visible', timeout: 15000 })
+      await page.waitForSelector('.tso:not([data-phase="loading"])', { state: 'visible', timeout: 45000 })
       await page.waitForTimeout(700)
       reportStage(where, await page.evaluate(measureStage, ['.tso-top-actions', '.tso-board']))
       report(where, await page.evaluate(measure))
@@ -419,7 +421,7 @@ async function sideways(browser, base, width, height) {
   const where = `/head-to-head at ${width} by ${height}`
   const page = await openPage(context, base, '/head-to-head', where)
   try {
-    await page.waitForSelector('.hh', { state: 'visible', timeout: 15000 })
+    await page.waitForSelector('.hh', { state: 'visible', timeout: 45000 })
     await page.waitForTimeout(500)
     const turn = await page.evaluate(() => getComputedStyle(document.querySelector('.hh-turn')).display)
     if (turn !== 'none') problem(where, 'the phone is on its side but is still asked to turn')
@@ -448,7 +450,7 @@ async function sideways(browser, base, width, height) {
   const upright = await browser.newContext({ viewport: { width: height, height: width }, deviceScaleFactor: 1, isMobile: true, hasTouch: true })
   const u = await openPage(upright, base, '/head-to-head', `/head-to-head at ${height} by ${width}`)
   try {
-    await u.waitForSelector('.hh', { state: 'visible', timeout: 15000 })
+    await u.waitForSelector('.hh', { state: 'visible', timeout: 45000 })
     const turn = await u.evaluate(() => getComputedStyle(document.querySelector('.hh-turn')).display)
     if (turn === 'none') problem(`/head-to-head at ${height} by ${width}`, 'held upright, it does not ask for the phone to be turned')
   } catch {
