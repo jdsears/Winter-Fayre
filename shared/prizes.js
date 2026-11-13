@@ -75,6 +75,17 @@ export function footballWords(state) {
     : `The football was not won: no score was on the leaderboard by ${FOOTBALL.said}.`
 }
 
+// The football at the head of the arcade page (John, 13 November 2026):
+// what it is and how it is won, while it can be, and who has won it once
+// it has closed. game is the name of the game it is won in, as it is
+// written in the middle of a sentence ("keepy-uppies"). Nothing, once it
+// has closed with no score on the leaderboard: there is no prize left to
+// tell of.
+export function footballHero(state, game) {
+  if (state?.closed) return state.leader ? footballWords(state) : ''
+  return `The best ${game} score on the leaderboard by ${FOOTBALL.said} wins ${FOOTBALL.prize}.`
+}
+
 // Whether a score wins a sweet in a game.
 export function wonPrize(game, score) {
   const p = PRIZES[game]

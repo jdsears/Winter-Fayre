@@ -13,7 +13,7 @@ import assert from 'node:assert/strict'
 import { startApp, PERSON, quiet } from './support/helpers.js'
 import { createBoard, createBoards, londonMoment } from '../server/board.js'
 import { createStore } from '../server/store.js'
-import { FOOTBALL, footballLine, ONE_EACH } from '../shared/prizes.js'
+import { FOOTBALL, footballLine, footballHero, ONE_EACH } from '../shared/prizes.js'
 import { GAMES } from '../shared/games.js'
 
 const HOUR = 60 * 60 * 1000
@@ -53,6 +53,20 @@ describe('the football\'s cut-off', () => {
       assert.equal('football' in top, g.key === 'keepy', g.key)
       assert.equal((await boards[g.key].winner()) === null, g.key !== 'keepy', g.key)
     }
+  })
+})
+
+describe('the football\'s words for the head of the arcade', () => {
+  test('say the rule and the game while it can be won, with or without a leader', () => {
+    const rule = 'The best keepy-uppies score on the leaderboard by 1:30pm wins a FIFA approved football.'
+    assert.equal(footballHero(null, 'keepy-uppies'), rule)
+    assert.equal(footballHero({ closed: false, leader: null }, 'keepy-uppies'), rule)
+    assert.equal(footballHero({ closed: false, leader: { initials: 'ABC', score: 44 } }, 'keepy-uppies'), rule)
+  })
+
+  test('say who has won once it has closed, and nothing if no one did', () => {
+    assert.equal(footballHero({ closed: true, leader: { initials: 'ABC', score: 44 } }, 'keepy-uppies'), 'The football is won: ABC with 44. Come to the sports stall.')
+    assert.equal(footballHero({ closed: true, leader: null }, 'keepy-uppies'), '')
   })
 })
 
@@ -201,6 +215,42 @@ describe('the football on the site', () => {
       assert.ok(!said.includes(footballLine()))
     } finally {
       await app.close()
+    }
+  })
+
+  test('the head of the arcade says there is a football to be won, between playing and giving, and then who won it', async () => {
+    const app = await startApp({ clock: { now: at(10) } })
+    try {
+      const head = async () => {
+        const html = await (await app.get('/', { headers: PERSON })).text()
+        return words(html.slice(html.indexOf('<header class="hero"'), html.indexOf('</header>')))
+      }
+      let said = await head()
+      const rule = 'Win. The best keepy-uppies score on the leaderboard by 1:30pm wins a FIFA approved football.'
+      assert.ok(said.includes(rule), said)
+      assert.ok(said.indexOf('Play.') < said.indexOf('Win.') && said.indexOf('Win.') < said.indexOf('Give.'))
+      // It is the rule alone while the football can be won: the tile below says who leads.
+      await played(app, 'ABC', 44, at(11, 0))
+      said = await head()
+      assert.ok(said.includes(rule))
+      assert.ok(!said.includes('ABC'))
+      // Once it has closed, the head says who has won it.
+      app.clock.now = at(13, 31)
+      said = await head()
+      assert.ok(said.includes('Win. The football is won: ABC with 44. Come to the sports stall.'), said)
+      assert.ok(!said.includes(rule))
+    } finally {
+      await app.close()
+    }
+    // Closed with no score on the leaderboard, there is no prize left to tell of at the head.
+    const late = await startApp({ clock: { now: at(13, 31) } })
+    try {
+      const html = await (await late.get('/', { headers: PERSON })).text()
+      const said = words(html.slice(html.indexOf('<header class="hero"'), html.indexOf('</header>')))
+      assert.ok(!said.includes('Win.'), said)
+      assert.ok(said.includes('Play.') && said.includes('Give.'))
+    } finally {
+      await late.close()
     }
   })
 

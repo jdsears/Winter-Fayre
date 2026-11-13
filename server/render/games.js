@@ -13,7 +13,7 @@ import { CREST, crestImg } from '../crest.js'
 import { appealHtml, ICONS } from './appeal.js'
 import { APPEAL } from '../../shared/appeal.js'
 import { GAMES } from '../../shared/games.js'
-import { prizeLine, FOOTBALL, ONE_EACH, footballWords } from '../../shared/prizes.js'
+import { prizeLine, FOOTBALL, ONE_EACH, footballWords, footballHero } from '../../shared/prizes.js'
 import { shootoutConfig } from '../../client/shootout/config.js'
 import { renderShootoutSection } from '../../client/shootout/section.js'
 
@@ -65,6 +65,10 @@ export function arcadeHtml({ football = null } = {}) {
   // fills it with the 3D (client/story): until then, and where 3D will
   // not run, it is a winter's night with the five things drawn in gold.
   const still = ['tables', 'water', 'posts', 'goals', 'covers'].map(key => ICONS[key]).join('')
+  // The football has a line of its own at the head of the page, between
+  // playing and giving (John, 13 November 2026).
+  const footballGame = GAMES.find(g => g.key === FOOTBALL.game)
+  const win = footballGame ? footballHero(football, footballGame.title.toLowerCase()) : ''
   return `<a class="skip" href="#games">Skip to the games</a>
 <main>
 <div class="lead" data-story-root>
@@ -76,7 +80,8 @@ export function arcadeHtml({ football = null } = {}) {
   <div class="wrap">
     <div class="wm host">${crestImg({ shown: 96 })}<span>${esc(SITE.host)}</span></div>
     <h1>${esc(SITE.short)} <em>Sports Arcade</em></h1>
-    <p class="hero-two"><b>Play.</b> Quick sports games on your phone. Beat a game's target and show your screen at the sports stall to claim a sweet. ${esc(ONE_EACH)}</p>
+    <p class="hero-two"><b>Play.</b> Quick sports games on your phone. Beat a game's target and show your screen at the sports stall to claim a sweet. ${esc(ONE_EACH)}</p>${win ? `
+    <p class="hero-two"><b>Win.</b> ${esc(win)}</p>` : ''}
     <p class="hero-two"><b>Give.</b> Every game is in aid of the PSA's ${esc(APPEAL.name)}, which buys sports equipment for the College.</p>
     <p class="hero-cue">Scroll down for the appeal's story, then the games.</p>
   </div>
