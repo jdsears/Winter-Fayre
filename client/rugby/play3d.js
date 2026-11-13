@@ -7,7 +7,7 @@
 // place in one is a place in the other.
 
 import {
-  KICKS, POSTS, BALL_R, kickSetup, shotFromSwipe, ballAt, crossing, outcome, metresFor, SAID, readBest, keepBest,
+  KICKS, POSTS, BALL_R, kickSetup, shotFromSwipe, ballAt, crossing, outcome, metresFor, SAID, readBest, keepBest, WIND_MOST,
 } from './rules.js'
 import { GOAL } from '../shootout/physics.js'
 import { project } from '../shootout/camera.js'
@@ -89,7 +89,8 @@ export async function playRugby3D(root, win = window) {
   const hud = () => {
     stage.set('now', over)
     stage.set('kick', Math.min(kick + 1, KICKS))
-    stage.note(windWords(setup.wind), setup.wind)
+    // The arrow grows with the wind: one, two or three heads.
+    stage.note(windWords(setup.wind), (setup.wind / WIND_MOST) * 9)
   }
 
   function finish() {

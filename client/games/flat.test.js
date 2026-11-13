@@ -66,7 +66,7 @@ describe('the flat stadium, drawn from wherever a game stands', () => {
     }),
     ...[[1.3, 0], [3.7, 0.95], [3.7, -0.95], [2.5, 0.6]].map(([d, turn]) => {
       const spot = { d, turn }
-      return { name: `netball from ${d} metres, turned ${turn}`, paint: paintNetball, state: { view: netballCamera(spot), ball: { x: HOOP.x, y: 1.15, z: HOOP.z + d }, hoop: HOOP } }
+      return { name: `netball from ${d} metres, turned ${turn}`, paint: paintNetball, state: { view: netballCamera(spot), ball: { x: HOOP.x, y: 1.15, z: HOOP.z + d }, hoop: { ...HOOP, swish: 0.5 }, arms: { at: { x: HOOP.x + Math.sin(turn) * d, y: 1.15, z: HOOP.z + Math.cos(turn) * d }, lift: turn > 0 ? 1 : 0 } } }
     }),
     // Cricket: the bowler running in with the ball, the ball at the bat
     // as the bat comes down to it, and a broken wicket with the ball gone by.

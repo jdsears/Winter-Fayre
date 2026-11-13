@@ -4,8 +4,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   KICKS, POSTS, SPOTS, SPEED, BEND_MAX, kickSetup, shotFromSwipe, launch, ballAt, crossing, outcome, metresFor, MOST_METRES,
-  SAID, BEST_KEY, readBest, keepBest,
-} from './rules.js'
+  SAID, BEST_KEY, readBest, keepBest, WIND_MOST } from './rules.js'
 
 const always = (v) => () => v
 // A straight swipe up the screen from (x, y) by (dx, up).
@@ -26,10 +25,34 @@ describe('the five kicks', () => {
     expect(SPOTS[0]).toEqual({ d: 18, x: 0, wind: [0, 0] })
   })
 
+  it('the wind rises steeply: a kick aimed at the middle of the posts is blown wide from the fourth on, and every kick can still be made by aiming into the wind', () => {
+    for (let k = 0; k < SPOTS.length; k++) {
+      for (const wind of SPOTS[k].wind) {
+        const setup = { kick: k, d: SPOTS[k].d, x0: SPOTS[k].x, wind }
+        const straight = outcome(setup, { aim: 0, power: 1, bend: 0 })
+        if (k >= 3) expect(straight, `kick ${k + 1} in a wind of ${wind}`).toBe('wide')
+        if (k === 0) expect(straight).toBe('over')
+        // Somewhere upwind of the posts there is an aim that goes over, at full power.
+        let made = null
+        for (let aim = 0; aim >= -30 && made === null; aim -= 0.25) if (outcome(setup, { aim, power: 1, bend: 0 }) === 'over') made = aim
+        expect(made, `kick ${k + 1} in a wind of ${wind}`).not.toBeNull()
+        // From the fourth kick it is well off the middle, and on the last
+        // in its strongest wind it is outside the upwind post.
+        if (k >= 3) expect(made).toBeLessThan(-0.5)
+        if (k === 4 && wind === SPOTS[4].wind[1]) expect(made).toBeLessThan(-2.8)
+        // But never so far that the place to aim at is off a phone's
+        // screen, which shows eight metres or so either side of the posts.
+        expect(made).toBeGreaterThan(-7.5)
+      }
+    }
+    expect(WIND_MOST).toBe(SPOTS[4].wind[1])
+    expect(WIND_MOST).toBeGreaterThanOrEqual(12)
+  })
+
   it('the first is straight in front with no wind; the rest fall to either side with the wind either way', () => {
     expect(kickSetup(always(0.3), 0)).toEqual({ kick: 0, d: 18, x0: 0, wind: 0 })
-    expect(kickSetup(always(0.1), 4)).toEqual({ kick: 4, d: 34, x0: -19, wind: -7 })
-    expect(kickSetup(always(0.9), 4)).toEqual({ kick: 4, d: 34, x0: 19, wind: 9 })
+    expect(kickSetup(always(0.1), 4)).toEqual({ kick: 4, d: 34, x0: -19, wind: -12 })
+    expect(kickSetup(always(0.9), 4)).toEqual({ kick: 4, d: 34, x0: 19, wind: 14 })
     for (let k = 1; k < KICKS; k++) {
       for (const r of [0, 0.25, 0.5, 0.75, 0.99]) {
         const s = kickSetup(always(r), k)
@@ -161,7 +184,7 @@ describe('what counts', () => {
       }
     }
     // The last kick, aimed straight at the middle in its wind, is blown wide.
-    expect(kick({ kick: 4, d: 34, x0: 19, wind: 9 }, { aim: 0, power: 1 })).not.toBe('over')
+    expect(kick({ kick: 4, d: 34, x0: 19, wind: SPOTS[4].wind[1] }, { aim: 0, power: 1 })).not.toBe('over')
   })
 
   it('a kick that counts adds the metres it was kicked from', () => {

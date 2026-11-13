@@ -13,6 +13,7 @@ import { tally } from '../games/count.js'
 import { createGoBoard } from '../games/board.js'
 import { othersFor } from '../../shared/games.js'
 import { paintNetball } from './paint.js'
+import { liftAt } from './arms.js'
 
 // The middle of the ring, held out in front of the post.
 export const HOOP = { x: 0, y: RING.height, z: GOAL.lineZ + 0.24 }
@@ -67,6 +68,7 @@ export async function playNetball3D(root, win = window) {
   let stage = null
   let board = null
   let clock = 0
+  let lowered = -9 // the clock when the arms last came down for a new ball
 
   const hud = () => {
     stage.set('now', goals)
@@ -114,7 +116,8 @@ export async function playNetball3D(root, win = window) {
         stage.cheer(2)
         stage.confetti(40)
       }
-      stage.prompt('')
+      // A goal is said where a miss's hint is: there is no mistaking it.
+      stage.prompt('Goal!')
     } else {
       if (result === 'rim') stage.audio.clang()
       stage.prompt(HINTS[result])
@@ -125,7 +128,10 @@ export async function playNetball3D(root, win = window) {
   // The ball is back in the hands: from a new place after a goal.
   function nextBall() {
     const scored = shot?.result === 'goal'
+    // The arms come down from where they were, to the ball that is now in hand.
+    lowered = clock
     shot = null
+    if (scored) stage.prompt('')
     if (left <= 0) { finish(); return }
     if (scored) {
       spot = spotFor(goals)
@@ -242,7 +248,11 @@ export async function playNetball3D(root, win = window) {
         if (after > (shot.result === 'goal' ? 0.42 : 0.5)) nextBall()
       }
     }
-    return { view: cam, taker: null, keeper: null, holding: false, ball, aim: null, hoop: HOOP }
+    // The shooter's arms: up with the shot, and down again for the next ball.
+    const lift = shot ? liftAt(clock - shot.at) : Math.max(0, 1 - (clock - lowered) / 0.18)
+    // The net swishes and the ring glows as a goal goes through.
+    const swish = shot && shot.result === 'goal' && shot.arrived ? clamp((clock - shot.at - FLIGHT) / 0.4, 0, 1) : 0
+    return { view: cam, taker: null, keeper: null, holding: false, ball, aim: null, hoop: { ...HOOP, swish }, arms: over ? null : { at: hands, lift } }
   })
   return stage
 }
