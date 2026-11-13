@@ -10,6 +10,8 @@ import { esc, attr } from './html.js'
 import { snowBand } from './layout.js'
 import { SITE, COLOURS } from '../site.js'
 import { CREST, crestImg } from '../crest.js'
+import { appealHtml } from './appeal.js'
+import { APPEAL } from '../../shared/appeal.js'
 import { GAMES } from '../../shared/games.js'
 import { prizeLine } from '../../shared/prizes.js'
 import { shootoutConfig } from '../../client/shootout/config.js'
@@ -50,17 +52,22 @@ function tileArt(kind) {
 
 export function arcadeHtml() {
   const tiles = GAMES.map(g => `<li class="gt"><a href="${attr(g.href)}">${tileArt(g.key)}<span class="gt-b"><span class="gt-t">${esc(g.title)}</span><span class="gt-p">${esc(g.text)}</span>${prizeLine(g.key) ? `<span class="gt-w">${esc(prizeLine(g.key))}</span>` : ''}<span class="btn y">${esc(g.play)}</span></span></a></li>`).join('')
-  return `<header class="hero" id="top">
+  // The story of the appeal comes first: the games are in aid of it, and
+  // a visitor scrolls through it on the way to them (John, 13 November
+  // 2026). A link for a keyboard goes straight to the games.
+  return `<a class="skip" href="#games">Skip to the games</a>
+<header class="hero" id="top">
   <div class="wrap">
     <div class="wm host">${crestImg({ shown: 96 })}<span>${esc(SITE.host)}</span></div>
     <h1>${esc(SITE.short)} <em>Sports Arcade</em></h1>
-    <p>Quick sports games to play on your phone. Beat a game's target and show your screen at the sports stall to claim a sweet, and put your three letters on today's leaderboard.</p>
+    <p>Quick sports games to play on your phone, in aid of the PSA's ${esc(APPEAL.name)}. Beat a game's target and show your screen at the sports stall to claim a sweet.</p>
   </div>
   ${snowBand({ w: 1600, h: 90, count: 96 })}
 </header>
 <main>
+${appealHtml()}
 <section id="games" class="band deep arcade"><div class="wrap">
-  <h2 class="vh">The games</h2>
+  <h2>The <em>games</em></h2>
   <ul class="gts">${tiles}</ul>
 </div></section>
 </main>`
@@ -79,7 +86,12 @@ function stadiumAttrs(ticket) {
   return ` data-boards="${attr(JSON.stringify(SITE.boards))}" data-top-sign="${attr(JSON.stringify(sign))}"${ticket ? ` data-ticket="${attr(ticket)}"` : ''}`
 }
 
-const more = '<div class="cta"><a class="btn o" href="/">More games</a></div>'
+// Back to the games menu, not to the top of the arcade: the story of the
+// appeal is scrolled through once, on arrival. And one line for
+// grown-ups on what the games are in aid of.
+const appealLine = `<p class="appeal-line">${esc(APPEAL.line)} <a href="/#appeal">${esc(APPEAL.more)}</a></p>`
+const more = `<div class="cta"><a class="btn o" href="/#games">More games</a></div>
+  ${appealLine}`
 
 // The penalty shootout's settings, in the shape its modules read
 // (client/shootout/config.js).
@@ -101,7 +113,10 @@ export function penaltiesConfig() {
 // and which opens the game full screen (client/shootout). A link ending
 // #play opens the game straight away.
 function penaltiesHtml({ ticket = null } = {}) {
-  return renderShootoutSection(penaltiesConfig(), { id: 'penalties' }).replace(' data-shootout=', `${stadiumAttrs(ticket)} data-shootout=`)
+  return renderShootoutSection(penaltiesConfig(), { id: 'penalties' })
+    .replace(' data-shootout=', `${stadiumAttrs(ticket)} data-shootout=`)
+    // The line on what the games are in aid of, under the shootout's own way back.
+    .replace('<noscript><p class="shootout-status">', `${appealLine}\n      <noscript><p class="shootout-status">`)
 }
 
 // Keepy-uppies: a canvas the page's script plays the flat game on where

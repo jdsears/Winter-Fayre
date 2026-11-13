@@ -46,14 +46,17 @@ export function renderPrivacy(opts) {
   <h1 class="art">Your privacy on this site</h1>
   <p class="updated">Last updated ${PRIVACY_UPDATED}</p>
   <div class="prose">
-<p>This site is a small set of sports games for the Winter Fayre, run by the sports stall. It is made to be played by children, so it keeps as little as it can.</p>
+<p>This site is a small set of sports games for the Winter Fayre, run by the sports stall in aid of the Parent Staff Association's Sports Fund Appeal. It is made to be played by children, so it keeps as little as it can.</p>
 
 <h2>What the site keeps</h2>
 <ul>
 <li><strong>A leaderboard entry, if you choose to add one.</strong> Three letters, your score and the time. Nothing else is kept with it: no name, no account, no email address and nothing about your phone. Adding a score is your choice, and every game plays the same without it.</li>
 <li><strong>The leaderboards are for the day.</strong> They show the day's best scores here and on the screen at the sports stall. A new leaderboard starts each day and the one before is deleted, so the leaderboards are cleared after the fayre.</li>
-<li><strong>The site's own counts.</strong> The site counts how many times each page is looked at and how many times each game is started and finished, as a total for the day. It uses no cookie for this, keeps nothing about you or your phone, and cannot tell one visitor from another.</li>
+<li><strong>The site's own counts.</strong> The site counts how many times each page is looked at, how many times each game is started and finished, and how many times the Donate button is tapped, as a total for the day. It uses no cookie for this, keeps nothing about you or your phone, and cannot tell one visitor from another.</li>
 </ul>
+
+<h2>The Donate button</h2>
+<p>The appeal is for parents and carers. Its Donate button takes you to the Parent Staff Association's page on JustGiving, which is a different website with its own privacy notice. This site sends nothing about you with you: JustGiving is not told that you came from here, and this site never learns whether you gave, how much, or who you are. No money is taken on this site.</p>
 
 <h2>What stays on your phone</h2>
 <p>Your best score in each game, the three letters you last used and the player you picked in head to head are kept in your own browser, so the games can show them to you again. If you add a run of wins in head to head, your browser also keeps what the site needs to let that entry grow as you win. None of this is sent anywhere unless you add a score to a leaderboard. Clearing this site's data in your browser removes it.</p>

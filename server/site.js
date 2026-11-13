@@ -1,8 +1,9 @@
 // The site's own names, words and colours, in one place.
 //
 // The name of the site is "Winter Fayre Sports Arcade". The boards round
-// the pitch read "Wymondham College PSA" and "Winter Fayre", as John
-// asked (13 November 2026). The crest of the College's Parent Staff
+// the pitch read "Wymondham College PSA", "Winter Fayre" and "Sports Fund
+// Appeal", as John asked (13 November 2026): the games are in aid of the
+// PSA's appeal (shared/appeal.js). The crest of the College's Parent Staff
 // Association, which John supplied and has permission to use, is the
 // one picture the site holds (crest.js).
 
@@ -13,7 +14,7 @@ export const SITE = {
   host: 'Wymondham College PSA',
   // The words on the boards round the pitch, turn and turn about, and on
   // the big sign across the stand.
-  boards: ['Wymondham College PSA', 'Winter Fayre'],
+  boards: ['Wymondham College PSA', 'Winter Fayre', 'Sports Fund Appeal'],
   sign: { name: 'Winter Fayre', over: 'Wymondham College PSA' },
   description: 'Quick sports games to play on your phone at the Winter Fayre.',
 }

@@ -12,6 +12,8 @@
 //   GET  /styles/...       the stylesheet
 //   GET  /icon.svg         the site's icon, a snowflake
 //   GET  /media/badge/...  the PSA's crest, the one picture the site holds (crest.js)
+//   GET  /donate           counts a tap on Donate and sends the visitor on to the PSA's
+//                          page on JustGiving (shared/appeal.js)
 //   GET  /robots.txt       search engines are kept out
 //   GET  /health           for Railway: the service is up
 //   GET  /api/board/<game> a game's leaderboard for the day, and a ticket for a go
@@ -39,6 +41,7 @@ import { qrSvg } from './qr.js'
 import { GAMES, GAME_KEYS, gameByKey } from '../shared/games.js'
 import { COLOURS } from './site.js'
 import { CREST } from './crest.js'
+import { APPEAL } from '../shared/appeal.js'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -48,6 +51,9 @@ export const COUNTED = {
   '/': 'The arcade',
   ...Object.fromEntries(GAMES.map(g => [g.path, g.title])),
   '/privacy': 'Privacy',
+  // Not a page: a tap on Donate, counted the same anonymous way before
+  // the visitor is sent on to the PSA's page on JustGiving.
+  [APPEAL.path]: 'Taps on Donate',
 }
 
 // How many of a board's entries the TV shows.
@@ -150,6 +156,16 @@ export function createApp({ origin = 'http://localhost:3000', production = false
     immutable: true,
     maxAge: '365d',
   }))
+
+  // A tap on Donate: counted as one more for the day, by nothing but its
+  // name, and sent on to the PSA's page on JustGiving. Nothing about the
+  // visitor is kept or passed on.
+  app.get(APPEAL.path, (req, res) => {
+    if (!isMachine(req.headers['user-agent'])) counts.page(APPEAL.path)
+    res.set('Cache-Control', 'no-store')
+    res.set('Referrer-Policy', 'no-referrer')
+    res.redirect(302, APPEAL.url)
+  })
 
   app.get('/robots.txt', (req, res) => {
     res.set('Cache-Control', 'public, max-age=300')

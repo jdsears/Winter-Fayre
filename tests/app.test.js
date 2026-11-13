@@ -51,10 +51,11 @@ describe('the pages', () => {
   test('each game\'s page carries the boards\' words, the sign and a ticket, and a way back', async () => {
     for (const g of GAMES) {
       const html = await (await app.get(g.path)).text()
-      assert.match(html, /data-boards="\[&quot;Wymondham College PSA&quot;,&quot;Winter Fayre&quot;\]"/, g.key)
+      assert.match(html, /data-boards="\[&quot;Wymondham College PSA&quot;,&quot;Winter Fayre&quot;,&quot;Sports Fund Appeal&quot;\]"/, g.key)
       assert.match(html, /data-top-sign="\{&quot;name&quot;:&quot;Winter Fayre&quot;,&quot;over&quot;:&quot;Wymondham College PSA&quot;,&quot;badge&quot;:&quot;\/media\/badge\/[0-9a-f]{16}\.webp&quot;\}"/, g.key)
       assert.match(html, /data-ticket="[0-9a-z]+\.[\w-]{12}\.[\w-]{22}"/, g.key)
-      assert.match(html, /<a class="btn o" href="\/">More games<\/a>/, g.key)
+      // Back to the games menu, not the top of the arcade.
+      assert.match(html, /<a class="btn o" href="\/#games">More games<\/a>/, g.key)
       assert.match(html, /<noscript>/, g.key)
       assert.match(html, /<a class="bar-play" href="\/">All games<\/a>/, g.key)
     }

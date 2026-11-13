@@ -54,7 +54,7 @@ p{margin:0 0 14px;max-width:60ch}
 .hero p{font-size:19px;color:var(--on-primary-soft);max-width:44ch;margin-bottom:0}
 .snow{display:block;width:100%;height:84px;margin-top:6px}
 .snow .sfi{stroke:var(--ice)}.snow .sfg{stroke:var(--accent)}.snow .sfw{stroke:#fff}.snow .sg{fill:var(--accent)}.snow .sw{fill:#fff}
-.arcade{padding-top:8px}
+.arcade{padding-top:38px}
 footer{background:var(--primary-deep);color:var(--on-primary-muted);padding:28px 0 calc(36px + env(safe-area-inset-bottom));font-size:16px;border-top:6px solid var(--accent)}
 footer p{margin-bottom:6px}
 footer b{color:#fff;font-family:var(--display);font-size:22px;letter-spacing:.04em;text-transform:uppercase}
@@ -92,6 +92,43 @@ footer .fl{display:flex;flex-wrap:wrap;gap:0 22px}
 .nums form{margin:0}
 .nums .btn.off{margin:0;min-height:44px;padding:0 16px;font-size:16px;background:#fff}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}`
+
+// The Sports Fund Appeal on the arcade page (render/appeal.js): the PSA's
+// own plum and gold, a part of the story to a card, one column on a
+// phone and two from 900. Every line is 16 pixels or more.
+const APPEAL_CSS = `.story{position:relative;background:linear-gradient(178deg,#2f1a2c 0%,#5c3351 22%,#4b2a43 68%,#241524 100%);color:#fff;padding:44px 0 40px;overflow:hidden}
+.story .wrap{position:relative;z-index:1}
+.st-eye{display:flex;align-items:center;justify-content:center;gap:14px;margin:0;font-family:var(--display);font-weight:700;letter-spacing:.3em;font-size:16px;text-transform:uppercase;color:var(--accent);text-align:center}
+.st-eye::before,.st-eye::after{content:"";flex:none;height:2px;width:30px;background:var(--accent);opacity:.85}
+.story h2{font-size:clamp(38px,10.6vw,80px);text-align:center;margin:14px 0 14px}
+.story h2 em{display:block}
+.st-lede{font-size:19px;line-height:1.5;color:#ffffffe0;text-align:center;max-width:34ch;margin:0 auto}
+.beats{list-style:none;margin:30px auto 0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:18px;max-width:560px}
+.beat{min-width:0;background:#1b0d1ab3;border:1px solid #ffffff2b;border-radius:22px;padding:22px 20px 18px;box-shadow:0 14px 40px #0004}
+.beat-i{display:block;color:var(--accent)}
+.beat>.beat-i{margin-bottom:10px}
+.beat h3{font-size:32px;margin:0 0 10px}
+.beat p{font-size:18px;line-height:1.5;color:#ffffffe6;margin:0 0 10px}
+.beat-k{font-family:var(--display);font-weight:800;font-size:28px!important;line-height:1.05!important;text-transform:uppercase;color:var(--accent)!important;margin:14px 0 4px!important}
+.fund{list-style:none;margin:14px 0 12px;padding:0;display:grid;gap:16px}
+.fund li{display:grid;grid-template-columns:56px minmax(0,1fr);gap:14px;align-items:start}
+.fund-t{display:block;min-width:0}
+.fund-t b{display:block;font-family:var(--display);font-weight:800;font-size:23px;line-height:1.1;text-transform:uppercase;letter-spacing:.01em}
+.fund-t .am{font-size:38px;line-height:.95;color:var(--accent);margin-bottom:2px}
+.fund-t span{display:block;font-size:17px;line-height:1.45;color:#ffffffd9;margin-top:4px}
+.st-small{font-size:16px!important;color:#ffffffcc!important}
+.give .btn{display:flex;width:100%;min-height:58px;font-size:20px;margin:14px 0 8px}
+.st-to{font-family:var(--display);font-weight:700;font-size:18px!important;letter-spacing:.02em;text-align:center;color:#fff!important;overflow-wrap:anywhere}
+.st-ch{margin-top:14px!important;padding-top:12px;border-top:1px solid #ffffff2b}
+.st-next{text-align:center;margin:28px 0 0}
+.arcade h2{font-size:clamp(34px,9vw,60px);margin:0 0 18px}
+.skip{position:absolute;left:12px;top:-80px;z-index:20;display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;background:var(--accent);color:var(--ink);font-weight:700;text-decoration:none}
+.skip:focus{top:12px}
+.gs-appeal{margin:14px 0 0;padding-top:12px;border-top:1px solid #ffffff2b;font-size:16px;line-height:1.45;color:#ffffffd9;text-align:center}
+.gs-appeal a{display:flex;align-items:center;justify-content:center;min-height:44px;width:max-content;max-width:100%;margin:0 auto;padding:0 12px;color:var(--accent);font-weight:700}
+.appeal-line{margin:18px 0 0;font-size:16px;line-height:1.5;color:var(--on-primary-soft)}
+.appeal-line a{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);font-weight:700}
+@media (min-width:900px){.beats{max-width:1040px;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}.st-lede{font-size:21px}}`
 
 // The arcade's tiles: one column on a phone, two from 560 and three from 900.
 const TILES_CSS = `.gts{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
@@ -312,4 +349,4 @@ const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display
 @keyframes tv-in{from{opacity:0;transform:translateY(1.2vh)}}
 @media (prefers-reduced-motion:reduce){.js .tvb.on{animation:none}}`
 
-export const SITE_CSS = [BASE_CSS, TILES_CSS, STAGE_CSS, HEADS_CSS, GAME_CSS, SHOOTOUT_CSS, TV_CSS].join('\n')
+export const SITE_CSS = [BASE_CSS, APPEAL_CSS, TILES_CSS, STAGE_CSS, HEADS_CSS, GAME_CSS, SHOOTOUT_CSS, TV_CSS].join('\n')

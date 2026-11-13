@@ -22,6 +22,8 @@ import { pageColours } from '../shootout/index.js'
 import { HOME_KEEPER_LOOK } from '../shootout/looks.js'
 import { boardLogosFrom, topSignFrom } from '../shootout/boards.js'
 import { drawPrize, clearPrize } from './prize.js'
+import { appealLine } from './appeal.js'
+import { MENU } from '../../shared/games.js'
 
 export function webglAvailable(doc = globalThis.document) {
   try {
@@ -119,7 +121,7 @@ export async function openStage({ name, hud = [], others = [], boards = [], spor
   const sound = el(doc, 'button', { type: 'button', class: 'gs-b', role: 'switch', 'aria-checked': 'false' }, 'Sound ', soundState)
   const musicState = el(doc, 'span', { class: 'gs-on' }, 'On')
   const musicSwitch = el(doc, 'button', { type: 'button', class: 'gs-b', role: 'switch', 'aria-checked': 'true' }, 'Music ', musicState)
-  const leave = el(doc, 'a', { class: 'gs-b', href: '/' }, 'Leave')
+  const leave = el(doc, 'a', { class: 'gs-b', href: MENU }, 'Leave')
   // A line under the top bar for what a kick must reckon with: the wind,
   // with an arrow for the way it blows.
   const noteArrow = el(doc, 'span', { class: 'gs-arrow', 'aria-hidden': 'true', hidden: true })
@@ -136,7 +138,9 @@ export async function openStage({ name, hud = [], others = [], boards = [], spor
   const endPrize = el(doc, 'p', { class: 'gs-prize', hidden: true })
   const end = el(doc, 'div', { class: 'gs-end', hidden: true },
     endTitle, endLine, endPrize, endExtra, again,
-    el(doc, 'p', { class: 'gs-more' }, ...others.map(o => el(doc, 'a', { class: 'btn o', href: o.href }, o.label))))
+    el(doc, 'p', { class: 'gs-more' }, ...others.map(o => el(doc, 'a', { class: 'btn o', href: o.href }, o.label))),
+    // And, last, what the games are in aid of.
+    appealLine(doc).root)
   const status = el(doc, 'p', { class: 'vh', role: 'status' })
   const root = el(doc, 'div', { class: 'gs', role: 'dialog', 'aria-modal': 'true', 'aria-label': name },
     pitch, el(doc, 'div', { class: 'gs-top' }, hudEl, el(doc, 'div', { class: 'gs-btns' }, sound, musicSwitch, leave)),
@@ -217,7 +221,7 @@ export async function openStage({ name, hud = [], others = [], boards = [], spor
   const onUp = (e) => { if (onPointer) { const p = point(e); onPointer('up', p.x, p.y) } }
   const onCancel = () => { if (onPointer) onPointer('cancel', 0, 0) }
   const onKeyDown = (e) => {
-    if (e.key === 'Escape') { win.location.assign('/'); return }
+    if (e.key === 'Escape') { win.location.assign(MENU); return }
     if (e.target.closest?.('button, a, input')) return
     if ([' ', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
       e.preventDefault()

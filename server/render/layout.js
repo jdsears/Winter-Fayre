@@ -122,7 +122,7 @@ export function barHtml({ home = false } = {}) {
 export function footerHtml() {
   return `<footer><div class="wrap">
   <p><b>${esc(SITE.name)}</b><br>${esc(SITE.host)}</p>
-  <p class="fl"><a class="mail" href="/">All games</a><a class="mail" href="/privacy">Privacy</a></p>
+  <p class="fl"><a class="mail" href="/#games">All games</a><a class="mail" href="/privacy">Privacy</a></p>
 </div></footer>`
 }
 

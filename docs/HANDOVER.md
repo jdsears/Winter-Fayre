@@ -1,6 +1,8 @@
 # Handover: the Winter Fayre Sports Arcade
 
-A small website of quick sports games for John's sports stall at the Winter Fayre on Saturday 14 November 2026. Visitors play on their own phones, reached by a QR code on the stall, and a TV at the stall shows the day's leaderboards. Sweets are given as prizes. The point is engagement: a conversation starter about sport.
+A small website of quick sports games for John's sports stall at the Winter Fayre on Saturday 14 November 2026. Visitors play on their own phones, reached by a QR code on the stall, and a TV at the stall shows the day's leaderboards. Sweets are given as prizes.
+
+**The purpose of it all is to guide donations to the Parent Staff Association's Sports Fund Appeal** (John, 13 November 2026): to draw attention to what the PSA raises for sports equipment, that much of the larger equipment is paid for this way, and to encourage parents to give once or monthly. The games are the way in; the appeal is the point.
 
 The repository is **jdsears/Winter-Fayre**. Work only in it. It was built from `jdsears/morleyu14`, which was read and never changed.
 
@@ -12,6 +14,10 @@ The repository is **jdsears/Winter-Fayre**. Work only in it. It was built from `
 4. **Every game is winter themed with a splash of Christmas** (13 November 2026). The stadium is a winter night: stars, falling snow, snow on the boards, fairy lights, a Christmas tree either side of the goal, and Christmas hats in the crowd and on the keeper. The visitor's player wears a Christmas red with white trim, the keeper an elf's green. The games' tune is the chorus of Jingle Bells, made on the spot like the rest of the sound.
 5. **Pull requests may be merged once the checks pass** (13 November 2026). For this project only, because the fayre is the next day.
 6. **The prizes are harder than first suggested: 80%** (13 November 2026). John asked for them to be more difficult, at 80%. That is read as four in five where a game has a fixed number of tries, and as double the first suggestion where it has none: penalties 4 of your own 5 kicks, free kicks 8 of 10, keepy-uppies 20, head to head a win, rugby 4 of 5 kicks, netball 8 goals in the thirty seconds (the first suggestion was 5; a faultless thirty seconds is about 18), cricket 28 runs from the six balls (the first suggestion was 15; six sixes is 36, and 28 is the nearest score to 80% of that which can be made without a single). They sit in one file, `shared/prizes.js`, so they are easy to change: one number each.
+
+7. **The appeal comes first** (13 November 2026). The games are in aid of the PSA's Sports Fund Appeal. Its story is told on the arcade page before the games menu, so a visitor scrolls through it on the way. After a game, links go straight back to the games menu, so the story is scrolled through once. Every game's finish panel carries one line for grown-ups with a link to the appeal on this site. The boards round the pitch also read "Sports Fund Appeal". The stall's TV is to show the appeal full screen in turn with the leaderboards, and the story is to be scrolled through with a 3D scene behind it: both are still to come.
+8. **Donate goes to the plain JustGiving address** (13 November 2026): `justgiving.com/page/wymcol-psa-sports`, without the tags JustGiving adds to a copied link. The site's own count of taps on Donate says how many came from the arcade.
+9. **The site's address is `winterfayresports.co.uk`** (13 November 2026), bought through Cloudflare and pointed at Railway. It is live.
 
 ## What is built
 
@@ -29,8 +35,9 @@ The repository is **jdsears/Winter-Fayre**. Work only in it. It was built from `
 - **The QR code alone** at `/qr.svg`, to print for the stall. It is drawn by the server from the site's own address, so it is right whatever address the site is on.
 - **Prizes.** When a go reaches its game's number, the finish panel says "You have won a sweet. Show this screen at the sports stall to claim a sweet." with the time it was won, so the stall can see it is that go and not an old picture. A go that falls short is told what to aim for. The arcade's tiles and the TV say what wins a sweet in each game.
 - **The PSA's crest**, the one picture on the site: beside "Wymondham College PSA" at the top of the arcade page, at the top of the stall's TV screen, and on the big sign across the stand in every game, to the left of its words. It is a file of about eighteen kilobytes served by the site itself (`server/crest/psa.webp`, made from the picture John sent: the whole of it, 512 pixels square). If the PSA has a sharper original, replacing that one file with it (a square WebP) is all it takes.
+- **The Sports Fund Appeal** on the arcade page, between the heading and the games menu, in the PSA's plum and gold: why it matters, what has been funded (£8,500 for table tennis tables, £5,000 towards the cricket irrigation, £5,000 towards the rugby post protectors), what is being raised for now (football box goals and cricket pitch covers), and a **Donate on JustGiving** button with Gift Aid and the charity's number. The words and figures are the PSA's own and sit in one file, `shared/appeal.js`. The button goes to the site's own `/donate`, which counts the tap and sends the visitor on to JustGiving in a new tab. No money is taken on the site, and nothing about the visitor is passed on.
 - **The privacy page** at `/privacy`.
-- **The numbers** at `/numbers`, behind `NUMBERS_PASSWORD`: anonymous daily totals of page views and games started and finished, and today's leaderboards with a **Take off** button beside every entry. If three letters appear that should not be on show, John opens `/numbers` on his phone, taps Take off, and the entry goes from the game and from the TV within a quarter of a minute.
+- **The numbers** at `/numbers`, behind `NUMBERS_PASSWORD`: anonymous daily totals of page views, games started and finished and taps on Donate, and today's leaderboards with a **Take off** button beside every entry. If three letters appear that should not be on show, John opens `/numbers` on his phone, taps Take off, and the entry goes from the game and from the TV within a quarter of a minute.
 
 ## How the day is kept
 

@@ -4,19 +4,21 @@
 
 ## What this is
 
-A small website of quick sports games for a sports stall at a school Winter Fayre on Saturday 14 November 2026. Visitors play on their own phones (a QR code on the stall leads to the site) and a TV at the stall shows the day's leaderboards. Sweets are given as prizes. It is a site and a deployment of its own: a Node 22 service that draws every page on the server, with Vite building the page script and three.js drawing the stadium. No database.
+A small website of quick sports games for a sports stall at a school Winter Fayre on Saturday 14 November 2026. The stall and the games are in aid of the Parent Staff Association's Sports Fund Appeal: their purpose is to guide parents to donate (John, 13 November 2026). Visitors play on their own phones (a QR code on the stall leads to the site) and a TV at the stall shows the day's leaderboards. Sweets are given as prizes. It is a site and a deployment of its own: a Node 22 service that draws every page on the server, with Vite building the page script and three.js drawing the stadium. No database.
 
 It was built from John's repository `jdsears/morleyu14`, which was read and never changed. Never push to, open pull requests on, or change `jdsears/morleyu14` or `jdsears/football-hub` from here.
 
 ```
 shared/
   games.js            the arcade's games, one list read by the server and the page script
+  appeal.js           the PSA's Sports Fund Appeal: its words, figures and where a gift is made
   prizes.js           the sweets: the score that wins one in each game, set in this one place
 server/
   index.js            starts the service (PORT, SITE_ORIGIN, NODE_ENV, NUMBERS_PASSWORD, DATA_DIR)
   app.js              the routes: the pages, the TV screen (/tv) and its code (/qr.svg), the
                       leaderboards (/api/board/<game>, /api/boards), the numbers (/api/count,
-                      /numbers), the crest (/media/badge/...), /health, robots
+                      /numbers), the crest (/media/badge/...), /donate (counts a tap and sends
+                      the visitor on to the PSA's page on JustGiving), /health, robots
   site.js             the site's names, the boards' words and the winter colours
   store.js            where the little the site keeps is kept: memory, and a small file if there is a folder
   board.js            the leaderboards: three letters, a score and the time, a board a game a day
@@ -24,7 +26,8 @@ server/
   security.js         Content-Security-Policy (with a nonce per response) and the other headers
   qr.js               the QR code, drawn as SVG from the site's own address
   crest.js            the PSA's crest, the one picture the site holds (crest/psa.webp)
-  render/             the pages: games.js (the arcade and each game's page), tv.js (the stall's TV
+  render/             the pages: games.js (the arcade and each game's page), appeal.js (the story
+                      of the appeal on the arcade page), tv.js (the stall's TV
                       screen), pages.js (privacy, not found), numbers.js, layout.js (head, top bar,
                       snow, footer), css.js, html.js
 client/               the page script (Vite): main.js, tv.js (the TV screen's turns and refresh),
@@ -66,6 +69,7 @@ This is a school event and children will play.
 - The privacy page (`server/render/pages.js`) says, in a few plain sentences, exactly what the site does. If what the site keeps changes, the page changes in the same piece of work.
 - An entry that should not be on show is taken off from the numbers page (`/numbers`, behind `NUMBERS_PASSWORD`): each of today's entries has a Take off button. The button is a plain form, accepted only with the password and only when it comes from the numbers page itself.
 - Every page is noindex, and robots.txt turns search engines away.
+- The appeal is for parents and carers, and no money is taken on this site. Its one Donate button goes to this site's own `/donate`, which counts the tap as an anonymous total and sends the visitor on to the PSA's page on JustGiving, saying nothing of where they came from. No page carries the address of another site. Inside a game, the line about the appeal links to the appeal on the arcade page, never straight to `/donate`: a child with the phone in hand is one step further from where money is given.
 
 ### Security
 
@@ -75,7 +79,9 @@ This is a school event and children will play.
 
 ### The look and the words
 
-- The site is called "Winter Fayre Sports Arcade". The boards round the pitch read "Wymondham College PSA" and "Winter Fayre", and the big sign carries both: John's instruction, 13 November 2026.
+- The site is called "Winter Fayre Sports Arcade". The boards round the pitch read "Wymondham College PSA", "Winter Fayre" and "Sports Fund Appeal", and the big sign carries the first two: John's instructions, 13 November 2026.
+- The appeal's words and figures are the PSA's own, from its JustGiving page and the slide John supplied, kept in one place (`shared/appeal.js`). Do not add to them or round them up. The appeal is shown in the PSA's plum and gold; the rest of the site keeps the winter palette.
+- On the arcade page the story of the appeal comes before the games menu, so a visitor scrolls through it on the way (John, 13 November 2026). Links back from a game go to the games menu (`/#games`), so it is scrolled through once, on arrival.
 - The crest of the College's Parent Staff Association is the one picture on the site. John supplied it and has said he has permission to use it (13 November 2026). It is used whole, as he sent it, on its own plum background: on the arcade page, on the TV screen and on the big sign in the stadium (`server/crest.js`). The picture he had was a soft one and he asked for it to be sharpened, so its blur has been undone as far as it can be without leaving marks; nothing was redrawn. Do not crop, recolour or redraw it, and do not put it anywhere else or use the College's colours for the site unless John asks.
 - A winter palette after the fayre's poster: deep navy, ice blue, white and a warm gold (`server/site.js`). Every game is winter themed with a splash of Christmas, as John asked: snow, fairy lights, Christmas trees and Christmas hats.
 - The games are original, in this site's own drawn style. Do not copy the name, look, characters or layout of any existing commercial game.
