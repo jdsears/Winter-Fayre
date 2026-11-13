@@ -10,6 +10,8 @@
 //
 // Nothing is sent anywhere: it only reads the day's leaderboards.
 
+import { footballTv } from '../shared/prizes.js'
+
 export const ROTATE_MS = 9000
 export const REFRESH_MS = 15000
 export const TOP = 10
@@ -26,6 +28,15 @@ export function cleanEntries(entries) {
     if (out.length >= TOP) break
   }
   return out
+}
+
+// How the football stands, from what the site answers, read with the
+// same care: { closed, leader } with a leader of three capital letters
+// and a whole score, or none. Null for anything else.
+export function cleanFootball(f) {
+  if (!f || typeof f !== 'object') return null
+  const leader = cleanEntries(f.leader ? [f.leader] : [])[0] || null
+  return { closed: f.closed === true, leader }
 }
 
 // The board after this one, round and round.
@@ -83,7 +94,15 @@ export function startTv(root, win = globalThis.window) {
       if (dayEl && typeof data.name === 'string') dayEl.textContent = data.name.slice(0, 40)
       for (const b of Array.isArray(data.boards) ? data.boards : []) {
         const section = sections.find(s => s.getAttribute('data-tv-board') === b?.key)
-        if (section) fill(section, b.entries)
+        if (!section) continue
+        fill(section, b.entries)
+        // The football's line, on the board that has one.
+        const line = section.querySelector('[data-tv-football]')
+        const football = cleanFootball(b.football)
+        if (line && football) {
+          line.textContent = footballTv(football)
+          line.classList.toggle('won', football.closed && Boolean(football.leader))
+        }
       }
     } catch { /* the wifi dropped: what is on the screen stays, and it is asked for again */ }
   }

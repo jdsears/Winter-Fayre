@@ -18,8 +18,9 @@ function shell({ nonce, assets, meta, body, home = false, script = true }) {
 }
 
 // The arcade: where the QR code lands.
-export function renderArcade(opts) {
-  return shell({ ...opts, home: true, meta: { title: SITE.name, description: SITE.description }, body: arcadeHtml() })
+// football is how the football stands on its leaderboard, or null.
+export function renderArcade({ football = null, ...opts }) {
+  return shell({ ...opts, home: true, meta: { title: SITE.name, description: SITE.description }, body: arcadeHtml({ football }) })
 }
 
 // One game's page. ticket is the first go's ticket for its leaderboard.
@@ -59,7 +60,7 @@ export function renderPrivacy(opts) {
 <p>The appeal is for parents and carers. Its Donate button takes you to the Parent Staff Association's page on JustGiving, which is a different website with its own privacy notice. This site sends nothing about you with you: JustGiving is not told that you came from here, and this site never learns whether you gave, how much, or who you are. No money is taken on this site.</p>
 
 <h2>What stays on your phone</h2>
-<p>Your best score in each game, the three letters you last used and the player you picked in head to head are kept in your own browser, so the games can show them to you again. If you add a run of wins in head to head, your browser also keeps what the site needs to let that entry grow as you win. None of this is sent anywhere unless you add a score to a leaderboard. Clearing this site's data in your browser removes it.</p>
+<p>Your best score in each game, the three letters you last used and the player you picked in head to head are kept in your own browser, so the games can show them to you again. So is whether you have won your sweet today (there is one sweet each), and, if you add a keepy-uppies score in time for the football, a four digit code that lets the stall see the winning score is yours. If you add a run of wins in head to head, your browser also keeps what the site needs to let that entry grow as you win. None of this is sent anywhere unless you add a score to a leaderboard. Clearing this site's data in your browser removes it.</p>
 
 <h2>What the site never does</h2>
 <ul>

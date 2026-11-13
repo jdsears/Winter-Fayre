@@ -5,6 +5,8 @@
 // then only the three letters, the score and the go's ticket. The three
 // letters last used are kept on this device, to fill the box next time.
 
+import { readClaims, keepClaim, footballFor } from './football.js'
+
 export const INITIALS_KEY = 'winterfayre:initials'
 export const TOP = 10
 
@@ -62,10 +64,14 @@ const el = (doc, tag, cls, text) => {
 }
 
 // Draws the board into its place in the finish panel. mine is the place
-// of the go just added, if it was.
-export function drawBoard(doc, into, board, { mine = 0, all = false, onMore = () => {}, title = null } = {}) {
+// of the go just added, if it was. On the football's board a line says
+// how the football stands, and whether it is this phone's to win or won
+// (claims: the codes this phone holds).
+export function drawBoard(doc, into, board, { mine = 0, all = false, onMore = () => {}, title = null, claims = [] } = {}) {
   const old = into.querySelector('.gs-lbw')
   const wrap = el(doc, 'div', 'gs-lbw')
+  const football = footballFor(board.football, claims)
+  if (football) wrap.append(el(doc, 'p', football.won ? 'gs-fb won' : football.mine ? 'gs-fb mine' : 'gs-fb', football.words))
   wrap.append(el(doc, 'p', 'gs-lbh', title || "Today's leaderboard"))
   if (!board.entries.length) {
     wrap.append(el(doc, 'p', 'gs-lbn', 'No one is on it yet. Be the first.'))
@@ -166,7 +172,7 @@ export function createGoBoard({ game, root, win = globalThis.window, say = () =>
       let shown = null
       let mine = 0
       let all = false
-      const redraw = () => { if (shown && go === goes) drawBoard(doc, into, shown, { mine, all, onMore: () => { all = true; redraw() } }) }
+      const redraw = () => { if (shown && go === goes) drawBoard(doc, into, shown, { mine, all, onMore: () => { all = true; redraw() }, claims: readClaims(store, shown.day) }) }
       fetchBoard(win, path).then((b) => {
         take(b.ticket)
         if (go !== goes) return
@@ -186,6 +192,8 @@ export function createGoBoard({ game, root, win = globalThis.window, say = () =>
               if (go !== goes) return
               if (out.ok) {
                 try { store?.setItem(INITIALS_KEY, initials) } catch { /* not kept: the box starts at AAA */ }
+                // An entry in time for the football comes with its code, for this phone to keep.
+                if (out.claim) keepClaim(store, out.day, { initials, score, claim: out.claim })
                 shown = out
                 mine = out.rank
                 all = all || out.rank > TOP

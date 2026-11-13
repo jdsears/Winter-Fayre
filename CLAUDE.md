@@ -12,7 +12,8 @@ It was built from John's repository `jdsears/morleyu14`, which was read and neve
 shared/
   games.js            the arcade's games, one list read by the server and the page script
   appeal.js           the PSA's Sports Fund Appeal: its words, figures and where a gift is made
-  prizes.js           the sweets: the score that wins one in each game, set in this one place
+  prizes.js           the prizes: the score that wins a sweet in each game, one sweet each, and the
+                      football for the best keepy-uppies score by 13:30, all set in this one place
 server/
   index.js            starts the service (PORT, SITE_ORIGIN, NODE_ENV, NUMBERS_PASSWORD, DATA_DIR)
   app.js              the routes: the pages, the TV screen (/tv) and its code (/qr.svg), the
@@ -62,7 +63,7 @@ npm run check        # build, then Playwright at 360, 375 and 390 wide, and side
 
 This is a school event and children will play.
 
-- The only thing kept from a visitor is a leaderboard entry they choose to add: three letters, a score and the time. Nothing else: no name, no account, no email, nothing about the device. Never keep anything else with an entry, never loosen the three letters to free text, and keep the list of refused letters (`server/board.js`).
+- The only thing kept from a visitor is a leaderboard entry they choose to add: three letters, a score and the time. Nothing else: no name, no account, no email, nothing about the device. What a phone remembers for itself (a best score, the three letters last used, the sweet it has won, a football code) stays on that phone. Never keep anything else with an entry, never loosen the three letters to free text, and keep the list of refused letters (`server/board.js`).
 - The leaderboards are for the day. A new board starts each day (UK time) and the day before is deleted when it does, so nothing is kept after the fayre. They are kept in the service's memory, and in a small file on a Railway volume if one is attached. Do not set up a storage bucket or a database unless John asks.
 - No analytics service, no advertising, no third-party cookies, no external fonts or scripts. The site sets no cookie at all. Its own anonymous daily totals of page views and game plays are fine (`server/counts.js`): nothing that identifies a visitor or a device, and a page or a game is counted only under a name fixed in the code. Never add anything to a count that could tell one visitor from another.
 - No photos or films of anyone, and no real child, parent or member of staff named anywhere, including tests and screenshots. Invented names only in tests. A test proves the repository holds no picture, film or sound file but the PSA's crest.
@@ -86,6 +87,8 @@ This is a school event and children will play.
 - A winter palette after the fayre's poster: deep navy, ice blue, white and a warm gold (`server/site.js`). Every game is winter themed with a splash of Christmas, as John asked: snow, fairy lights, Christmas trees and Christmas hats.
 - The games are original, in this site's own drawn style. Do not copy the name, look, characters or layout of any existing commercial game.
 - The prizes are set in one place, `shared/prizes.js`: the score that wins a sweet in each game. The finish panel, the arcade's tiles and the TV all read it. A winner is shown John's words: "Show this screen at the sports stall to claim a sweet."
+- One sweet each (John, 13 November 2026). The first go on a phone that reaches a game's number wins the sweet; the phone remembers it for the day, shows it on every finish panel and on the arcade page until it is collected, and the stall's helper taps "Stall: sweet given" twice on the winner's phone when it is handed over. All of that is kept in the phone's own storage (`client/games/prize.js`): the site is told nothing, and must never be.
+- The football (John, 13 November 2026): the best keepy-uppies score on the leaderboard by 13:30, UK time, wins a FIFA approved football. The leader at the cut-off has won and the board carries on. The phone that added an entry in time is told a four digit code for it, made from the entry and the service's own secret, and keeps it; the numbers page shows the leader's code, and nothing else ever does. Nothing more is kept with an entry for this. The ball is described in words and drawn in the site's own style: no maker's name, logo or photograph.
 - British English. No invented claims, names or facts. If words or a picture are missing, leave the space out and ask.
 - No em or en dashes, and no spaced hyphens, in content, UI text, comments, docs or commit messages. Scores are written "2 - 2", the one exception.
 - Plain English for John, calm in tone, with no exclamation marks, and numbered yes or no questions when he needs to decide something. He is not a coder.

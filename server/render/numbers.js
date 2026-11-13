@@ -12,6 +12,7 @@ import { headHtml, documentHtml } from './layout.js'
 import { GAMES, GAME_NAMES, dayTotal } from '../counts.js'
 import { SITE } from '../site.js'
 import { APPEAL } from '../../shared/appeal.js'
+import { FOOTBALL } from '../../shared/prizes.js'
 
 const DATE = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
 const dateOf = (day) => DATE.format(new Date(`${day}T12:00:00Z`))
@@ -29,10 +30,28 @@ function boardHtml(board) {
   ${rows ? `<div class="tw"><table><thead><tr><th scope="col">Place</th><th scope="col">Letters</th><th scope="col">Score</th><th scope="col"><span class="vh">Take off</span></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p>No one is on it yet.</p>'}`
 }
 
+const CLOCK = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Europe/London' })
+
+// The football: who leads, or has won, and the code their phone shows.
+// football: { until, closed, leader: { initials, score, at, code } | null }
+function footballHtml(football) {
+  if (!football) return ''
+  const { closed, leader } = football
+  const who = leader
+    ? `<p class="fbw"><b>${esc(leader.initials)}</b> with <b>${esc(leader.score)}</b>, added at ${esc(CLOCK.format(new Date(leader.at)))}. Winner's code: <b class="fbc">${esc(leader.code)}</b></p>
+  <p>The phone that added that score shows ${closed ? '"You have won the football"' : '"You are leading for the football"'} and, once it is won, this code. Give the football to the phone that shows the same code. If no phone can show it, the three letters and the score are all there is to go on.</p>`
+    : `<p>${closed ? `No score was on the leaderboard by ${esc(FOOTBALL.said)}.` : 'No one is on the leaderboard yet.'}</p>`
+  return `<h2 id="football">The football</h2>
+  <p>${closed ? `<strong>Closed at ${esc(FOOTBALL.said)}.</strong> The winner is the best keepy-uppies score that was on the leaderboard by then:` : `<strong>Open until ${esc(FOOTBALL.said)}.</strong> The best keepy-uppies score on the leaderboard by then wins ${esc(FOOTBALL.prize)}. Leading now:`}</p>
+  ${who}
+  <p>Taking an entry off below changes who leads, before the close or after it.</p>`
+}
+
 // names    { name: 'What it is called' } for each page that is counted
 // boards   today's leaderboards: [{ key, title, entries }]
 // removed  true when an entry has just been taken off, false when it could not be
-export function renderNumbers({ days, names, nonce, stylesheet, kept = 'memory', boards = [], removed = null }) {
+// football the football's leader and code (board.js, winner), or null
+export function renderNumbers({ days, names, nonce, stylesheet, kept = 'memory', boards = [], football = null, removed = null }) {
   const head = headHtml({ meta: { title: `Numbers: ${SITE.name}`, description: null }, stylesheet, nonce })
   const spans = [['Today', days.slice(0, 1)], ['Last 7 days', days.slice(0, 7)], ['Last 30 days', days.slice(0, 30)]]
   const cards = spans.map(([label, list]) => `<li class="num"><span class="nl">${label}</span><b>${sum(list, views)}</b> page views<br><b>${sum(list, plays)}</b> games started<br><b>${sum(list, taps)}</b> taps on Donate</li>`).join('')
@@ -59,6 +78,7 @@ export function renderNumbers({ days, names, nonce, stylesheet, kept = 'memory',
   <p>A tap on Donate is counted as the visitor leaves for the PSA's page on JustGiving. What is given there, and by whom, is for JustGiving and the PSA to know: this site never does.</p>
   <p>${kept === 'file' ? 'The numbers and the leaderboards are being written to the volume, so a restart keeps them.' : 'No volume is attached, so the numbers and the leaderboards are kept in memory only and start again after a restart.'}</p>
   <ul class="numgrid">${cards}</ul>
+  ${footballHtml(football)}
   <h2>Games, last 30 days</h2>
   <div class="tw"><table><thead><tr><th scope="col">Game</th><th scope="col">Started</th><th scope="col">Finished</th></tr></thead><tbody>${gameRows}</tbody></table></div>
   <h2>Pages, last 30 days</h2>

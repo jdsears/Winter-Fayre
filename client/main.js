@@ -27,7 +27,10 @@
 
 import { enhanceShootout } from './shootout/index.js'
 import { tally } from './games/count.js'
-import { createGoBoard } from './games/board.js'
+import { createGoBoard, fetchBoard, boardPath } from './games/board.js'
+import { readSweet, drawSweet } from './games/prize.js'
+import { readClaims, footballFor } from './games/football.js'
+import { FOOTBALL } from '../shared/prizes.js'
 
 document.documentElement.classList.add('js')
 
@@ -48,6 +51,30 @@ function setupPenalties() {
       },
     },
   })
+}
+
+// On the arcade page, above the games menu, what this phone has won:
+// a sweet still to be collected, and the football if it leads for it or
+// has won it. Read from the phone's own storage; only the football asks
+// the site anything, and only for the leaderboard everyone sees.
+function setupMine() {
+  const sweetAt = document.querySelector('[data-mine]')
+  const footballAt = document.querySelector('[data-mine-football]')
+  if (!sweetAt && !footballAt) return
+  const store = (() => { try { return window.localStorage } catch { return null } })()
+  if (sweetAt) {
+    const sweet = readSweet(store)
+    if (sweet && !sweet.given) drawSweet(document, sweetAt, sweet, { store })
+  }
+  if (footballAt) {
+    fetchBoard(window, boardPath(FOOTBALL.game)).then((b) => {
+      const mine = footballFor(b.football, readClaims(store, b.day))
+      if (!mine || !mine.mine) return
+      footballAt.textContent = mine.words
+      footballAt.className = mine.won ? 'gs-fb mine-fb won' : 'gs-fb mine-fb mine'
+      footballAt.hidden = false
+    }, () => {})
+  }
 }
 
 // Each game is fetched only on the page that has it.
@@ -97,6 +124,7 @@ function setupTv() {
   if (tv) import('./tv.js').then(m => m.startTv(tv), () => {})
 }
 
+setupMine()
 setupPenalties()
 setupGames()
 setupStageGames()

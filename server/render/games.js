@@ -13,7 +13,7 @@ import { CREST, crestImg } from '../crest.js'
 import { appealHtml } from './appeal.js'
 import { APPEAL } from '../../shared/appeal.js'
 import { GAMES } from '../../shared/games.js'
-import { prizeLine } from '../../shared/prizes.js'
+import { prizeLine, FOOTBALL, ONE_EACH, footballWords } from '../../shared/prizes.js'
 import { shootoutConfig } from '../../client/shootout/config.js'
 import { renderShootoutSection } from '../../client/shootout/section.js'
 
@@ -50,8 +50,11 @@ function tileArt(kind) {
 // The arcade
 // ---------------------------------------------------------------------
 
-export function arcadeHtml() {
-  const tiles = GAMES.map(g => `<li class="gt"><a href="${attr(g.href)}">${tileArt(g.key)}<span class="gt-b"><span class="gt-t">${esc(g.title)}</span><span class="gt-p">${esc(g.text)}</span>${prizeLine(g.key) ? `<span class="gt-w">${esc(prizeLine(g.key))}</span>` : ''}<span class="btn y">${esc(g.play)}</span></span></a></li>`).join('')
+// football is how the football stands ({ closed, leader }), from its
+// leaderboard, or null: the tile of the game it is won in says so.
+export function arcadeHtml({ football = null } = {}) {
+  const prize = (g) => `${prizeLine(g.key) ? `<span class="gt-w">${esc(prizeLine(g.key))}</span>` : ''}${g.key === FOOTBALL.game ? `<span class="gt-w gt-f">${esc(footballWords(football))}</span>` : ''}`
+  const tiles = GAMES.map(g => `<li class="gt"><a href="${attr(g.href)}">${tileArt(g.key)}<span class="gt-b"><span class="gt-t">${esc(g.title)}</span><span class="gt-p">${esc(g.text)}</span>${prize(g)}<span class="btn y">${esc(g.play)}</span></span></a></li>`).join('')
   // The story of the appeal comes first: the games are in aid of it, and
   // a visitor scrolls through it on the way to them (John, 13 November
   // 2026). A link for a keyboard goes straight to the games.
@@ -60,7 +63,7 @@ export function arcadeHtml() {
   <div class="wrap">
     <div class="wm host">${crestImg({ shown: 96 })}<span>${esc(SITE.host)}</span></div>
     <h1>${esc(SITE.short)} <em>Sports Arcade</em></h1>
-    <p>Quick sports games to play on your phone, in aid of the PSA's ${esc(APPEAL.name)}. Beat a game's target and show your screen at the sports stall to claim a sweet.</p>
+    <p>Quick sports games to play on your phone, in aid of the PSA's ${esc(APPEAL.name)}. Beat a game's target and show your screen at the sports stall to claim a sweet. ${esc(ONE_EACH)}</p>
   </div>
   ${snowBand({ w: 1600, h: 90, count: 96 })}
 </header>
@@ -68,6 +71,8 @@ export function arcadeHtml() {
 ${appealHtml()}
 <section id="games" class="band deep arcade"><div class="wrap">
   <h2>The <em>games</em></h2>
+  <p class="gs-prize mine" data-mine hidden></p>
+  <p class="gs-fb mine-fb" data-mine-football role="status" hidden></p>
   <ul class="gts">${tiles}</ul>
 </div></section>
 </main>`

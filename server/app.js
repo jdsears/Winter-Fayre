@@ -42,6 +42,7 @@ import { GAMES, GAME_KEYS, gameByKey } from '../shared/games.js'
 import { COLOURS } from './site.js'
 import { CREST } from './crest.js'
 import { APPEAL } from '../shared/appeal.js'
+import { FOOTBALL } from '../shared/prizes.js'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -215,7 +216,7 @@ export function createApp({ origin = 'http://localhost:3000', production = false
       const top = await boards[g.key].top()
       day = top.day
       name = top.name
-      all.push({ key: g.key, title: g.title, scores: g.scores, entries: top.entries.slice(0, TV_TOP) })
+      all.push({ key: g.key, title: g.title, scores: g.scores, entries: top.entries.slice(0, TV_TOP), ...(top.football ? { football: top.football } : {}) })
     }
     return { day, name, version, boards: all }
   }
@@ -277,7 +278,9 @@ export function createApp({ origin = 'http://localhost:3000', production = false
       res.set('Content-Security-Policy', cspFor({ nonce, forms: true, production }))
       const today = []
       for (const g of GAMES) today.push({ key: g.key, title: g.title, entries: (await boards[g.key].top()).entries })
-      res.type('html').send(renderNumbers({ days: await counts.days(30), names: COUNTED, nonce, stylesheet, kept: store.kind, boards: today, removed: req.query.removed === '1' ? true : req.query.removed === '0' ? false : null }))
+      // The football's leader and the winner's code: shown here and nowhere else.
+      const football = await boards[FOOTBALL.game].winner()
+      res.type('html').send(renderNumbers({ days: await counts.days(30), names: COUNTED, nonce, stylesheet, kept: store.kind, boards: today, football, removed: req.query.removed === '1' ? true : req.query.removed === '0' ? false : null }))
     } catch (err) {
       if (!(err instanceof StoreUnavailable)) log.error?.(err)
       res.status(503).set('Retry-After', '30').type('text').send('The numbers cannot be reached. Try again in a minute.\n')
@@ -312,8 +315,12 @@ export function createApp({ origin = 'http://localhost:3000', production = false
   // Pages
   // ---------------------------------------------------------------------
 
-  app.get('/', (req, res) => {
-    page(req, res, renderArcade(opts(req)), { counted: '/' })
+  // The arcade says how the football stands. If the leaderboard cannot
+  // be read, it says the rule and no more.
+  app.get('/', async (req, res) => {
+    let football = null
+    try { football = (await boards[FOOTBALL.game].top()).football || null } catch { /* the rule alone */ }
+    page(req, res, renderArcade({ ...opts(req), football }), { counted: '/' })
   })
 
   // A game's page carries a ticket for its first go at the leaderboard.
