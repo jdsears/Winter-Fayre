@@ -30,6 +30,7 @@ describe('the sweets', () => {
     assert.equal(PRIZES.freekick.at, 8)
     assert.equal(PRIZES.headtohead.at, 1)
     assert.equal(PRIZES.keepy.at, 20)
+    if (PRIZES.rugby) assert.equal(PRIZES.rugby.at, 4)
   })
 
   test('a score at the number wins, one under it does not, and nonsense never does', () => {

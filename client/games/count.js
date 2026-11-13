@@ -3,7 +3,9 @@
 // sent: no cookie, and nothing about the visitor or their device. If it
 // cannot be sent, nothing happens: the game does not depend on it.
 
-export const GAMES = ['penalties', 'keepy', 'freekick', 'headtohead']
+import { GAME_KEYS } from '../../shared/games.js'
+
+export const GAMES = GAME_KEYS
 
 export function tally(game, moment, win = globalThis.window) {
   if (!GAMES.includes(game) || (moment !== 'play' && moment !== 'done')) return false

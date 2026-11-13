@@ -28,9 +28,11 @@ server/
                       snow, footer), css.js, html.js
 client/               the page script (Vite): main.js, tv.js (the TV screen's turns and refresh),
                       games/ (the full-screen stage the games share, the leaderboard in a finish
-                      panel, the game counts), shootout/ (penalties and the 3D stadium), keepy/
-                      (keepy-uppies), freekick/ (the free kick challenge), headtohead/ (head to
-                      head, drawn flat), fonts/ (Barlow, OFL)
+                      panel, the prize, the game counts, and flat.js, the stadium drawn flat for
+                      a stage game where the 3D will not run), shootout/ (penalties and the 3D
+                      stadium, which dresses for each sport), keepy/ (keepy-uppies), freekick/
+                      (the free kick challenge), headtohead/ (head to head, drawn flat), rugby/
+                      (rugby conversion), fonts/ (Barlow, OFL)
 tests/                node:test server, safety and writing-rule tests
 tools/check.mjs       npm run check: Playwright at 360, 375 and 390 wide, sideways, and the TV at 1920 by 1080
 docs/HANDOVER.md      what is built, what John has decided, what is left
@@ -91,7 +93,7 @@ Most visitors play on a phone, so that is the main view.
 - Every button and link is at least 44 by 44 pixels. Game controls are larger (Jump in head to head is 88).
 - No sideways scrolling, on any page, at any width.
 - Head to head asks for the phone to be turned, and locks the touches that would zoom or drag the page.
-- Where 3D cannot run, a game falls back to its flat version. With reduced motion the snow hangs still and nothing shakes or sweeps.
+- Where 3D cannot run, a game falls back to its flat version. The four games from the base each have a flat version of their own. A game made for the stage (rugby and after) hands the stage a small painter, and the stage draws the whole stadium flat for it (`client/games/flat.js`), so it plays the same: the same rules, swipes, finish panel and leaderboard. With reduced motion the snow hangs still and nothing shakes or sweeps.
 - No large picture downloads. The tiles are drawn (SVG). Anything raster would be WebP, sized for its place, with width and height set, and lazy-loaded below the first screen.
 - Barlow, served from the site itself. Body text no smaller than 16 pixels; headings scale with `clamp`.
 - The TV page is the one page made for a large screen (1920 by 1080, read from three metres): leaderboard rows' letters at least 40 pixels, the QR code at least 400 pixels square, sized by the screen so a smaller or larger television shows the same picture. It must still be usable, stacked, on a phone, and readable with no script.

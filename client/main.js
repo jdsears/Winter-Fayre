@@ -13,6 +13,10 @@
 //   head to head   drawn flat, full screen, with the phone held sideways
 //                  (./headtohead)
 //
+//   rugby          played on the same stage (./rugby); where the 3D will
+//                  not run the stage draws the stadium flat, so there is
+//                  no second version on the page
+//
 // and on the stall's TV screen, the leaderboards taking turns and
 // refreshing themselves (./tv.js).
 //
@@ -68,6 +72,19 @@ function setupGames() {
   }
 }
 
+// A game played only on the stage, in 3D or drawn flat: if the stage
+// cannot open at all, the page says so.
+function stageGame(root, play) {
+  const said = root.querySelector('[data-game-said]')
+  const failed = () => { if (said) said.textContent = 'The game could not load. Check your connection and try again.' }
+  play().then((stage) => { if (!stage) failed() }, failed)
+}
+
+function setupStageGames() {
+  const rugby = document.querySelector('[data-rugby]')
+  if (rugby) stageGame(rugby, () => import('./rugby/play3d.js').then(m => m.playRugby3D(rugby)))
+}
+
 // The stall's TV screen.
 function setupTv() {
   const tv = document.querySelector('[data-tv]')
@@ -76,4 +93,5 @@ function setupTv() {
 
 setupPenalties()
 setupGames()
+setupStageGames()
 setupTv()
