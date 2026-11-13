@@ -38,5 +38,7 @@ export default defineConfig({
   test: {
     include: ['client/**/*.test.js'],
     environment: 'node',
+    // A moment between tests, so a long file never looks hung (see the file).
+    setupFiles: ['client/testing/yield.js'],
   },
 })
