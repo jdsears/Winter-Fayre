@@ -80,9 +80,12 @@ describe('the TV page', () => {
       assert.match(html, /<p class="tvh">Scan to <em>play<\/em><\/p>/)
       assert.ok(html.includes(qrSvg('https://arcade.example/', { label: 'A QR code that opens arcade.example on your phone' })), 'the code is the one for this address')
       assert.match(html, /<p class="tva">arcade\.example<\/p>/)
-      assert.match(html, /Wymondham College PSA Winter Fayre/)
-      // No picture is fetched for it: the code is in the page.
-      assert.ok(!/<img\b/.test(html))
+      assert.match(html, /<span>Wymondham College PSA<br>Winter Fayre<\/span>/)
+      // No picture is fetched for the code: it is in the page. The one
+      // picture is the PSA's crest, from this site.
+      const pictures = html.match(/<img\b[^>]*>/g) || []
+      assert.equal(pictures.length, 1)
+      assert.match(pictures[0], /^<img class="crest" src="\/media\/badge\/[0-9a-f]{16}\.webp" width="96" height="96" alt="Wymondham College Parent Staff Association" decoding="async">$/)
     } finally {
       await app.close()
     }

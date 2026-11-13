@@ -6,7 +6,8 @@
 //   No page asks anything of another site: no analytics, no adverts, no
 //   outside fonts, scripts, pictures or frames.
 //   No cookie is ever set.
-//   The repository holds no photo or film of anyone.
+//   The repository holds no photo or film of anyone: its one picture
+//   is the PSA's crest.
 //   The privacy page says what the site does, and no more.
 
 import { test, describe, before, after } from 'node:test'
@@ -127,9 +128,19 @@ describe('the repository', () => {
     return out
   }
 
-  test('holds no photo or film of anyone: no picture, film or sound file at all', () => {
+  test('holds no photo or film of anyone: no picture, film or sound file but the PSA\'s crest', () => {
     const media = files().map(f => path.relative(ROOT, f)).filter(f => /\.(jpe?g|png|gif|webp|avif|heic|bmp|tiff?|svg|mp4|mov|webm|m4v|mp3|wav|ogg|m4a)$/i.test(f))
-    assert.deepEqual(media, [])
+    assert.deepEqual(media, [path.join('server', 'crest', 'psa.webp')])
+  })
+
+  test('the crest is a small WebP picture, 256 pixels square: nothing a phone would notice fetching', () => {
+    const bytes = readFileSync(path.join(ROOT, 'server', 'crest', 'psa.webp'))
+    assert.ok(bytes.length < 12 * 1024, `${bytes.length} bytes`)
+    assert.equal(bytes.subarray(0, 4).toString('latin1'), 'RIFF')
+    assert.equal(bytes.subarray(8, 16).toString('latin1'), 'WEBPVP8X')
+    // The size the picture says it is: width and height, each less one.
+    assert.equal(bytes.readUIntLE(24, 3) + 1, 256)
+    assert.equal(bytes.readUIntLE(27, 3) + 1, 256)
   })
 
   test('holds no secret: no .env, and nothing that looks like a key', () => {

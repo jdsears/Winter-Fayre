@@ -40,8 +40,11 @@ describe('the pages', () => {
       assert.ok(html.includes(`<span class="btn y">${g.play}</span>`), g.key)
     }
     assert.equal((html.match(/<li class="gt">/g) || []).length, GAMES.length)
-    // The tiles are drawn: no picture is fetched.
-    assert.ok(!/<img\b/.test(html))
+    // The tiles are drawn. The one picture is the PSA's crest, from this
+    // site, with its size given so the page does not jump as it loads.
+    const pictures = html.match(/<img\b[^>]*>/g) || []
+    assert.equal(pictures.length, 1)
+    assert.match(pictures[0], /^<img class="crest" src="\/media\/badge\/[0-9a-f]{16}\.webp" width="72" height="72" alt="Wymondham College Parent Staff Association" decoding="async">$/)
     assert.match(html, /<a class="mail" href="\/privacy">Privacy<\/a>/)
   })
 
@@ -49,7 +52,7 @@ describe('the pages', () => {
     for (const g of GAMES) {
       const html = await (await app.get(g.path)).text()
       assert.match(html, /data-boards="\[&quot;Wymondham College PSA&quot;,&quot;Winter Fayre&quot;\]"/, g.key)
-      assert.match(html, /data-top-sign="\{&quot;name&quot;:&quot;Winter Fayre&quot;,&quot;over&quot;:&quot;Wymondham College PSA&quot;\}"/, g.key)
+      assert.match(html, /data-top-sign="\{&quot;name&quot;:&quot;Winter Fayre&quot;,&quot;over&quot;:&quot;Wymondham College PSA&quot;,&quot;badge&quot;:&quot;\/media\/badge\/[0-9a-f]{16}\.webp&quot;\}"/, g.key)
       assert.match(html, /data-ticket="[0-9a-z]+\.[\w-]{12}\.[\w-]{22}"/, g.key)
       assert.match(html, /<a class="btn o" href="\/">More games<\/a>/, g.key)
       assert.match(html, /<noscript>/, g.key)

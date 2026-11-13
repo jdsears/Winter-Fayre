@@ -14,6 +14,7 @@ import { esc, attr } from './html.js'
 import { headHtml, documentHtml, snowBand } from './layout.js'
 import { qrSvg } from '../qr.js'
 import { SITE } from '../site.js'
+import { CREST, crestImg } from '../crest.js'
 import { prizeLine } from '../../shared/prizes.js'
 
 // How many seconds between asking again, with no script.
@@ -50,7 +51,7 @@ export function renderTv({ origin, boards, day, version = '', nonce, assets }) {
   const body = `<main class="tv" data-tv data-version="${attr(version)}">
   <h1 class="vh">${esc(SITE.name)}: scan to play, and today's leaderboards</h1>
   <section class="tvq" aria-label="Scan to play">
-    <p class="wm">${esc(SITE.host)} ${esc(SITE.short)}</p>
+    <p class="wm host">${crestImg({ shown: 96 })}<span>${esc(SITE.host)}${CREST ? '<br>' : ' '}${esc(SITE.short)}</span></p>
     <p class="tvh">Scan to <em>play</em></p>
     <div class="tvcode">${qrSvg(`${origin}/`, { label: `A QR code that opens ${address} on your phone` })}</div>
     <p class="tva">${esc(address)}</p>

@@ -16,13 +16,14 @@ server/
   index.js            starts the service (PORT, SITE_ORIGIN, NODE_ENV, NUMBERS_PASSWORD, DATA_DIR)
   app.js              the routes: the pages, the TV screen (/tv) and its code (/qr.svg), the
                       leaderboards (/api/board/<game>, /api/boards), the numbers (/api/count,
-                      /numbers), /health, robots
+                      /numbers), the crest (/media/badge/...), /health, robots
   site.js             the site's names, the boards' words and the winter colours
   store.js            where the little the site keeps is kept: memory, and a small file if there is a folder
   board.js            the leaderboards: three letters, a score and the time, a board a game a day
   counts.js           the site's own numbers: page views and game plays a day
   security.js         Content-Security-Policy (with a nonce per response) and the other headers
   qr.js               the QR code, drawn as SVG from the site's own address
+  crest.js            the PSA's crest, the one picture the site holds (crest/psa.webp)
   render/             the pages: games.js (the arcade and each game's page), tv.js (the stall's TV
                       screen), pages.js (privacy, not found), numbers.js, layout.js (head, top bar,
                       snow, footer), css.js, html.js
@@ -61,7 +62,7 @@ This is a school event and children will play.
 - The only thing kept from a visitor is a leaderboard entry they choose to add: three letters, a score and the time. Nothing else: no name, no account, no email, nothing about the device. Never keep anything else with an entry, never loosen the three letters to free text, and keep the list of refused letters (`server/board.js`).
 - The leaderboards are for the day. A new board starts each day (UK time) and the day before is deleted when it does, so nothing is kept after the fayre. They are kept in the service's memory, and in a small file on a Railway volume if one is attached. Do not set up a storage bucket or a database unless John asks.
 - No analytics service, no advertising, no third-party cookies, no external fonts or scripts. The site sets no cookie at all. Its own anonymous daily totals of page views and game plays are fine (`server/counts.js`): nothing that identifies a visitor or a device, and a page or a game is counted only under a name fixed in the code. Never add anything to a count that could tell one visitor from another.
-- No photos or films of anyone, and no real child, parent or member of staff named anywhere, including tests and screenshots. Invented names only in tests. A test proves the repository holds no picture, film or sound file.
+- No photos or films of anyone, and no real child, parent or member of staff named anywhere, including tests and screenshots. Invented names only in tests. A test proves the repository holds no picture, film or sound file but the PSA's crest.
 - The privacy page (`server/render/pages.js`) says, in a few plain sentences, exactly what the site does. If what the site keeps changes, the page changes in the same piece of work.
 - An entry that should not be on show is taken off from the numbers page (`/numbers`, behind `NUMBERS_PASSWORD`): each of today's entries has a Take off button. The button is a plain form, accepted only with the password and only when it comes from the numbers page itself.
 - Every page is noindex, and robots.txt turns search engines away.
@@ -75,7 +76,7 @@ This is a school event and children will play.
 ### The look and the words
 
 - The site is called "Winter Fayre Sports Arcade". The boards round the pitch read "Wymondham College PSA" and "Winter Fayre", and the big sign carries both: John's instruction, 13 November 2026.
-- The College's crest is not used until John supplies the file. He has said he has permission. Until then the site is words only.
+- The crest of the College's Parent Staff Association is the one picture on the site. John supplied it and has said he has permission to use it (13 November 2026). It is used whole, as he sent it, on its own plum background: on the arcade page, on the TV screen and on the big sign in the stadium (`server/crest.js`). Do not crop, recolour or redraw it, and do not put it anywhere else or use the College's colours for the site unless John asks.
 - A winter palette after the fayre's poster: deep navy, ice blue, white and a warm gold (`server/site.js`). Every game is winter themed with a splash of Christmas, as John asked: snow, fairy lights, Christmas trees and Christmas hats.
 - The games are original, in this site's own drawn style. Do not copy the name, look, characters or layout of any existing commercial game.
 - The prizes are set in one place, `shared/prizes.js`: the score that wins a sweet in each game. The finish panel, the arcade's tiles and the TV all read it. A winner is shown John's words: "Show this screen at the sports stall to claim a sweet."
@@ -95,7 +96,7 @@ Most visitors play on a phone, so that is the main view.
 - No sideways scrolling, on any page, at any width.
 - Head to head asks for the phone to be turned, and locks the touches that would zoom or drag the page.
 - Where 3D cannot run, a game falls back to its flat version. The four games from the base each have a flat version of their own. A game made for the stage (rugby and after) hands the stage a small painter, and the stage draws the whole stadium flat for it (`client/games/flat.js`), so it plays the same: the same rules, swipes, finish panel and leaderboard. With reduced motion the snow hangs still and nothing shakes or sweeps.
-- No large picture downloads. The tiles are drawn (SVG). Anything raster would be WebP, sized for its place, with width and height set, and lazy-loaded below the first screen.
+- No large picture downloads. The tiles are drawn (SVG). The one raster picture is the crest: WebP, 256 pixels square, about six kilobytes, with its width and height set. Anything else raster would be WebP too, sized for its place, with width and height set, and lazy-loaded below the first screen.
 - Barlow, served from the site itself. Body text no smaller than 16 pixels; headings scale with `clamp`.
 - The TV page is the one page made for a large screen (1920 by 1080, read from three metres): leaderboard rows' letters at least 40 pixels, the QR code at least 400 pixels square, sized by the screen so a smaller or larger television shows the same picture. It must still be usable, stacked, on a phone, and readable with no script.
 
