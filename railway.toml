@@ -1,0 +1,13 @@
+# The Winter Fayre Sports Arcade on Railway: one service, from this
+# repository.
+[build]
+builder = "NIXPACKS"
+# Nixpacks installs with npm ci first; this builds the page script.
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
