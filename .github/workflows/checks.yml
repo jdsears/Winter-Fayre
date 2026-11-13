@@ -1,0 +1,55 @@
+# The checks every pull request must pass, run by GitHub:
+#   npm test        the server, safety and writing-rule tests, then the client tests
+#   npm run check   the site in a real browser at 360, 375 and 390 wide, and sideways
+#
+# Playwright is installed here for the run only. It is not one of the
+# site's dependencies, so package.json is left alone.
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Tests and phone check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright for this run only
+        # The browser is fetched with the system packages it likes to have.
+        # When the runner cannot reach the package servers, which happens,
+        # the browser alone is fetched: the runner image already carries
+        # what a headless browser needs, and the phone check that follows
+        # fails plainly if it does not.
+        run: |
+          npm install --no-save playwright@1.63.0
+          if ! timeout 240 npx playwright install --with-deps chromium; then
+            echo "The system packages could not be fetched. Installing the browser alone."
+            npx playwright install chromium
+          fi
+      - name: Tests
+        run: npm test
+      - name: Phone check at 360, 375 and 390 wide, and sideways
+        run: npm run check
+      - name: Keep the screenshots if the phone check fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots
+          if-no-files-found: ignore
