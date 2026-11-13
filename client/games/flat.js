@@ -17,6 +17,7 @@ import { project } from '../shootout/camera.js'
 import { BOARDS_Z, GOAL } from '../shootout/physics.js'
 import { BOARD_COUNT, BOARD_W, boardCentre, drawTopSign, loadTopSign } from '../shootout/boards.js'
 import { mix } from '../shootout/colour.js'
+import { drawFlake, drawSparkle, stadiumFlakes, swayAt } from './flakes.js'
 
 const FONT = '"Barlow Condensed", "Arial Narrow", sans-serif'
 const COATS = ['#f0c05a', '#ffffff', '#c8102e', '#1e9e57', '#8fd6e8', '#2b2f3a']
@@ -68,6 +69,8 @@ export function createFlatView({ canvas, paint, colours, boards = [], sign = nul
   const names = boards.length ? boards : ['Winter Fayre']
   // The sign's badge, if it has one: drawn once it has loaded.
   const signPics = sign ? loadTopSign(sign) : {}
+  // The poster's snowflakes and stars in the sky, in the 3D stadium's places.
+  const hung = stadiumFlakes(BOARDS_Z - 18)
   // Snow, as shares of the screen, so it falls the same at any size.
   const flakes = Array.from({ length: 80 }, (_, i) => ({ x: (i * 0.618034) % 1, y: (i * 0.381966) % 1, r: 1 + (i % 4) * 0.5, v: 0.05 + (i % 5) * 0.014, p: i * 1.3 }))
 
@@ -134,6 +137,20 @@ export function createFlatView({ canvas, paint, colours, boards = [], sign = nul
       g.fillRect(((i * 0.754877) % 1) * width, ((i * 0.569840) % 1) * Math.max(0, horizon - 20) * 0.8, 1.6, 1.6)
     }
     g.globalAlpha = 1
+    // The fayre's poster snowflakes and stars, hung above the stand and
+    // behind it, where the 3D stadium hangs them (flakes.js).
+    for (const flake of hung) {
+      if (!seen(flake)) continue
+      const sway = swayAt(flake, now, reduce)
+      const s = at({ x: flake.x, y: flake.y + sway.lift, z: flake.z })
+      const size = flake.size * s.scale * sway.scale
+      if (size < 4 || s.x < -size || s.x > width + size || s.y < -size || s.y > height + size) continue
+      g.save()
+      g.translate(s.x, s.y)
+      if (flake.star) drawSparkle(g, size, flake.ink)
+      else drawFlake(g, size, flake.kind, flake.ink)
+      g.restore()
+    }
     g.fillStyle = '#357e50'
     g.fillRect(0, horizon, width, height - horizon)
     for (let z = BOARDS_Z, i = 0; z < 60; z += 5.5, i++) {
