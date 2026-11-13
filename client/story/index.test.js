@@ -2,7 +2,7 @@
 // the small sums it scrolls by.
 
 import { describe, it, expect } from 'vitest'
-import { canDraw3d, focusLine, follow, startStory, pastTheStory, boardWords, SHORT } from './index.js'
+import { canDraw3d, focusLine, follow, startStory, pastTheStory, boardWords, easeOff, SLOW_MS, WARM_UP, SAMPLE, SHORT } from './index.js'
 
 describe('where the words are being read', () => {
   it('is a little above the middle of the room under the stage', () => {
@@ -34,6 +34,29 @@ describe('the camera following the scroll', () => {
   it('stays where it is when no time has passed, or the clock has gone back', () => {
     expect(follow(1.5, 4, 0)).toBe(1.5)
     expect(follow(1.5, 4, -1)).toBe(1.5)
+  })
+})
+
+describe('keeping the picture moving on a slow phone', () => {
+  it('draws fewer pixels once enough frames have been slow, where there are pixels to spare', () => {
+    expect(easeOff({ average: 70, counted: SAMPLE, ratio: 2 })).toBe(true)
+    expect(easeOff({ average: SLOW_MS + 1, counted: SAMPLE + 30, ratio: 1.5 })).toBe(true)
+  })
+
+  it('leaves a phone that keeps up alone, and does not judge on a few frames', () => {
+    expect(easeOff({ average: 17, counted: 500, ratio: 2 })).toBe(false)
+    expect(easeOff({ average: SLOW_MS, counted: 500, ratio: 2 })).toBe(false)
+    expect(easeOff({ average: 300, counted: SAMPLE - 1, ratio: 2 })).toBe(false)
+  })
+
+  it('has nothing more to take off a picture already drawn at one pixel to one', () => {
+    expect(easeOff({ average: 300, counted: 500, ratio: 1 })).toBe(false)
+  })
+
+  it('calls under twenty frames a second slow, and waits for the scene to settle before counting', () => {
+    expect(SLOW_MS).toBe(50)
+    expect(WARM_UP).toBeGreaterThanOrEqual(20)
+    expect(SAMPLE).toBeGreaterThanOrEqual(30)
   })
 })
 

@@ -60,6 +60,17 @@ export function boardWords(root) {
 // Whether the page was opened at its games menu, below the story.
 export const pastTheStory = (hash) => String(hash || '') === '#games'
 
+// Keeping the picture moving on a slow phone. The time between frames
+// is averaged, leaving out the first few while the scene settles. If the
+// average is slower than SLOW_MS (under twenty frames a second) and the
+// picture is being drawn with more than one of the screen's pixels to
+// each of the page's, it is drawn with one from then on: a quarter of
+// the work, and only a little softer.
+export const SLOW_MS = 50
+export const WARM_UP = 24
+export const SAMPLE = 45
+export const easeOff = ({ average, counted, ratio }) => counted >= SAMPLE && average > SLOW_MS && ratio > 1
+
 // How quickly the camera catches up with the scroll: most of the way in
 // a fifth of a second, so a flick of the thumb is followed smoothly.
 export const follow = (shown, target, dt) => shown + (target - shown) * (1 - Math.exp(-Math.max(0, dt) * 7))
@@ -128,9 +139,26 @@ export async function startStory(root, win = globalThis.window) {
   let seen = false
   let stopped = false
   let drawn = false
+  // The real time between frames, to notice a phone that is struggling.
+  let lastMs = 0
+  let frames = 0
+  let counted = 0
+  let total = 0
+  const pace = (ms) => {
+    const gap = lastMs ? ms - lastMs : 0
+    lastMs = ms
+    // A long gap is the page having been away, not a slow frame.
+    if (!(gap > 0 && gap < 400)) return
+    frames += 1
+    if (frames <= WARM_UP) return
+    counted += 1
+    total += gap
+    if (easeOff({ average: total / counted, counted, ratio: scene.ratio })) scene.setRatio(1)
+  }
   const frame = (ms) => {
     raf = 0
     if (stopped) return
+    pace(ms)
     const now = ms / 1000
     const dt = last ? Math.min(0.1, now - last) : 0
     last = now
@@ -146,7 +174,7 @@ export async function startStory(root, win = globalThis.window) {
     }
     if (seen) raf = win.requestAnimationFrame(frame)
   }
-  const wake = () => { if (!raf && !stopped && seen) { last = 0; raf = win.requestAnimationFrame(frame) } }
+  const wake = () => { if (!raf && !stopped && seen) { last = 0; lastMs = 0; raf = win.requestAnimationFrame(frame) } }
 
   // The picture is drawn only while it is on the screen.
   const watch = new win.IntersectionObserver((entries) => {

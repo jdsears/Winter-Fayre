@@ -854,7 +854,16 @@ export function createStoryScene({ canvas, win = globalThis.window, words = 'Spo
     }
   }
 
+  let ratio = dpr
   return {
+    // How many of the screen's own pixels are drawn to each of the page's:
+    // two on most phones. Fewer is quicker, and a little softer.
+    get ratio() { return ratio },
+    setRatio(next) {
+      ratio = Math.max(1, Math.min(dpr, next))
+      renderer.setPixelRatio(ratio)
+      renderer.setSize(width, height, false)
+    },
     // Draws the story at t (0 at its first stop, as path.js counts) and
     // at now seconds on the clock.
     render(t, now) {
