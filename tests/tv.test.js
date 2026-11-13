@@ -1,0 +1,167 @@
+// The stall's TV screen and the QR code (server/render/tv.js, server/qr.js).
+//
+//   The QR code is drawn here, as plain SVG, from the site's own address,
+//   so it is right whatever address the site is on.
+//   The TV page is whole without JavaScript: the code and every game's
+//   leaderboard are in its HTML, and it asks for itself again.
+//   It carries the same strict browser rules as every other page.
+
+import { test, describe } from 'node:test'
+import assert from 'node:assert/strict'
+import { qrMatrix, qrSvg } from '../server/qr.js'
+import { shortAddress, tvBoardHtml, TV_REFRESH_SECONDS } from '../server/render/tv.js'
+import { cspFor } from '../server/security.js'
+import { GAMES } from '../shared/games.js'
+import { startApp, PERSON } from './support/helpers.js'
+
+// The three big squares in the corners of every QR code: a dark ring
+// seven squares across, a light ring inside it and a dark middle.
+function finderAt(m, row, column) {
+  for (let r = 0; r < 7; r++) {
+    for (let c = 0; c < 7; c++) {
+      const edge = r === 0 || r === 6 || c === 0 || c === 6
+      const middle = r >= 2 && r <= 4 && c >= 2 && c <= 4
+      if (m.dark(row + r, column + c) !== (edge || middle)) return false
+    }
+  }
+  return true
+}
+
+describe('the QR code', () => {
+  test('is a proper code: square, with the three corner squares where a scanner looks for them', () => {
+    const m = qrMatrix('https://arcade.example/')
+    assert.ok(m.size >= 21 && (m.size - 21) % 4 === 0, `size ${m.size}`)
+    assert.ok(finderAt(m, 0, 0), 'top left')
+    assert.ok(finderAt(m, 0, m.size - 7), 'top right')
+    assert.ok(finderAt(m, m.size - 7, 0), 'bottom left')
+  })
+
+  test('is made from the address it is given: the same each time, and different for a different address', () => {
+    const squares = (text) => { const m = qrMatrix(text); let s = ''; for (let r = 0; r < m.size; r++) for (let c = 0; c < m.size; c++) s += m.dark(r, c) ? '1' : '0'; return s }
+    assert.equal(squares('https://arcade.example/'), squares('https://arcade.example/'))
+    assert.notEqual(squares('https://arcade.example/'), squares('https://another.example/'))
+    // A longer address needs more squares.
+    assert.ok(qrMatrix(`https://${'a'.repeat(120)}.example/`).size > qrMatrix('https://arcade.example/').size)
+  })
+
+  test('is drawn as plain SVG: dark on white with a quiet border, no script, no style, nothing fetched', () => {
+    const m = qrMatrix('https://arcade.example/')
+    const svg = qrSvg('https://arcade.example/', { label: 'A QR code that opens arcade.example' })
+    const span = m.size + 8
+    assert.match(svg, new RegExp(`^<svg xmlns="http://www.w3.org/2000/svg" class="qr" viewBox="0 0 ${span} ${span}"`))
+    assert.match(svg, /role="img" aria-label="A QR code that opens arcade\.example"/)
+    assert.match(svg, new RegExp(`<rect width="${span}" height="${span}" fill="#fff"/>`))
+    assert.match(svg, /<path d="(M\d+ \d+h\d+v1h-\d+z)+" fill="#0c1626"\/>/)
+    assert.ok(!/<script|style=|href=|<image|<foreignObject/i.test(svg))
+    // Every dark square is in the path, and nothing is drawn in the quiet border.
+    let dark = 0
+    for (let r = 0; r < m.size; r++) for (let c = 0; c < m.size; c++) if (m.dark(r, c)) dark++
+    let drawn = 0
+    for (const [, x, y, run] of svg.matchAll(/M(\d+) (\d+)h(\d+)v1/g)) {
+      drawn += Number(run)
+      assert.ok(Number(x) >= 4 && Number(y) >= 4 && Number(x) + Number(run) <= m.size + 4 && Number(y) < m.size + 4)
+    }
+    assert.equal(drawn, dark)
+  })
+
+  test('a label with markup in it is escaped', () => {
+    assert.ok(!qrSvg('x', { label: '"><script>alert(1)</script>' }).includes('<script>'))
+  })
+})
+
+describe('the TV page', () => {
+  test('carries the code for the site\'s own address, the words Scan to play and the address to type', async () => {
+    const app = await startApp({ origin: 'https://arcade.example' })
+    try {
+      const res = await app.get('/tv', { headers: PERSON })
+      assert.equal(res.status, 200)
+      const html = await res.text()
+      assert.match(html, /<p class="tvh">Scan to <em>play<\/em><\/p>/)
+      assert.ok(html.includes(qrSvg('https://arcade.example/', { label: 'A QR code that opens arcade.example on your phone' })), 'the code is the one for this address')
+      assert.match(html, /<p class="tva">arcade\.example<\/p>/)
+      assert.match(html, /Wymondham College PSA Winter Fayre/)
+      // No picture is fetched for it: the code is in the page.
+      assert.ok(!/<img\b/.test(html))
+    } finally {
+      await app.close()
+    }
+  })
+
+  test('the address in the code follows the site\'s address, whatever it is', async () => {
+    const app = await startApp({ origin: 'https://winter.example' })
+    try {
+      const html = await (await app.get('/tv')).text()
+      assert.ok(html.includes(qrSvg('https://winter.example/', { label: 'A QR code that opens winter.example on your phone' })))
+      const alone = await app.get('/qr.svg')
+      assert.match(alone.headers.get('content-type'), /^image\/svg\+xml/)
+      assert.equal(await alone.text(), `${qrSvg('https://winter.example/', { label: 'A QR code that opens winter.example' })}\n`)
+    } finally {
+      await app.close()
+    }
+    assert.equal(shortAddress('https://arcade.example/'), 'arcade.example')
+    assert.equal(shortAddress('http://localhost:3000'), 'localhost:3000')
+  })
+
+  test('every game\'s leaderboard is in the page, readable with no script, and the page asks for itself again', async () => {
+    const app = await startApp()
+    try {
+      const tickets = Array.from({ length: 12 }, () => app.boards.keepy.ticket())
+      app.clock.now += 5 * 60 * 1000
+      for (let n = 0; n < 12; n++) await app.boards.keepy.add({ initials: ['ABC', 'XYZ', 'LMN'][n % 3], score: 10 + n, ticket: tickets[n] })
+      const html = await (await app.get('/tv')).text()
+      for (const g of GAMES) {
+        assert.ok(html.includes(`data-tv-board="${g.key}"`), g.key)
+        assert.ok(html.includes(`<h2 id="tvb-${g.key}">${g.title}</h2>`), g.key)
+        assert.ok(html.includes(`<p class="tvc">Counting ${g.scores}</p>`), g.key)
+      }
+      // Keepy-uppies: its top ten, best first.
+      const keepy = /data-tv-board="keepy"[\s\S]*?<\/section>/.exec(html)[0]
+      assert.equal((keepy.match(/<li>/g) || []).length, 10)
+      assert.match(keepy, /<li><span class="n">1<\/span><span class="i">LMN<\/span><span class="s">21<\/span><\/li>/)
+      assert.match(keepy, /<p class="tve" hidden>/)
+      // A game no one has played yet says so.
+      const kicks = /data-tv-board="freekick"[\s\S]*?<\/section>/.exec(html)[0]
+      assert.match(kicks, /<ol class="tvl" hidden><\/ol>/)
+      assert.match(kicks, /<p class="tve">No scores yet\. Scan the code and be the first\.<\/p>/)
+      assert.match(html, /Saturday 14 November/)
+      assert.ok(html.includes(`<noscript><meta http-equiv="refresh" content="${TV_REFRESH_SECONDS}"></noscript>`))
+    } finally {
+      await app.close()
+    }
+  })
+
+  test('it keeps the strict rules, is not indexed and is not counted as a visit', async () => {
+    const app = await startApp()
+    try {
+      const res = await app.get('/tv', { headers: PERSON })
+      const html = await res.text()
+      const nonce = /<style nonce="([^"]+)">/.exec(html)[1]
+      assert.equal(res.headers.get('content-security-policy'), cspFor({ nonce }))
+      assert.match(html, /<meta name="robots" content="noindex, nofollow">/)
+      assert.ok(!/\sstyle\s*=/.test(html.replace(/<style[\s\S]*?<\/style>/, '')))
+      assert.equal(res.headers.get('set-cookie'), null)
+      const [today] = await app.counts.days(1)
+      assert.deepEqual(today.pages, {})
+    } finally {
+      await app.close()
+    }
+  })
+
+  test('the page and the answer the script asks for carry the same version, so a new deploy is noticed', async () => {
+    const app = await startApp()
+    try {
+      const html = await (await app.get('/tv')).text()
+      const version = /data-version="([0-9a-f]{10})"/.exec(html)[1]
+      const all = await (await app.get('/api/boards')).json()
+      assert.equal(all.version, version)
+    } finally {
+      await app.close()
+    }
+  })
+
+  test('a board\'s letters are escaped as they are written', () => {
+    const html = tvBoardHtml({ key: 'keepy', title: 'Keepy-uppies', scores: 'keepy-uppies', entries: [{ initials: '<b>', score: 3 }] })
+    assert.ok(!html.includes('<b>'))
+    assert.ok(html.includes('&lt;b&gt;'))
+  })
+})

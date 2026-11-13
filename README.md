@@ -1,6 +1,6 @@
 # Winter Fayre Sports Arcade
 
-Quick sports games to play on a phone at the Winter Fayre, with a leaderboard for the day for every game and a screen for the stall's TV. A small Node 22 service draws every page on the server; the games are added on top and played in the visitor's browser.
+Quick sports games to play on a phone at the Winter Fayre, with a leaderboard for the day for every game and a screen for the stall's TV (`/tv`: a QR code to scan and the leaderboards taking turns). A small Node 22 service draws every page on the server; the games are added on top and played in the visitor's browser.
 
 Start with `docs/HANDOVER.md`, then `CLAUDE.md` for the rules.
 

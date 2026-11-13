@@ -16,6 +16,11 @@
 // itself. Head to head is played with the phone on its side. With the 3D
 // off, the flat version of a game is played in its place.
 //
+// The stall's TV screen is checked at 1920 by 1080 with a full
+// leaderboard: the QR code at least 400 pixels square, a leaderboard
+// row's letters at least 40 pixels, everything on the one screen, and
+// the leaderboards taking turns by themselves.
+//
 // Screenshots go to CHECK_SCREENSHOTS (default ./screenshots, which git
 // ignores). Uses the Playwright installed on the machine
 // (require('playwright')); it is not one of the site's dependencies.
@@ -36,7 +41,7 @@ const shots = path.resolve(process.env.CHECK_SCREENSHOTS || path.join(root, 'scr
 const WIDTHS = Object.fromEntries(Object.entries({ 360: 780, 375: 812, 390: 844 }).filter(([w]) => !process.env.CHECK_WIDTHS || process.env.CHECK_WIDTHS.split(',').includes(w)))
 // A phone on its side.
 const SIDEWAYS = [[740, 360], [568, 320]]
-const PAGES = ['/', ...GAMES.map(g => g.path), '/privacy', '/not-a-page']
+const PAGES = ['/', ...GAMES.map(g => g.path), '/tv', '/privacy', '/not-a-page']
 
 const problems = []
 const problem = (where, what) => problems.push(`${where}: ${what}`)
@@ -247,6 +252,7 @@ async function main() {
     await flatGames(browsers.no3d, base)
     for (const [w, h] of SIDEWAYS) await sideways(browsers.normal, base, w, h)
     await widerScreens(browsers.normal, base)
+    await television(browsers.normal, base)
   } finally {
     await browsers.normal.close()
     await browsers.no3d.close()
@@ -257,7 +263,7 @@ async function main() {
     for (const p of problems) console.error(`  ${p}`)
     process.exit(1)
   }
-  console.log(`npm run check: ${pagesChecked} page views at ${Object.keys(WIDTHS).join(', ')} wide, with the 3D on and off, reduced motion and no JavaScript, every game opened, and head to head on its side at ${SIDEWAYS.map(s => s.join(' by ')).join(' and ')}: no problems. Screenshots in ${shots}`)
+  console.log(`npm run check: ${pagesChecked} page views at ${Object.keys(WIDTHS).join(', ')} wide, with the 3D on and off, reduced motion and no JavaScript, every game opened, head to head on its side at ${SIDEWAYS.map(s => s.join(' by ')).join(' and ')}, and the TV screen at 1920 by 1080: no problems. Screenshots in ${shots}`)
 }
 
 // Each game opened at a phone's width: its stage fills the screen, its
@@ -469,6 +475,93 @@ async function widerScreens(browser, base) {
     await page.close()
     await context.close()
   }
+}
+
+// The stall's TV screen, as a television shows it, with one leaderboard
+// full: ten invented goes of one or two keepy-uppies, which the site
+// takes at once.
+async function television(browser, base) {
+  for (let n = 0; n < 10; n++) {
+    const { ticket } = await (await fetch(`${base}/api/board/keepy`)).json()
+    const res = await fetch(`${base}/api/board/keepy`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initials: ['ABC', 'XYZ', 'LMN', 'QRS', 'TUV'][n % 5], score: n < 5 ? 2 : 1, ticket }) })
+    if (!res.ok) problem('/tv', `an invented score for the picture was refused (${res.status})`)
+  }
+  for (const [width, height, name] of [[1920, 1080, 'tv-1920x1080'], [1280, 720, 'tv-1280x720'], [3840, 2160, null]]) {
+    const where = `/tv at ${width} by ${height}`
+    const context = await browser.newContext({ viewport: { width, height } })
+    const page = await openPage(context, base, '/tv', where)
+    await page.waitForTimeout(700)
+    // Each board in its turn, keepy-uppies (the full one) among them. The
+    // check gives each its turn here, so it need not wait for them all.
+    const seen = new Set()
+    for (let turn = 0; turn < GAMES.length; turn++) {
+      const m = await page.evaluate((index) => {
+        const all = [...document.querySelectorAll('.tvb')]
+        all.forEach((b, n) => b.classList.toggle('on', n === index))
+        const on = all.filter(b => getComputedStyle(b).display !== 'none')
+        const board = on[0]
+        const code = document.querySelector('.tvcode svg').getBoundingClientRect()
+        const card = board?.getBoundingClientRect()
+        const row = board?.querySelector('.tvl li')
+        const snow = document.querySelector('.tv .snow').getBoundingClientRect()
+        return {
+          shown: on.length,
+          key: board?.getAttribute('data-tv-board'),
+          rows: board ? board.querySelectorAll('.tvl li').length : 0,
+          code: Math.round(Math.min(code.width, code.height)),
+          codeInside: code.top >= 0 && code.bottom <= innerHeight && code.left >= 0 && code.right <= innerWidth,
+          letters: row ? parseFloat(getComputedStyle(row).fontSize) : null,
+          cardInside: card ? card.top >= 0 && card.bottom <= snow.top + 1 && card.right <= innerWidth : false,
+          scrolls: document.documentElement.scrollHeight > innerHeight + 1 || document.documentElement.scrollWidth > innerWidth + 1,
+          address: document.querySelector('.tva').getBoundingClientRect().bottom <= snow.top + 1,
+        }
+      }, turn)
+      seen.add(m.key)
+      const scale = width / 1920
+      if (m.shown !== 1) problem(where, `${m.shown} leaderboards are on the screen at once, not one`)
+      if (m.code < 400 * scale) problem(where, `the QR code is ${m.code}px square, under ${Math.round(400 * scale)}`)
+      if (!m.codeInside) problem(where, 'the QR code is not wholly on the screen')
+      if (m.letters !== null && m.letters < 40 * scale) problem(where, `a leaderboard row's letters are ${m.letters}px, under ${Math.round(40 * scale)}`)
+      if (!m.cardInside) problem(where, `the ${m.key} leaderboard, with ${m.rows} rows, does not fit the screen`)
+      if (!m.address) problem(where, 'the address under the code runs into the snow')
+      if (m.scrolls) problem(where, 'the screen scrolls')
+      if (m.key === 'keepy') {
+        if (m.rows !== 10) problem(where, `the full leaderboard shows ${m.rows} rows, not 10`)
+        await page.waitForTimeout(700)
+        if (name) await page.screenshot({ path: path.join(shots, `${name}.png`) })
+      }
+    }
+    // And left alone, the next board takes its turn by itself.
+    if (width === 1920) {
+      const was = await page.evaluate(() => document.querySelector('.tvb.on')?.getAttribute('data-tv-board'))
+      try {
+        await page.waitForFunction((key) => document.querySelector('.tvb.on')?.getAttribute('data-tv-board') !== key, was, { timeout: 14000 })
+      } catch {
+        problem(where, 'the leaderboards do not take turns by themselves')
+      }
+    }
+    if (seen.size !== GAMES.length) problem(where, `only ${seen.size} of the ${GAMES.length} leaderboards took a turn`)
+    await page.close()
+    await context.close()
+  }
+
+  // With no script the code and every leaderboard are still there to read.
+  const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, javaScriptEnabled: false })
+  const where = '/tv at 1920 by 1080 (no JavaScript)'
+  const page = await openPage(context, base, '/tv', where)
+  const m = await page.evaluate(() => ({
+    code: Math.round(document.querySelector('.tvcode svg').getBoundingClientRect().width),
+    boards: [...document.querySelectorAll('.tvb')].filter(b => getComputedStyle(b).display !== 'none').length,
+    rows: document.querySelectorAll('.tvb[data-tv-board="keepy"] .tvl li').length,
+    wide: document.documentElement.scrollWidth > innerWidth + 1,
+  }))
+  if (m.code < 400) problem(where, `the QR code is ${m.code}px square, under 400`)
+  if (m.boards !== GAMES.length) problem(where, `${m.boards} leaderboards can be read, not ${GAMES.length}`)
+  if (m.rows !== 10) problem(where, 'the full leaderboard is not all there')
+  if (m.wide) problem(where, 'the page scrolls sideways')
+  await page.screenshot({ path: path.join(shots, 'tv-1920x1080-no-js.png'), fullPage: true })
+  await page.close()
+  await context.close()
 }
 
 main().catch((err) => {

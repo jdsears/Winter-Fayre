@@ -4,6 +4,8 @@
 //   GET  /                 the arcade: a tile for each game
 //   GET  /penalties, /keepy-uppies, /free-kicks, /head-to-head
 //                          a page for each game (shared/games.js)
+//   GET  /tv               the stall's TV screen: the QR code and the day's leaderboards
+//   GET  /qr.svg           the QR code alone, to print for the stall
 //   GET  /privacy          what the site keeps, in plain English
 //   GET  /assets/...       the page's script, built by Vite
 //   GET  /fonts/...        Barlow and Barlow Condensed, served from here
@@ -30,6 +32,8 @@ import { securityHeaders, cspFor, newNonce } from './security.js'
 import { SITE_CSS } from './render/css.js'
 import { FACES } from './render/layout.js'
 import { renderArcade, renderGame, renderPrivacy, renderNotFound, renderBareError } from './render/pages.js'
+import { renderTv, shortAddress } from './render/tv.js'
+import { qrSvg } from './qr.js'
 import { GAMES, GAME_KEYS, gameByKey } from '../shared/games.js'
 import { COLOURS } from './site.js'
 
@@ -82,6 +86,9 @@ export function createApp({ origin = 'http://localhost:3000', production = false
   const built = readAssets(dist)
   if (!built.script) log.warn?.('No built script in dist: the pages read the same, but no game can be played. Run npm run build.')
   const assets = { stylesheet, script: built.script }
+  // What the site is made of, in a few letters: it changes when the site
+  // is deployed again, which is how an open TV page knows to reload.
+  const version = crypto.createHash('sha256').update(`${built.script}|${cssHash}|${GAME_KEYS.join(',')}`).digest('hex').slice(0, 10)
 
   // counted is the name a page is counted under (counts.js), for a page
   // a person asked for: not a machine, and not a page that was not found.
@@ -172,22 +179,32 @@ export function createApp({ origin = 'http://localhost:3000', production = false
     }
   })
 
-  // Every game's best of the day in one answer, for the TV.
+  // Every game's best of the day, for the TV.
+  async function allBoards() {
+    const all = []
+    let day = null
+    let name = null
+    for (const g of GAMES) {
+      const top = await boards[g.key].top()
+      day = top.day
+      name = top.name
+      all.push({ key: g.key, title: g.title, scores: g.scores, entries: top.entries.slice(0, TV_TOP) })
+    }
+    return { day, name, version, boards: all }
+  }
+
   app.get('/api/boards', async (req, res) => {
     try {
-      const all = []
-      let day = null
-      let name = null
-      for (const g of GAMES) {
-        const top = await boards[g.key].top()
-        day = top.day
-        name = top.name
-        all.push({ key: g.key, title: g.title, scores: g.scores, entries: top.entries.slice(0, TV_TOP) })
-      }
-      answer(res, 200, { day, name, boards: all })
+      answer(res, 200, await allBoards())
     } catch (err) {
       failed(res, err)
     }
+  })
+
+  // The QR code alone, to print for the stall: the site's own address.
+  app.get('/qr.svg', (req, res) => {
+    res.set('Cache-Control', 'no-cache')
+    res.type('image/svg+xml').send(`${qrSvg(`${origin}/`, { label: `A QR code that opens ${shortAddress(origin)}` })}\n`)
   })
 
   // ---------------------------------------------------------------------
@@ -246,6 +263,16 @@ export function createApp({ origin = 'http://localhost:3000', production = false
 
   app.get('/privacy', (req, res) => {
     page(req, res, renderPrivacy(opts(req)), { counted: '/privacy' })
+  })
+
+  // The stall's TV screen. It is not counted: it asks for itself all day.
+  app.get('/tv', async (req, res, next) => {
+    try {
+      const { name, boards: all } = await allBoards()
+      page(req, res, renderTv({ ...opts(req), boards: all, day: name, version }))
+    } catch (err) {
+      next(err)
+    }
   })
 
   // Anything else: not here.

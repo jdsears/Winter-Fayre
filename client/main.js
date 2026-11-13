@@ -13,6 +13,9 @@
 //   head to head   drawn flat, full screen, with the phone held sideways
 //                  (./headtohead)
 //
+// and on the stall's TV screen, the leaderboards taking turns and
+// refreshing themselves (./tv.js).
+//
 // No analytics, advertising or tracking of any kind. Built by Vite
 // (vite.config.js) into dist/assets.
 
@@ -64,5 +67,12 @@ function setupGames() {
   }
 }
 
+// The stall's TV screen.
+function setupTv() {
+  const tv = document.querySelector('[data-tv]')
+  if (tv) import('./tv.js').then(m => m.startTv(tv), () => {})
+}
+
 setupPenalties()
 setupGames()
+setupTv()

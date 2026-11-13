@@ -13,21 +13,25 @@ shared/
   games.js            the arcade's games, one list read by the server and the page script
 server/
   index.js            starts the service (PORT, SITE_ORIGIN, NODE_ENV, NUMBERS_PASSWORD, DATA_DIR)
-  app.js              the routes: the pages, the leaderboards (/api/board/<game>, /api/boards),
-                      the numbers (/api/count, /numbers), /health, robots
+  app.js              the routes: the pages, the TV screen (/tv) and its code (/qr.svg), the
+                      leaderboards (/api/board/<game>, /api/boards), the numbers (/api/count,
+                      /numbers), /health, robots
   site.js             the site's names, the boards' words and the winter colours
   store.js            where the little the site keeps is kept: memory, and a small file if there is a folder
   board.js            the leaderboards: three letters, a score and the time, a board a game a day
   counts.js           the site's own numbers: page views and game plays a day
   security.js         Content-Security-Policy (with a nonce per response) and the other headers
-  render/             the pages: games.js (the arcade and each game's page), pages.js (privacy,
-                      not found), numbers.js, layout.js (head, top bar, snow, footer), css.js, html.js
-client/               the page script (Vite): main.js, games/ (the full-screen stage the games share,
-                      the leaderboard in a finish panel, the game counts), shootout/ (penalties and
-                      the 3D stadium), keepy/ (keepy-uppies), freekick/ (the free kick challenge),
-                      headtohead/ (head to head, drawn flat), fonts/ (Barlow, OFL)
+  qr.js               the QR code, drawn as SVG from the site's own address
+  render/             the pages: games.js (the arcade and each game's page), tv.js (the stall's TV
+                      screen), pages.js (privacy, not found), numbers.js, layout.js (head, top bar,
+                      snow, footer), css.js, html.js
+client/               the page script (Vite): main.js, tv.js (the TV screen's turns and refresh),
+                      games/ (the full-screen stage the games share, the leaderboard in a finish
+                      panel, the game counts), shootout/ (penalties and the 3D stadium), keepy/
+                      (keepy-uppies), freekick/ (the free kick challenge), headtohead/ (head to
+                      head, drawn flat), fonts/ (Barlow, OFL)
 tests/                node:test server, safety and writing-rule tests
-tools/check.mjs       npm run check: Playwright at 360, 375 and 390 wide, and sideways
+tools/check.mjs       npm run check: Playwright at 360, 375 and 390 wide, sideways, and the TV at 1920 by 1080
 docs/HANDOVER.md      what is built, what John has decided, what is left
 ```
 
@@ -87,11 +91,11 @@ Most visitors play on a phone, so that is the main view.
 - Where 3D cannot run, a game falls back to its flat version. With reduced motion the snow hangs still and nothing shakes or sweeps.
 - No large picture downloads. The tiles are drawn (SVG). Anything raster would be WebP, sized for its place, with width and height set, and lazy-loaded below the first screen.
 - Barlow, served from the site itself. Body text no smaller than 16 pixels; headings scale with `clamp`.
-- The TV page is the one page made for a large screen (1920 by 1080, read from three metres). It must still be usable, stacked, on a phone.
+- The TV page is the one page made for a large screen (1920 by 1080, read from three metres): leaderboard rows' letters at least 40 pixels, the QR code at least 400 pixels square, sized by the screen so a smaller or larger television shows the same picture. It must still be usable, stacked, on a phone, and readable with no script.
 
 ### Dependencies, services and secrets
 
-- Dependencies: Express, three.js and Vite, with vitest and @babel/parser for tests. Ask John before adding any other dependency or any paid service. He has agreed to one more, for the QR code: `qrcode-generator`, used on the server only.
+- Dependencies: Express, three.js and Vite, with vitest and @babel/parser for tests, and `qrcode-generator` for the QR code, which John agreed to (13 November 2026) and which is used on the server only. Ask John before adding any other dependency or any paid service.
 
 ### Branches, pull requests and commits
 
