@@ -82,7 +82,8 @@ describe('the appeal on the arcade', () => {
     assert.deepEqual(stops, ['why', ...APPEAL.funded.items.map(i => i.key), ...APPEAL.raising.items.map(i => i.key), 'give'])
     assert.deepEqual(stops, ['why', 'tables', 'water', 'posts', 'goals', 'covers', 'give'])
     assert.equal((html.match(/data-story-body/g) || []).length, 1)
-    assert.match(html, /<section id="appeal" class="story" aria-labelledby="appeal-h" data-story>/)
+    // The boards in the 3D story read as the boards round the games' pitch do.
+    assert.ok(html.includes(`<section id="appeal" class="story" aria-labelledby="appeal-h" data-story data-boards="${JSON.stringify(SITE.boards).replace(/"/g, '&quot;')}">`))
     // The stage is the page script's to add, where a phone can draw 3D:
     // with no script the story is its words alone, and nothing is empty.
     const page = html.replace(/<style[\s\S]*?<\/style>/g, '')

@@ -41,6 +41,18 @@ export function focusLine(stage, screenHeight) {
 // The shortest screen the stage is pinned on, in pixels.
 export const SHORT = 480
 
+// The words for the boards along the back of the field, as the page
+// gives them (the ones round the games' pitch): a few short names, and
+// nothing else. None, where the page gives none that can be used.
+export function boardWords(root) {
+  try {
+    const names = JSON.parse(root.getAttribute('data-boards') || '[]')
+    return names.filter(n => typeof n === 'string' && /^[A-Za-z][A-Za-z ']{1,38}$/.test(n.trim())).map(n => n.trim()).slice(0, 6)
+  } catch {
+    return []
+  }
+}
+
 // Whether the page was opened at its games menu, below the story.
 export const pastTheStory = (hash) => String(hash || '') === '#games'
 
@@ -104,7 +116,7 @@ export async function startStory(root, win = globalThis.window) {
   let scene = null
   try {
     const m = await import('./scene.js')
-    scene = m.createStoryScene({ canvas, win, words: APPEAL.name })
+    scene = m.createStoryScene({ canvas, win, words: APPEAL.name, boards: boardWords(root) })
   } catch {
     off()
     return null

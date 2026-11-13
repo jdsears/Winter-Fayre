@@ -2,7 +2,7 @@
 // the small sums it scrolls by.
 
 import { describe, it, expect } from 'vitest'
-import { canDraw3d, focusLine, follow, startStory, keepPlace, pastTheStory, SHORT } from './index.js'
+import { canDraw3d, focusLine, follow, startStory, keepPlace, pastTheStory, boardWords, SHORT } from './index.js'
 
 describe('where the words are being read', () => {
   it('is a little above the middle of the room under the stage', () => {
@@ -52,6 +52,28 @@ describe('keeping a visitor\'s place as the stage goes into the page', () => {
   it('does nothing with a measure that is not a number', () => {
     expect(keepPlace(undefined, 400, true)).toBe(0)
     expect(keepPlace(100, NaN, true)).toBe(0)
+  })
+})
+
+describe('the words on the boards along the back of the field', () => {
+  const page = (value) => ({ getAttribute: (name) => (name === 'data-boards' ? value : null) })
+
+  it('are the ones the page gives, which are the ones round the games\' pitch', () => {
+    expect(boardWords(page(JSON.stringify(['Wymondham College PSA', 'Winter Fayre', 'Sports Fund Appeal'])))).toEqual(['Wymondham College PSA', 'Winter Fayre', 'Sports Fund Appeal'])
+    expect(boardWords(page(JSON.stringify(['  Winter Fayre  ', 'The PSA\'s appeal'])))).toEqual(['Winter Fayre', 'The PSA\'s appeal'])
+  })
+
+  it('are a few short names and nothing else: no markup, no numbers, nothing long', () => {
+    const odd = ['<b>Winter</b>', 'Winter Fayre', 7, null, { name: 'x' }, 'a'.repeat(60), 'https://elsewhere.example', '', 'x']
+    expect(boardWords(page(JSON.stringify(odd)))).toEqual(['Winter Fayre'])
+    expect(boardWords(page(JSON.stringify(Array.from({ length: 20 }, () => 'Winter Fayre'))))).toHaveLength(6)
+  })
+
+  it('are none where the page gives none that can be read', () => {
+    expect(boardWords(page(null))).toEqual([])
+    expect(boardWords(page('not a list'))).toEqual([])
+    expect(boardWords(page('{"a":1}'))).toEqual([])
+    expect(boardWords({ getAttribute: () => { throw new Error('no') } })).toEqual([])
   })
 })
 

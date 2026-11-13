@@ -135,8 +135,8 @@ const APPEAL_CSS = `.story{position:relative;background:linear-gradient(178deg,#
 .appeal-line a{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);font-weight:700}
 .st-stage{display:none}
 .story.s3d{overflow:visible}
-.s3d .st-stage{display:block;position:sticky;top:0;z-index:3;height:44vh;height:44svh;min-height:230px;max-height:440px;margin:26px 0 20px;background:#24152a;overflow:hidden;box-shadow:0 16px 28px #150b18e6}
-.s3d .st-stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(#150b1800,#150b18d9);pointer-events:none}
+.s3d .st-stage{display:block;position:sticky;top:0;z-index:3;height:44vh;height:44svh;min-height:230px;max-height:440px;margin:26px 0 20px;background:#0b1322;overflow:hidden;box-shadow:0 16px 28px #150b18e6}
+.s3d .st-stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(#0c162600,#0c1626d9);pointer-events:none}
 .st-canvas{display:block;width:100%;height:100%}
 .st-cap{position:absolute;z-index:1;left:max(14px,env(safe-area-inset-left));right:max(14px,env(safe-area-inset-right));bottom:12px;margin:0;max-width:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:26px;line-height:1.05;color:#fff;text-shadow:0 2px 10px #000c}
 .st-cap .k{flex-basis:100%;font-weight:700;font-size:16px;line-height:1.3;letter-spacing:.18em;color:var(--accent)}
