@@ -14,6 +14,7 @@ import { esc, attr } from './html.js'
 import { headHtml, documentHtml, snowBand } from './layout.js'
 import { qrSvg } from '../qr.js'
 import { SITE } from '../site.js'
+import { prizeLine } from '../../shared/prizes.js'
 
 // How many seconds between asking again, with no script.
 export const TV_REFRESH_SECONDS = 60
@@ -27,7 +28,7 @@ export function tvBoardHtml(board, { first = false } = {}) {
   const rows = board.entries.map((e, i) => `<li><span class="n">${i + 1}</span><span class="i">${esc(e.initials)}</span><span class="s">${esc(e.score)}</span></li>`).join('')
   return `<section class="tvb${first ? ' on' : ''}" data-tv-board="${attr(board.key)}" aria-labelledby="tvb-${attr(board.key)}">
     <h2 id="tvb-${attr(board.key)}">${esc(board.title)}</h2>
-    <p class="tvc">Counting ${esc(board.scores)}</p>
+    <p class="tvc">Counting ${esc(board.scores)}${prizeLine(board.key) ? `. <b>${esc(prizeLine(board.key))}</b>` : ''}</p>
     <ol class="tvl"${board.entries.length ? '' : ' hidden'}>${rows}</ol>
     <p class="tve"${board.entries.length ? ' hidden' : ''}>No scores yet. Scan the code and be the first.</p>
   </section>`

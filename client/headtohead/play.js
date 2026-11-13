@@ -28,6 +28,7 @@ import { boardsFrom, lockTouch } from '../games/stage.js'
 import { tally } from '../games/count.js'
 import { readRun, keepRun, placeOf } from './run.js'
 import { othersFor } from '../../shared/games.js'
+import { drawPrize, clearPrize } from '../games/prize.js'
 import { INITIALS_KEY, SAID, drawBoard, drawForm, fetchBoard, ordinal, sendGo, tidyInitials, wouldMake } from '../games/board.js'
 
 const BOARD_PATH = '/api/board/headtohead'
@@ -184,6 +185,8 @@ export function playHeadToHead(root, win = window) {
   const endTitle = el(doc, 'h2', { class: 'gs-end-t' })
   const endLine = el(doc, 'p', { class: 'gs-end-l' })
   const endExtra = el(doc, 'div', { class: 'gs-extra' })
+  // Where the prize is said: to a winner, to show the screen at the stall.
+  const endPrize = el(doc, 'p', { class: 'gs-prize', hidden: true })
   const again = el(doc, 'button', { type: 'button', class: 'btn y' }, 'Play again')
   const change = el(doc, 'button', { type: 'button', class: 'gs-lbm' }, 'Change player')
   // The players to pick from: each a button with its head drawn on it.
@@ -195,7 +198,7 @@ export function playHeadToHead(root, win = window) {
   })
   const go = el(doc, 'button', { type: 'button', class: 'btn y' }, 'Kick off')
   const pick = el(doc, 'div', { class: 'hh-pick', hidden: Boolean(picked) }, el(doc, 'h2', { class: 'gs-end-t' }, 'Pick your player'), el(doc, 'div', { class: 'hh-faces', role: 'group', 'aria-label': 'Players' }, ...options), go)
-  const end = el(doc, 'div', { class: 'gs-end hh-end', hidden: true }, endTitle, endLine, again, change, endExtra,
+  const end = el(doc, 'div', { class: 'gs-end hh-end', hidden: true }, endTitle, endLine, endPrize, again, change, endExtra,
     el(doc, 'p', { class: 'gs-more' }, ...othersFor('headtohead').map(o => el(doc, 'a', { class: 'btn o', href: o.href }, o.label))))
   const status = el(doc, 'p', { class: 'vh', role: 'status' })
   const shell = el(doc, 'div', { class: 'gs hh', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Head to head' },
@@ -364,10 +367,12 @@ export function playHeadToHead(root, win = window) {
       : after.ended
         ? `${line} Your run of ${after.ended} ${after.ended === 1 ? 'win' : 'wins'} is over. Your best run on this device is ${best}.`
         : `${line} Win to start a run. Your best run on this device is ${best}.`
+    // A win is a sweet (shared/prizes.js).
+    const prize = drawPrize(doc, endPrize, 'headtohead', outcome === 'win' ? 1 : 0)
     end.hidden = false
     shell.classList.add('ended')
     again.focus({ preventScroll: true })
-    say(`Full time. ${endTitle.textContent}. ${endLine.textContent}`)
+    say(`Full time. ${endTitle.textContent}. ${endLine.textContent} ${prize}`)
     leaderboard(outcome === 'win' ? streak : after.ended, matches)
   }
 
@@ -391,6 +396,7 @@ export function playHeadToHead(root, win = window) {
     sparks = []
     pops = []
     end.hidden = true
+    clearPrize(endPrize)
     shell.classList.remove('ended')
     prompt.hidden = false
     them.c = pickOpponent(me.c.id)
@@ -953,6 +959,7 @@ export function playHeadToHead(root, win = window) {
   }
   const openPick = () => {
     end.hidden = true
+    clearPrize(endPrize)
     pick.hidden = false
     prompt.hidden = true
     shell.classList.add('ended')

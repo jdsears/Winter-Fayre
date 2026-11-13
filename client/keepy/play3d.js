@@ -99,7 +99,8 @@ export async function playKeepy3D(root, win = window) {
       title: record && go.score >= 3 ? 'New best' : go.score === 0 ? 'Dropped it' : 'Good go',
       line: `${times}. Your best on this device is ${best}.`,
     })
-    stage.say(`The ball is down. ${times}. Your best on this device is ${best}.`)
+    const prize = stage.prize('keepy', go.score)
+    stage.say(`The ball is down. ${times}. Your best on this device is ${best}. ${prize}`)
     stage.endExtra.replaceChildren()
     board.show(stage.endExtra, go.score)
   }

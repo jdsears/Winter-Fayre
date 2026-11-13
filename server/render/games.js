@@ -10,6 +10,7 @@ import { esc, attr } from './html.js'
 import { snowBand } from './layout.js'
 import { SITE, COLOURS } from '../site.js'
 import { GAMES } from '../../shared/games.js'
+import { prizeLine } from '../../shared/prizes.js'
 import { shootoutConfig } from '../../client/shootout/config.js'
 import { renderShootoutSection } from '../../client/shootout/section.js'
 
@@ -44,12 +45,12 @@ function tileArt(kind) {
 // ---------------------------------------------------------------------
 
 export function arcadeHtml() {
-  const tiles = GAMES.map(g => `<li class="gt"><a href="${attr(g.href)}">${tileArt(g.key)}<span class="gt-b"><span class="gt-t">${esc(g.title)}</span><span class="gt-p">${esc(g.text)}</span><span class="btn y">${esc(g.play)}</span></span></a></li>`).join('')
+  const tiles = GAMES.map(g => `<li class="gt"><a href="${attr(g.href)}">${tileArt(g.key)}<span class="gt-b"><span class="gt-t">${esc(g.title)}</span><span class="gt-p">${esc(g.text)}</span>${prizeLine(g.key) ? `<span class="gt-w">${esc(prizeLine(g.key))}</span>` : ''}<span class="btn y">${esc(g.play)}</span></span></a></li>`).join('')
   return `<header class="hero" id="top">
   <div class="wrap">
     <div class="wm">${esc(SITE.host)}</div>
     <h1>${esc(SITE.short)} <em>Sports Arcade</em></h1>
-    <p>Quick sports games to play on your phone. Pick a game, beat your best and put your three letters on today's leaderboard.</p>
+    <p>Quick sports games to play on your phone. Beat a game's target and show your screen at the sports stall to claim a sweet, and put your three letters on today's leaderboard.</p>
   </div>
   ${snowBand({ w: 1600, h: 90, count: 96 })}
 </header>

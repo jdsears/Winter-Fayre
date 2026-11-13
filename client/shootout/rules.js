@@ -29,6 +29,12 @@ export function tally(state) {
   return t
 }
 
+// How many of a side's first five kicks went in: what the arcade's prize
+// is judged on, so sudden death never adds to it.
+export function firstFiveGoals(state, side = 'us') {
+  return state.kicks.filter((k) => k.side === side).slice(0, KICKS_EACH).filter((k) => k.scored).length
+}
+
 // The number of kicks each side will have taken when the round in play
 // is complete: five, or more once sudden death has started.
 function roundLength(t) {

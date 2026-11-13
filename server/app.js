@@ -17,7 +17,8 @@
 //   POST /api/board/<game> a go for the leaderboard: three letters and a score (board.js)
 //   GET  /api/boards       every game's top ten, for the TV
 //   POST /api/count        a game was started or finished (counts.js): no cookie, nothing about anyone
-//   GET  /numbers          the site's own numbers, behind a password (NUMBERS_PASSWORD)
+//   GET  /numbers          the site's own numbers and today's leaderboards, behind a password (NUMBERS_PASSWORD)
+//   POST /numbers/remove   takes one entry off a leaderboard, behind the same password
 
 import express from 'express'
 import crypto from 'node:crypto'
@@ -222,27 +223,62 @@ export function createApp({ origin = 'http://localhost:3000', production = false
   })
 
   // John's page, behind his password (asked for by the browser, with no
-  // cookie). A few wrong tries a minute at most, from everyone.
+  // cookie). A few wrong tries a minute at most, from everyone. True
+  // when the password was right; otherwise the answer has been sent.
   let wrong = []
-  app.get('/numbers', async (req, res) => {
+  function numbersOpen(req, res) {
     res.set('Cache-Control', 'no-store')
-    if (!numbersPassword) return res.status(404).type('text').send('Not found\n')
+    if (!numbersPassword) { res.status(404).type('text').send('Not found\n'); return false }
     wrong = wrong.filter(at => Date.now() - at < 60 * 1000)
-    if (wrong.length >= 10) return res.status(429).set('Retry-After', '60').type('text').send('Too many tries. Wait a minute.\n')
+    if (wrong.length >= 10) { res.status(429).set('Retry-After', '60').type('text').send('Too many tries. Wait a minute.\n'); return false }
     const m = /^Basic\s+(.+)$/i.exec(String(req.headers.authorization || ''))
     const given = m ? Buffer.from(m[1], 'base64').toString('utf8') : ''
     const password = given.slice(given.indexOf(':') + 1)
     if (!m || !crypto.timingSafeEqual(sha256(password), sha256(numbersPassword))) {
       if (m) wrong.push(Date.now())
-      return res.status(401).set('WWW-Authenticate', 'Basic realm="The numbers", charset="UTF-8"').type('text').send('A password is needed.\n')
+      res.status(401).set('WWW-Authenticate', 'Basic realm="The numbers", charset="UTF-8"').type('text').send('A password is needed.\n')
+      return false
     }
+    return true
+  }
+
+  app.get('/numbers', async (req, res) => {
+    if (!numbersOpen(req, res)) return
     try {
       const nonce = res.locals.nonce
-      res.set('Content-Security-Policy', cspFor({ nonce, production }))
-      res.type('html').send(renderNumbers({ days: await counts.days(30), names: COUNTED, nonce, stylesheet, kept: store.kind }))
+      // The one page with forms on it: each takes an entry off a
+      // leaderboard, and can be sent only to this site.
+      res.set('Content-Security-Policy', cspFor({ nonce, forms: true, production }))
+      const today = []
+      for (const g of GAMES) today.push({ key: g.key, title: g.title, entries: (await boards[g.key].top()).entries })
+      res.type('html').send(renderNumbers({ days: await counts.days(30), names: COUNTED, nonce, stylesheet, kept: store.kind, boards: today, removed: req.query.removed === '1' ? true : req.query.removed === '0' ? false : null }))
     } catch (err) {
       if (!(err instanceof StoreUnavailable)) log.error?.(err)
       res.status(503).set('Retry-After', '30').type('text').send('The numbers cannot be reached. Try again in a minute.\n')
+    }
+  })
+
+  // Takes one entry off today's leaderboard for a game: the one at a
+  // place whose letters and score are the ones the page showed, so a
+  // board that has moved on never loses the wrong entry. Behind the same
+  // password, and only when the form was sent from this site's own page:
+  // a browser sends a remembered password wherever a form comes from, so
+  // a form on another site is turned away by where it says it came from.
+  app.post('/numbers/remove', express.urlencoded({ extended: false, limit: 400, parameterLimit: 8 }), async (req, res) => {
+    if (!numbersOpen(req, res)) return
+    const from = req.headers.origin || req.headers.referer || ''
+    let sameSite = false
+    try { sameSite = new URL(from).host === String(req.headers.host || '') } catch { /* no address given: not ours */ }
+    if (!sameSite) return res.status(403).type('text').send('That did not come from the numbers page.\n')
+    const { game, place, initials, score } = req.body || {}
+    const b = GAME_KEYS.includes(game) ? boards[game] : null
+    if (!b || !/^\d{1,2}$/.test(String(place)) || !/^[A-Z]{3}$/.test(String(initials)) || !/^\d{1,5}$/.test(String(score))) return res.status(422).type('text').send('That entry could not be read.\n')
+    try {
+      const out = await b.remove({ place: Number(place), initials: String(initials), score: Number(score) })
+      res.redirect(303, `/numbers?removed=${out.ok ? 1 : 0}#boards`)
+    } catch (err) {
+      if (!(err instanceof StoreUnavailable)) log.error?.(err)
+      res.status(503).set('Retry-After', '30').type('text').send('The leaderboard cannot be reached. Try again in a minute.\n')
     }
   })
 

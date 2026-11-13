@@ -19,6 +19,7 @@ import { kits as makeKits } from '../shootout/kit.js'
 import { pageColours } from '../shootout/index.js'
 import { HOME_KEEPER_LOOK } from '../shootout/looks.js'
 import { boardLogosFrom, topSignFrom } from '../shootout/boards.js'
+import { drawPrize, clearPrize } from './prize.js'
 
 export function webglAvailable(doc = globalThis.document) {
   try {
@@ -121,8 +122,10 @@ export async function openStage({ name, hud = [], others = [], boards = [], onPo
   const endLine = el(doc, 'p', { class: 'gs-end-l' })
   const again = el(doc, 'button', { type: 'button', class: 'btn y' }, 'Play again')
   const endExtra = el(doc, 'div', { class: 'gs-extra' })
+  // Where the prize is said: to a winner, to show the screen at the stall.
+  const endPrize = el(doc, 'p', { class: 'gs-prize', hidden: true })
   const end = el(doc, 'div', { class: 'gs-end', hidden: true },
-    endTitle, endLine, endExtra, again,
+    endTitle, endLine, endPrize, endExtra, again,
     el(doc, 'p', { class: 'gs-more' }, ...others.map(o => el(doc, 'a', { class: 'btn o', href: o.href }, o.label))))
   const status = el(doc, 'p', { class: 'vh', role: 'status' })
   const root = el(doc, 'div', { class: 'gs', role: 'dialog', 'aria-modal': 'true', 'aria-label': name },
@@ -283,8 +286,12 @@ export async function openStage({ name, hud = [], others = [], boards = [], onPo
       end.hidden = false
       again.focus({ preventScroll: true })
     },
+    // The prize for a game and a score (shared/prizes.js), on the finish
+    // panel. Returns what was said, to be read out with the result.
+    prize(game, score) { return drawPrize(doc, endPrize, game, score) },
     hideEnd() {
       end.hidden = true
+      clearPrize(endPrize)
       fx.stopConfetti()
       pitch.focus({ preventScroll: true })
     },

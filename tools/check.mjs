@@ -21,6 +21,9 @@
 // row's letters at least 40 pixels, everything on the one screen, and
 // the leaderboards taking turns by themselves.
 //
+// The numbers page, behind its password, is checked on a phone too: it
+// is where an entry is taken off a leaderboard at the stall.
+//
 // Screenshots go to CHECK_SCREENSHOTS (default ./screenshots, which git
 // ignores). Uses the Playwright installed on the machine
 // (require('playwright')); it is not one of the site's dependencies.
@@ -43,6 +46,9 @@ const WIDTHS = Object.fromEntries(Object.entries({ 360: 780, 375: 812, 390: 844 
 const SIDEWAYS = [[740, 360], [568, 320]]
 const PAGES = ['/', ...GAMES.map(g => g.path), '/tv', '/privacy', '/not-a-page']
 
+// A password for the numbers page, for this check's own copy of the site.
+const NUMBERS = 'for-the-check-only'
+
 const problems = []
 const problem = (where, what) => problems.push(`${where}: ${what}`)
 
@@ -61,7 +67,7 @@ async function startServer() {
   const port = await freePort()
   const child = spawn(process.execPath, ['server/index.js'], {
     cwd: root,
-    env: { ...process.env, PORT: String(port), SITE_ORIGIN: '', DATA_DIR: '', RAILWAY_VOLUME_MOUNT_PATH: '', RAILWAY_PUBLIC_DOMAIN: '', NUMBERS_PASSWORD: '', NODE_ENV: 'development' },
+    env: { ...process.env, PORT: String(port), SITE_ORIGIN: '', DATA_DIR: '', RAILWAY_VOLUME_MOUNT_PATH: '', RAILWAY_PUBLIC_DOMAIN: '', NUMBERS_PASSWORD: NUMBERS, NODE_ENV: 'development' },
     stdio: ['ignore', 'ignore', 'inherit'],
   })
   const base = `http://127.0.0.1:${port}`
@@ -253,6 +259,7 @@ async function main() {
     for (const [w, h] of SIDEWAYS) await sideways(browsers.normal, base, w, h)
     await widerScreens(browsers.normal, base)
     await television(browsers.normal, base)
+    await numbersPage(browsers.normal, base)
   } finally {
     await browsers.normal.close()
     await browsers.no3d.close()
@@ -477,6 +484,35 @@ async function widerScreens(browser, base) {
     await page.close()
     await context.close()
   }
+}
+
+// The numbers page on a phone, behind its password: nothing wider than
+// the screen, every Take off button big enough for a thumb, and a tap on
+// one takes that entry off. The television check has put ten invented
+// entries on the keepy-uppies leaderboard by now.
+async function numbersPage(browser, base) {
+  const where = '/numbers at 375'
+  const context = await browser.newContext({ viewport: { width: 375, height: 812 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, httpCredentials: { username: 'check', password: NUMBERS } })
+  const page = await openPage(context, base, '/numbers', where)
+  await scrollThrough(page)
+  report(where, await page.evaluate(measure))
+  const before = await page.locator('form[action="/numbers/remove"]').count()
+  if (before !== 10) problem(where, `${before} entries have a Take off button, not the 10 that were added`)
+  if (before) {
+    await page.locator('form[action="/numbers/remove"] button').first().click()
+    await page.waitForLoadState('load')
+    const said = await page.getByText('That entry has been taken off').count()
+    const after = await page.locator('form[action="/numbers/remove"]').count()
+    if (!said || after !== before - 1) problem(where, 'a tap on Take off did not take the entry off')
+    await page.screenshot({ path: path.join(shots, 'numbers-375.png'), fullPage: true })
+  }
+  await page.close()
+  await context.close()
+  // Without the password it is not shown.
+  const closed = await browser.newContext({ viewport: { width: 375, height: 812 } })
+  const res = await (await closed.newPage()).goto(`${base}/numbers`)
+  if (res.status() !== 401) problem(where, `without the password it answered ${res.status()}, not 401`)
+  await closed.close()
 }
 
 // The stall's TV screen, as a television shows it, with one leaderboard
