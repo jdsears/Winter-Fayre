@@ -1,12 +1,17 @@
 // The 3D scene of the appeal's story (index.js runs it; path.js says
 // where things stand and where the camera is).
 //
-// A snowy sports field at night, in the PSA's plum and gold, with the
-// things the appeal is about standing in a row: the table tennis tables,
-// the cricket square being watered and the rugby posts in their
-// protectors, which the PSA has funded, and the football box goals and
-// the cricket covers it is raising for now, each in a ring of gold with
-// sparks rising round it.
+// A snowy sports field on a winter's night, with the things the appeal is
+// about standing in a row: the table tennis tables, the cricket square
+// being watered and the rugby posts in their protectors, which the PSA
+// has funded, and the football box goals and the cricket covers it is
+// raising for now, each in a ring of gold with sparks rising round it.
+//
+// It is dressed as the Winter Fayre's poster is (John, 13 November 2026):
+// a deep navy night, snowflakes and four-pointed stars in the poster's
+// teal and gold hung among the trees, the fayre's own navy boards beside
+// the appeal's plum ones, snow under the Christmas trees, presents and a
+// snowman or two.
 //
 // The things are made to look as the College's own do in the picture
 // John supplied (13 November 2026): dark blue tables on white frames,
@@ -19,7 +24,7 @@ import {
   AdditiveBlending, BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, CircleGeometry, Color, ConeGeometry,
   CylinderGeometry, DirectionalLight, DoubleSide, Fog, Group, HemisphereLight, Mesh, MeshBasicMaterial,
   MeshLambertMaterial, PerspectiveCamera, PlaneGeometry, Points, PointsMaterial, RepeatWrapping, RingGeometry, Scene,
-  SphereGeometry, SRGBColorSpace, TorusGeometry, Vector3, WebGLRenderer,
+  SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3, WebGLRenderer,
 } from 'three'
 import { PLACES, RAISING, viewAt, cheerAt } from './path.js'
 
@@ -33,6 +38,9 @@ const fract = (v) => v - Math.floor(v)
 
 export const PLUM = '#5c3351'
 export const GOLD = '#f0c05a'
+// The Winter Fayre's own colours, after its poster: a deep navy, the
+// teal and the ice blue of its snowflakes, and white.
+export const FAYRE = { navy: '#1a2a47', night: '#0b1322', teal: '#3fb8c9', ice: '#8fd6e8', red: '#c8102e' }
 // The colours of the College's own things, as in the picture supplied.
 export const COLOURS = {
   table: '#1f4d8c', // the tables' tops: a deep blue
@@ -54,9 +62,11 @@ function seeded(seed) {
   }
 }
 
-// words   the appeal's name, for the boards along the back
+// words   the appeal's name, for its boards along the back
+// boards  the words on all the boards, turn and turn about, as round the
+//         games' pitch; the appeal's own board is plum, the rest navy
 // college the name up the post protectors, as on the College's own
-export function createStoryScene({ canvas, win = globalThis.window, words = 'Sports Fund Appeal', college = 'Wymondham College' }) {
+export function createStoryScene({ canvas, win = globalThis.window, words = 'Sports Fund Appeal', boards = [], college = 'Wymondham College' }) {
   const doc = win.document
   const dpr = Math.min(2, win.devicePixelRatio || 1)
   const renderer = new WebGLRenderer({ canvas, antialias: dpr < 2, powerPreference: 'high-performance' })
@@ -109,17 +119,19 @@ export function createStoryScene({ canvas, win = globalThis.window, words = 'Spo
     return m
   }
 
-  // The sky: the appeal's plum, dark above and lifting towards the field.
+  // The sky: the poster's navy night, lifting to the appeal's plum where
+  // it meets the trees.
   scene.background = drawn(4, 256, (g, w, h) => {
     const grad = g.createLinearGradient(0, 0, 0, h)
-    grad.addColorStop(0, '#150b18')
-    grad.addColorStop(0.55, '#3a2038')
-    grad.addColorStop(1, PLUM)
+    grad.addColorStop(0, FAYRE.night)
+    grad.addColorStop(0.5, FAYRE.navy)
+    grad.addColorStop(0.82, '#33305c')
+    grad.addColorStop(1, '#4d2f5c')
     g.fillStyle = grad
     g.fillRect(0, 0, w, h)
   })
-  scene.fog = new Fog(new Color('#3a2038'), 46, 150)
-  scene.add(new HemisphereLight(0xeee4ff, 0x2c4a3a, 0.92 * LIGHT))
+  scene.fog = new Fog(new Color('#27294c'), 46, 150)
+  scene.add(new HemisphereLight(0xe6edff, 0x2c4a3a, 0.92 * LIGHT))
   const moon = new DirectionalLight(0xfff2dc, 0.62 * LIGHT)
   moon.position.set(-10, 18, 14)
   scene.add(moon)
@@ -196,24 +208,42 @@ export function createStoryScene({ canvas, win = globalThis.window, words = 'Spo
   // Along the back: the boards, the fairy lights and the Christmas trees.
   // ------------------------------------------------------------------
   const BACK = -19
-  const board = lettered(1024, 128, (g, w, h) => {
-    g.fillStyle = '#3d2137'
+  // A board's face. The appeal's own is plum with gold lettering; the
+  // rest are the fayre's navy, their first word in gold and the rest in
+  // white, as "Winter Fayre" is on its poster.
+  const face = (text) => lettered(1024, 128, (g, w, h) => {
+    const appeal = text === words
+    g.fillStyle = appeal ? '#3d2137' : FAYRE.navy
     g.fillRect(0, 0, w, h)
-    g.fillStyle = GOLD
+    g.fillStyle = appeal ? GOLD : FAYRE.ice
     g.fillRect(0, 0, w, 7)
     g.fillRect(0, h - 7, w, 7)
     g.font = `800 84px ${FONT}`
-    g.textAlign = 'center'
     g.textBaseline = 'middle'
-    g.fillText(String(words).toUpperCase(), w / 2, h / 2 + 4, w - 60)
+    g.textAlign = 'left'
+    const said = String(text).toUpperCase()
+    const cut = appeal ? said.length : (said.indexOf(' ') < 0 ? said.length : said.indexOf(' '))
+    const first = said.slice(0, cut)
+    const rest = said.slice(cut)
+    const wide = Math.min(w - 60, g.measureText(said).width)
+    const squeeze = wide / (g.measureText(said).width || 1)
+    let x = (w - wide) / 2
+    g.fillStyle = GOLD
+    g.fillText(first, x, h / 2 + 4, g.measureText(first).width * squeeze)
+    x += g.measureText(first).width * squeeze
+    g.fillStyle = '#ffffff'
+    if (rest) g.fillText(rest, x, h / 2 + 4, g.measureText(rest).width * squeeze)
   })
-  const boardMat = flat('#ffffff', { map: board })
+  const signs = (boards.length ? boards : [words]).map(text => flat('#ffffff', { map: face(text) }))
   const boardGeo = box(11.6, 1.45, 0.25)
   const snowCap = box(11.7, 0.12, 0.34)
   for (let i = -4; i <= 4; i++) {
-    put(scene, boardGeo, boardMat, i * 12, 0.73, BACK)
+    put(scene, boardGeo, signs[(i + 4) % signs.length], i * 12, 0.73, BACK)
     put(scene, snowCap, white, i * 12, 1.5, BACK)
   }
+  // Behind the boards the ground is under snow, and the trees stand in it.
+  const snowfield = put(scene, keep(new PlaneGeometry(260, 90)), lam('#e7edf7'), 0, 0.03, BACK - 45.2)
+  snowfield.rotation.x = -PI / 2
 
   // Fairy lights, strung from pole to pole above the boards.
   const BULBS = ['#ffd166', '#bfe3ff', '#ff6b6b', '#7be0a0']
@@ -241,6 +271,7 @@ export function createStoryScene({ canvas, win = globalThis.window, words = 'Spo
   }
   bulbs.geometry.setAttribute('color', new BufferAttribute(tint, 3))
 
+  const driftGeo = keep(new SphereGeometry(1, 10, 6))
   // Christmas trees behind the boards, snow on their tops and a star above.
   const bough = lam('#1f5a3f')
   const farBough = lam('#17382f')
@@ -263,15 +294,161 @@ export function createStoryScene({ canvas, win = globalThis.window, words = 'Spo
     g.scale.setScalar(scale)
     scene.add(g)
   }
-  for (let i = -4; i <= 4; i++) tree(i * 12 + 6, BACK - 4.5, 1 + rnd() * 0.25, true)
+  const litTrees = []
+  for (let i = -4; i <= 4; i++) {
+    const lit = { x: i * 12 + 6, z: BACK - 4.5, scale: 1 + rnd() * 0.25 }
+    litTrees.push(lit)
+    tree(lit.x, lit.z, lit.scale, true)
+  }
   for (let i = -9; i <= 9; i++) tree(i * 7 + rnd() * 3, BACK - 12 - rnd() * 6, 1.25 + rnd() * 0.7, false)
+  // Lights on the Christmas trees, on the side that faces the field.
+  const PER_TREE = 13
+  const baubles = cloud(litTrees.length * PER_TREE, keep(new PointsMaterial({ size: 0.5, map: dot, transparent: true, depthWrite: false, vertexColors: true, blending: AdditiveBlending, fog: false })))
+  const baubleTint = new Float32Array(baubles.at.length)
+  const BAUBLES = [GOLD, '#ffffff', FAYRE.teal, '#ff6b6b']
+  litTrees.forEach((lit, t) => {
+    for (let k = 0; k < PER_TREE; k++) {
+      const n = t * PER_TREE + k
+      // A tree is widest low down: a light is put on its outside at its height.
+      const up = 1.5 + rnd() * 4.2
+      const out = (2.3 * (1 - (up - 1) / 5.4) + 0.12) * lit.scale
+      const round = (rnd() - 0.5) * 2.6
+      baubles.at[n * 3] = lit.x + Math.sin(round) * out
+      baubles.at[n * 3 + 1] = up * lit.scale
+      baubles.at[n * 3 + 2] = lit.z + Math.cos(round) * out
+      c.set(BAUBLES[n % BAUBLES.length])
+      baubleTint[n * 3] = c.r
+      baubleTint[n * 3 + 1] = c.g
+      baubleTint[n * 3 + 2] = c.b
+    }
+  })
+  baubles.geometry.setAttribute('color', new BufferAttribute(baubleTint, 3))
+
+  // The poster's snowflakes: six arms each, in three patterns, drawn in
+  // white so each can be given the poster's teal, ice blue or gold.
+  const flakeArt = (kind) => drawn(128, 128, (g, w, h) => {
+    g.translate(w / 2, h / 2)
+    g.strokeStyle = '#ffffff'
+    g.lineCap = 'round'
+    g.lineWidth = 5
+    const R = 54
+    const stroke = (x1, y1, x2, y2) => { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke() }
+    for (let i = 0; i < 6; i++) {
+      g.save()
+      g.rotate((i * PI) / 3)
+      stroke(0, 0, 0, -R)
+      if (kind === 0) {
+        // Two pairs of branches up each arm.
+        for (const [at, len] of [[0.42, 0.3], [0.7, 0.2]]) for (const side of [-1, 1]) stroke(0, -R * at, side * R * len * 0.87, -R * (at + len * 0.5))
+      } else if (kind === 1) {
+        // A diamond at each tip and a ring half way up.
+        g.beginPath(); g.moveTo(0, -R); g.lineTo(8, -R + 12); g.lineTo(0, -R + 24); g.lineTo(-8, -R + 12); g.closePath(); g.stroke()
+        g.beginPath(); g.arc(0, -R * 0.4, 5, 0, PI * 2); g.stroke()
+      } else {
+        // A short spoke between each pair of arms, and a fork at each tip.
+        for (const side of [-1, 1]) stroke(0, -R * 0.78, side * R * 0.16, -R)
+        g.rotate(PI / 6)
+        stroke(0, -R * 0.24, 0, -R * 0.56)
+      }
+      g.restore()
+    }
+    if (kind === 2) { g.beginPath(); g.arc(0, 0, R * 0.22, 0, PI * 2); g.stroke() }
+  })
+  // And its four-pointed stars.
+  const sparkleArt = drawn(128, 128, (g, w, h) => {
+    g.translate(w / 2, h / 2)
+    g.fillStyle = '#ffffff'
+    g.beginPath()
+    for (let i = 0; i < 8; i++) {
+      const a = (i * PI) / 4
+      const far = i % 2 ? 8 : 60
+      g.lineTo(Math.sin(a) * far, -Math.cos(a) * far)
+    }
+    g.closePath()
+    g.fill()
+  })
+  const flakes = [0, 1, 2].map(flakeArt)
+  const hang = (map, colour) => keep(new SpriteMaterial({ map, color: new Color(colour), transparent: true, depthWrite: false, fog: false }))
+  const flakeMats = flakes.flatMap(art => [hang(art, FAYRE.teal), hang(art, FAYRE.ice), hang(art, GOLD)])
+  const sparkleMats = [hang(sparkleArt, GOLD), hang(sparkleArt, '#ffffff'), hang(sparkleArt, FAYRE.teal)]
+  // They hang among the trees behind the boards, all the way along.
+  const HUNG = 44
+  const hung = []
+  for (let i = 0; i < HUNG; i++) {
+    const star = i % 4 === 3
+    const mats = star ? sparkleMats : flakeMats
+    const sprite = new Sprite(mats[Math.floor(rnd() * mats.length)])
+    const size = star ? 1.1 + rnd() * 1.3 : 1.7 + rnd() * 2.1
+    const y = 3.6 + rnd() * 8.8
+    sprite.position.set(-66 + (i + rnd()) * (132 / HUNG), y, BACK - 6.6 - rnd() * 4)
+    sprite.scale.set(size, size, 1)
+    scene.add(sprite)
+    hung.push({ sprite, y, size, star, beat: rnd() * 10 })
+  }
+
+  // Presents at the foot of the boards, wrapped in the fayre's colours.
+  const WRAP = [FAYRE.red, FAYRE.teal, GOLD, '#ffffff', FAYRE.navy]
+  const wrapMats = WRAP.map(colour => lam(colour))
+  const unit = box(1, 1, 1)
+  const present = (x, z, wide, high, wrap, ribbon, turn) => {
+    const g = new Group()
+    const body = put(g, unit, wrapMats[wrap], 0, high / 2, 0)
+    body.scale.set(wide, high, wide)
+    for (const across of [0, 1]) {
+      const band = put(g, unit, wrapMats[ribbon], 0, high / 2, 0)
+      band.scale.set(across ? wide * 1.03 : wide * 0.16, high * 1.03, across ? wide * 0.16 : wide * 1.03)
+    }
+    const bow = put(g, driftGeo, wrapMats[ribbon], 0, high + wide * 0.08, 0)
+    bow.scale.set(wide * 0.22, wide * 0.12, wide * 0.22)
+    g.position.set(x, 0, z)
+    g.rotation.y = turn
+    scene.add(g)
+  }
+
+  // A snowman: three balls of snow, coal for eyes, a carrot, a scarf and
+  // a Christmas hat.
+  const snowMat = lam('#f4f7fc')
+  const carrot = lam('#f08a2c')
+  const hat = lam(FAYRE.red)
+  const ball = keep(new SphereGeometry(1, 16, 12))
+  const noseGeo = keep(new ConeGeometry(0.09, 0.42, 8))
+  const hatGeo = keep(new ConeGeometry(0.42, 0.8, 12))
+  const brimGeo = keep(new TorusGeometry(0.42, 0.09, 8, 16))
+  const scarfGeo = keep(new TorusGeometry(0.5, 0.12, 8, 16))
+  const snowman = (x, z, scarf, turn) => {
+    const g = new Group()
+    for (const [r, y] of [[0.95, 0.85], [0.68, 2.1], [0.47, 3.02]]) put(g, ball, snowMat, 0, y, 0).scale.setScalar(r)
+    for (const side of [-1, 1]) put(g, ball, black, side * 0.17, 3.12, 0.41).scale.setScalar(0.055)
+    for (const y of [1.9, 2.25]) put(g, ball, black, 0, y, 0.66).scale.setScalar(0.06)
+    const nose = put(g, noseGeo, carrot, 0, 3.0, 0.62)
+    nose.rotation.x = PI / 2
+    const wrap = put(g, scarfGeo, wrapMats[scarf], 0, 2.66, 0)
+    wrap.rotation.x = PI / 2
+    put(g, unit, wrapMats[scarf], 0.3, 2.3, 0.42).scale.set(0.2, 0.62, 0.08)
+    const brim = put(g, brimGeo, snowMat, 0, 3.36, 0)
+    brim.rotation.x = PI / 2
+    put(g, hatGeo, hat, 0, 3.76, 0)
+    put(g, ball, snowMat, 0, 4.18, 0).scale.setScalar(0.12)
+    g.position.set(x, 0, z)
+    g.rotation.y = turn
+    scene.add(g)
+  }
 
   // Drifts of snow along the foot of the boards.
-  const driftGeo = keep(new SphereGeometry(1, 10, 6))
   for (let i = 0; i < 26; i++) {
     const d = put(scene, driftGeo, white, -56 + i * 4.5 + rnd() * 2, 0, BACK + 0.9 + rnd() * 0.8)
     d.scale.set(1.6 + rnd() * 1.6, 0.22 + rnd() * 0.2, 0.8 + rnd() * 0.5)
   }
+  // Between the things, in front of the boards: a pile of presents, or a
+  // snowman with presents at his feet.
+  ;[-30, -18, -6, 6, 18, 30].forEach((x, i) => {
+    const z = BACK + 2.2
+    if (i % 2) snowman(x + 0.4, z + 0.3, i % 3 === 0 ? 1 : 0, (rnd() - 0.5) * 0.7)
+    const at = i % 2 ? x - 1.9 : x
+    present(at - 0.9, z + 0.2, 1.25, 1.0, i % 5, (i + 2) % 5 === i % 5 ? 3 : (i + 2) % 5, rnd() * 0.6)
+    present(at + 0.55, z - 0.1, 0.95, 1.3, (i + 1) % 5, 2, -rnd() * 0.5)
+    present(at - 0.1, z + 1.25, 0.8, 0.7, (i + 3) % 5, i % 2 ? 3 : 2, rnd() * 0.9)
+  })
 
   // ------------------------------------------------------------------
   // Already funded: the table tennis tables. Deep blue tops with white
@@ -562,6 +739,10 @@ export function createStoryScene({ canvas, win = globalThis.window, words = 'Spo
   const snow = cloud(FLAKES, keep(new PointsMaterial({ size: 0.26, map: dot, color: new Color('#ffffff'), transparent: true, opacity: 0.9, depthWrite: false })))
   const flake = Array.from({ length: FLAKES }, () => [rnd(), rnd(), rnd(), 0.7 + rnd() * 0.6])
   const SKY = { x: 110, y: 26, z: 70, near: 44 }
+  // And a few large ones nearer to, drawn as the poster's snowflakes are.
+  const BIG = 46
+  const bigSnow = cloud(BIG, keep(new PointsMaterial({ size: 0.85, map: flakes[0], color: new Color('#dff3fb'), transparent: true, opacity: 0.92, depthWrite: false })))
+  const bigFlake = Array.from({ length: BIG }, () => [rnd(), rnd(), rnd(), 0.55 + rnd() * 0.5])
 
   function animate(t, now) {
     // The rally: the ball goes from bat to bat, bouncing once on the far half.
@@ -641,6 +822,22 @@ export function createStoryScene({ canvas, win = globalThis.window, words = 'Spo
       snow.at[i * 3 + 2] = SKY.near - f[2] * SKY.z
     }
     snow.geometry.attributes.position.needsUpdate = true
+    for (let i = 0; i < BIG; i++) {
+      const f = bigFlake[i]
+      bigSnow.at[i * 3] = (f[0] - 0.5) * 96 + Math.sin(now * 0.4 + f[2] * 30) * 0.9
+      bigSnow.at[i * 3 + 1] = fract(f[1] - now * 0.04 * f[3]) * 15
+      bigSnow.at[i * 3 + 2] = 30 - f[2] * 44
+    }
+    bigSnow.geometry.attributes.position.needsUpdate = true
+
+    // The snowflakes and stars hung among the trees sway a little, and the stars twinkle.
+    for (const d of hung) {
+      d.sprite.position.y = d.y + Math.sin(now * 0.5 + d.beat) * 0.22
+      if (d.star) {
+        const k = 0.72 + 0.28 * Math.sin(now * 2.4 + d.beat * 3)
+        d.sprite.scale.set(d.size * k, d.size * k, 1)
+      }
+    }
   }
 
   return {

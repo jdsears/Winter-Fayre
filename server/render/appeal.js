@@ -15,6 +15,7 @@
 
 import { esc, attr } from './html.js'
 import { APPEAL, charityLine } from '../../shared/appeal.js'
+import { SITE } from '../site.js'
 
 // A drawn picture for each part: gold lines on the plum. Shapes only.
 const icon = (inner) => `<svg class="beat-i" viewBox="0 0 64 64" width="56" height="56" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${inner}</svg>`
@@ -44,7 +45,8 @@ const item = (i) => `<li data-stop="${attr(i.key)}"><span class="fund-i">${ICONS
 
 export function appealHtml() {
   const a = APPEAL
-  return `<section id="appeal" class="story" aria-labelledby="appeal-h" data-story>
+  // The words for the boards in the 3D story are the ones round the games' pitch.
+  return `<section id="appeal" class="story" aria-labelledby="appeal-h" data-story data-boards="${attr(JSON.stringify(SITE.boards))}">
   <div class="wrap story-top">
     <p class="st-eye">${esc(a.name)}</p>
     <h2 id="appeal-h">${esc(a.headline[0])} <em>${esc(a.headline[1])}</em></h2>
