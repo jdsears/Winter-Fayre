@@ -300,7 +300,9 @@ const GAME_CSS = `.ku{margin:10px 0 0}
 // television the code is on the left and one leaderboard at a time is on
 // the right, sized by the screen so it reads from across a hall: at 1920
 // by 1080 the code is about 500 pixels square and a leaderboard row's
-// letters are 48 pixels high.
+// letters are 48 pixels high. The appeal (.tvx) is a card in the PSA's
+// plum and gold: stacked on a phone with its Donate button, and on a
+// television the whole screen in its turn, with a code to scan.
 const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);gap:28px;align-content:start;padding:28px max(22px,env(safe-area-inset-right)) 112px max(22px,env(safe-area-inset-left));background:linear-gradient(175deg,var(--primary-light) 0%,var(--primary) 40%,var(--primary-deep) 100%);overflow:hidden}
 .tv .snow{position:absolute;left:0;right:0;bottom:0;height:84px;margin:0;pointer-events:none}
 .tv p{margin:0;max-width:none}
@@ -330,6 +332,23 @@ const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display
 .tvl .s{margin-left:auto;font-variant-numeric:tabular-nums}
 .tve{font-size:19px;color:var(--on-primary-soft)}
 .tvp{display:none}
+.tvx{min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:20px;padding:22px 18px 20px;border-radius:22px;border:2px solid #ffffff2e;background:linear-gradient(170deg,#2f1a2c 0%,#5c3351 38%,#4b2a43 74%,#2a1728 100%);color:#fff}
+.tvx-w{display:grid;gap:12px;min-width:0}
+.tvx-eye{display:flex;align-items:center;gap:14px;font-family:var(--display);font-weight:700;letter-spacing:.22em;text-transform:uppercase;font-size:17px;line-height:1.2;color:var(--accent)}
+.tvx-eye .crest{flex:none;width:72px;height:auto}
+.tvx h2{font-size:clamp(34px,9.6vw,56px);line-height:.95;margin:0;text-wrap:balance}
+.tvx h2 em{display:block;font-style:normal;color:var(--accent)}
+.tvx-g{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;min-width:0}
+.tvx-t{font-family:var(--display);font-weight:700;letter-spacing:.18em;text-transform:uppercase;font-size:16px;line-height:1.3;color:var(--accent);padding:6px 0 8px}
+.tvx-l{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.tvx-l li{display:flex;align-items:center;gap:12px;min-width:0;font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.01em;font-size:22px;line-height:1.1}
+.tvx-l .beat-i{flex:none;width:40px;height:40px;color:var(--accent)}
+.tvx-ch{font-size:16px;line-height:1.4;color:#ffffffcc;padding-top:4px}
+.tvx-q{display:grid;gap:12px;justify-items:center;text-align:center;min-width:0}
+.tvx-s,.tvx .tvcode{display:none}
+.tvx-s em{font-style:normal;color:var(--accent)}
+.tvx-b{display:flex;width:100%;min-height:58px;font-size:20px}
+.tvx-a{font-family:var(--display);font-weight:700;font-size:18px;line-height:1.2;letter-spacing:.02em;overflow-wrap:anywhere}
 @media (min-width:1000px) and (orientation:landscape){
 .tv{grid-template-columns:38fr 62fr;gap:4vw;align-items:center;align-content:center;padding:3.4vh 4vw 9.4vh}
 .tv .snow{height:7.6vh}
@@ -361,8 +380,28 @@ const TV_CSS = `.tv{position:relative;min-height:100vh;min-height:100dvh;display
 .js .tvp{display:flex;justify-content:center;gap:1vw}
 .tvp i{width:1.1vw;height:1.1vw;border-radius:50%;background:#ffffff40}
 .tvp i.on{background:var(--accent)}
+.tvx{grid-column:1/-1;grid-template-columns:58fr 42fr;gap:4vw;align-items:center;padding:4vh 3vw;border-radius:3vh}
+.tvx-w{gap:1.5vh}
+.tvx-eye{font-size:min(1.9vw,3.4vh);gap:1.3vw}
+.tvx-eye .crest{width:min(12vh,6.8vw)}
+.tvx h2{font-size:min(5.4vw,9.8vh);line-height:.92}
+.tvx-g{grid-template-columns:repeat(2,minmax(0,1fr));gap:2vw;align-items:start;padding-top:1vh}
+.tvx-t{font-size:min(1.45vw,2.6vh);padding:0 0 1.2vh}
+.tvx-l{gap:1.3vh}
+.tvx-l li{font-size:min(1.85vw,3.35vh);gap:.9vw}
+.tvx-l .beat-i{width:min(3.4vw,6.1vh);height:min(3.4vw,6.1vh)}
+.tvx-ch{font-size:min(1.2vw,2.2vh);padding-top:1.2vh}
+.tvx-q{gap:1.6vh}
+.tvx-s{display:block;font-family:var(--display);font-weight:800;text-transform:uppercase;line-height:.9;font-size:min(5.2vw,9.6vh);white-space:nowrap}
+.tvx .tvcode{display:block}
+.tvx-b{display:none}
+.tvx-a{font-size:min(1.9vw,3.4vh)}
+.js .tvx{position:absolute;inset:0;grid-column:auto;z-index:2;display:none;border:0;border-radius:0;padding:4.4vh 4vw 11vh}
+.js .tvx.on{display:grid;animation:tv-fade .7s ease both}
+.tv .snow{z-index:3}
 }
 @keyframes tv-in{from{opacity:0;transform:translateY(1.2vh)}}
-@media (prefers-reduced-motion:reduce){.js .tvb.on{animation:none}}`
+@keyframes tv-fade{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){.js .tvb.on,.js .tvx.on{animation:none}}`
 
 export const SITE_CSS = [BASE_CSS, APPEAL_CSS, TILES_CSS, STAGE_CSS, HEADS_CSS, GAME_CSS, SHOOTOUT_CSS, TV_CSS].join('\n')

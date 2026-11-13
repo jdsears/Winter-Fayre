@@ -14,6 +14,7 @@
 //   GET  /media/badge/...  the PSA's crest, the one picture the site holds (crest.js)
 //   GET  /donate           counts a tap on Donate and sends the visitor on to the PSA's
 //                          page on JustGiving (shared/appeal.js)
+//   GET  /donate/tv        the same for a scan of the code on the stall's TV, counted apart
 //   GET  /robots.txt       search engines are kept out
 //   GET  /health           for Railway: the service is up
 //   GET  /api/board/<game> a game's leaderboard for the day, and a ticket for a go
@@ -52,9 +53,11 @@ export const COUNTED = {
   '/': 'The arcade',
   ...Object.fromEntries(GAMES.map(g => [g.path, g.title])),
   '/privacy': 'Privacy',
-  // Not a page: a tap on Donate, counted the same anonymous way before
-  // the visitor is sent on to the PSA's page on JustGiving.
+  // Not pages: a tap on Donate, and a scan of the code to donate on the
+  // stall's TV, each counted the same anonymous way before the visitor is
+  // sent on to the PSA's page on JustGiving.
   [APPEAL.path]: 'Taps on Donate',
+  [APPEAL.tvPath]: 'Scans of the TV\'s code to donate',
 }
 
 // How many of a board's entries the TV shows.
@@ -158,11 +161,12 @@ export function createApp({ origin = 'http://localhost:3000', production = false
     maxAge: '365d',
   }))
 
-  // A tap on Donate: counted as one more for the day, by nothing but its
-  // name, and sent on to the PSA's page on JustGiving. Nothing about the
-  // visitor is kept or passed on.
-  app.get(APPEAL.path, (req, res) => {
-    if (!isMachine(req.headers['user-agent'])) counts.page(APPEAL.path)
+  // A tap on Donate, or a scan of the code to donate on the stall's TV:
+  // counted as one more for the day, by nothing but its name, and sent on
+  // to the PSA's page on JustGiving. Nothing about the visitor is kept or
+  // passed on.
+  app.get([APPEAL.path, APPEAL.tvPath], (req, res) => {
+    if (!isMachine(req.headers['user-agent'])) counts.page(req.path.startsWith(APPEAL.tvPath) ? APPEAL.tvPath : APPEAL.path)
     res.set('Cache-Control', 'no-store')
     res.set('Referrer-Policy', 'no-referrer')
     res.redirect(302, APPEAL.url)

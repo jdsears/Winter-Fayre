@@ -141,6 +141,38 @@ describe('Donate', () => {
     }
   })
 
+  test('a scan of the code on the stall\'s TV goes the same way, and is counted apart from a tap on Donate', async () => {
+    const app = await startApp({ appOptions: { numbersPassword: password } })
+    try {
+      assert.equal(APPEAL.tvPath, '/donate/tv')
+      const res = await app.get('/donate/tv', { headers: PERSON })
+      assert.equal(res.status, 302)
+      assert.equal(res.headers.get('location'), 'https://www.justgiving.com/page/wymcol-psa-sports')
+      assert.equal(res.headers.get('cache-control'), 'no-store')
+      assert.equal(res.headers.get('referrer-policy'), 'no-referrer')
+      assert.equal(res.headers.get('set-cookie'), null)
+      assert.match(res.headers.get('x-robots-tag'), /noindex/)
+      await app.get('/donate/tv', { headers: PERSON })
+      await app.get('/donate/tv/?from=somewhere', { headers: PERSON })
+      await app.get('/donate/tv', { headers: { 'user-agent': 'Googlebot/2.1' } })
+      await app.get('/donate', { headers: PERSON })
+      await app.get('/', { headers: PERSON })
+      const today = (await app.counts.days(1))[0]
+      assert.equal(today.pages['/donate/tv'], 3)
+      assert.equal(today.pages['/donate'], 1)
+      // The numbers page shows the two apart, and neither as a page looked at.
+      const numbers = words(await (await app.get('/numbers', { headers: auth })).text())
+      assert.ok(numbers.includes('1 page views'), numbers.slice(0, 600))
+      assert.ok(numbers.includes('1 taps on Donate'))
+      assert.ok(numbers.includes('3 scans of the TV\'s code'))
+      assert.ok(!/Scans of the TV's code to donate \d/.test(numbers), 'not listed among the pages')
+      // Nothing else under /donate is a way through.
+      assert.equal((await app.get('/donate/elsewhere', { headers: PERSON })).status, 404)
+    } finally {
+      await app.close()
+    }
+  })
+
   test('is said on the privacy page: where it goes, that nothing is sent with you and that no money is taken here', async () => {
     const app = await startApp()
     try {

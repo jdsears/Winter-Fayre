@@ -2,7 +2,9 @@
 //
 // What this adds: the leaderboards take turns on the screen, a few
 // seconds each, and are asked for again every quarter of a minute, so
-// the screen follows the fayre with no one touching it. If the stall's
+// the screen follows the fayre with no one touching it. After every
+// three leaderboards the appeal the stall is in aid of fills the screen
+// for ten seconds, with its code to scan to donate. If the stall's
 // wifi drops, what is on the screen stays and it is asked for again. If
 // the site has been deployed again since the page was opened, the page
 // reloads itself, once the site has answered. It also asks the screen
@@ -15,6 +17,11 @@ import { footballTv } from '../shared/prizes.js'
 export const ROTATE_MS = 9000
 export const REFRESH_MS = 15000
 export const TOP = 10
+// The appeal's turn: how long it is on the screen, and how many
+// leaderboards are shown between its turns. Ten seconds in every
+// thirty-seven (John asked for about ten in every forty).
+export const APPEAL_MS = 10000
+export const APPEAL_EVERY = 3
 
 // A board's rows as they will be written: three capital letters and a
 // whole score each, ten at most. Anything else is left out.
@@ -42,18 +49,42 @@ export function cleanFootball(f) {
 // The board after this one, round and round.
 export const nextBoard = (at, count) => (count > 0 ? (at + 1) % count : 0)
 
+// What the screen shows, a turn at a time: { board, appeal, since }.
+//   board    the leaderboard that is on, or was last on while the appeal is
+//   appeal   whether the appeal fills the screen
+//   since    how many leaderboards have had a turn since the appeal did
+// The leaderboards go round in their order, and the appeal takes a turn
+// after every APPEAL_EVERY of them, where the page has one.
+export const firstTurn = (board = 0) => ({ board, appeal: false, since: 1 })
+export function nextTurn(turn, count, hasAppeal = true) {
+  if (turn.appeal) return { board: nextBoard(turn.board, count), appeal: false, since: 1 }
+  if (hasAppeal && turn.since >= APPEAL_EVERY) return { board: turn.board, appeal: true, since: 0 }
+  return { board: nextBoard(turn.board, count), appeal: false, since: turn.since + 1 }
+}
+// How long a turn lasts.
+export const turnMs = (turn) => (turn.appeal ? APPEAL_MS : ROTATE_MS)
+
 export function startTv(root, win = globalThis.window) {
   const doc = win.document
   const sections = [...root.querySelectorAll('[data-tv-board]')]
   const dots = [...(root.querySelector('[data-tv-dots]')?.children || [])]
   const dayEl = root.querySelector('[data-tv-day]')
+  const appeal = root.querySelector('[data-tv-appeal]')
   const version = root.getAttribute('data-version') || ''
-  let at = Math.max(0, sections.findIndex(s => s.classList.contains('on')))
+  let turn = firstTurn(Math.max(0, sections.findIndex(s => s.classList.contains('on'))))
+  let timer = null
 
   function show(i) {
-    at = i
     sections.forEach((s, n) => s.classList.toggle('on', n === i))
     dots.forEach((d, n) => d.classList.toggle('on', n === i))
+  }
+
+  // A turn is put on the screen, and the one after it is set to follow.
+  function take(next) {
+    turn = next
+    appeal?.classList.toggle('on', turn.appeal)
+    show(turn.board)
+    timer = win.setTimeout(() => take(nextTurn(turn, sections.length, Boolean(appeal))), turnMs(turn))
   }
 
   // Writes a board's rows, made with createElement so nothing read from
@@ -111,8 +142,7 @@ export function startTv(root, win = globalThis.window) {
   const awake = () => { try { win.navigator.wakeLock?.request('screen').catch(() => {}) } catch { /* not here: the screen's own setting stands */ } }
   const onVisible = () => { if (doc.visibilityState === 'visible') { awake(); refresh() } }
 
-  show(at)
-  const rotate = win.setInterval(() => show(nextBoard(at, sections.length)), ROTATE_MS)
+  take(turn)
   const poll = win.setInterval(refresh, REFRESH_MS)
   doc.addEventListener('visibilitychange', onVisible)
   awake()
@@ -121,7 +151,7 @@ export function startTv(root, win = globalThis.window) {
   return {
     refresh,
     stop() {
-      win.clearInterval(rotate)
+      win.clearTimeout(timer)
       win.clearInterval(poll)
       doc.removeEventListener('visibilitychange', onVisible)
     },

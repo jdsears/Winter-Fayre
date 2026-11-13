@@ -62,11 +62,12 @@ export const APPEAL = {
   line: 'Grown-ups: these games are in aid of the PSA\'s Sports Fund Appeal, which buys sports equipment for the College.',
   more: 'See the appeal',
 
-  // The appeal in a line each, for the stall's TV.
-  short: {
-    raising: 'Now raising for football box goals and cricket covers',
-    funded: 'Already funded: rugby post protectors, table tennis tables, cricket irrigation',
-  },
+  // On the stall's TV the appeal has a code to scan in place of the
+  // button. It leads to the same place by a path of its own, so the
+  // site's numbers can tell a scan of the TV from a tap on the button.
+  tvPath: '/donate/tv',
+  // The words over that code: the second is shown in gold.
+  scan: ['Scan to', 'donate'],
 }
 
 // The charity's line, as it is written out.
