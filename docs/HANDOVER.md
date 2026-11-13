@@ -30,7 +30,7 @@ The repository is **jdsears/Winter-Fayre**. Work only in it. It was built from `
 19. **Monthly giving stays in the appeal's words** (13 November 2026). John confirmed that the PSA's page on JustGiving offers a monthly gift, so "A single donation or a monthly contribution: both help." stands.
 20. **The football is at the head of the page** (13 November 2026). John asked for the hero to say that there is a FIFA approved football for the best keepy-uppies score of the day. It is a line of its own, "Win.", between "Play." and "Give.".
 21. **The poster's snowflakes and stars in the games' stadiums too** (13 November 2026). Asked whether he would like them there as well as in the story, John said yes. The poster's teal, ice blue and gold snowflakes and four-pointed stars hang in the night sky above the stand in every game played in the stadium, in the same places in 3D and drawn flat. They sway a little and the stars twinkle; with reduced motion they hang still. Head to head is left as it was: its sky is a thin strip behind the scoreboard and the buttons, with no room for them.
-22. **The appeal's story in 3D on the stall's TV** (13 November 2026). John asked whether the 3D scene could be brought to the TV to catch the eye. In the appeal's turn the story's field now fills the screen behind the appeal's words and its code to scan, where the television can draw 3D. The turn is still ten seconds in every thirty-seven, and the code is the size it was.
+22. **The appeal's story in 3D on the stall's TV** (13 November 2026). John asked whether the 3D scene could be brought to the TV to catch the eye. In the appeal's turn the story's field now fills the screen behind the appeal's words and its code to scan, where the television can draw 3D. The turn is still ten seconds in every thirty-seven, and the code is the size it was. Asked whether he would like the field behind the leaderboards as well, the whole time the TV is on, John said no (13 November 2026): the leaderboards stay plain, so the scores are easy to read and the television is at rest between the appeal's turns.
 
 ## What is built
 
@@ -66,6 +66,7 @@ The leaderboards and the numbers are kept in the service's memory. If a Railway 
 - **Railway**, from this repository. `railway.toml` installs with `npm ci`, builds with `npm run build`, starts with `npm start` and checks `/health`.
 - **Variables:** `NODE_ENV=production`, `NUMBERS_PASSWORD` (John chose it and set it himself) and `SITE_ORIGIN` (the site's full address, which the QR codes carry). If `SITE_ORIGIN` is left out, the address Railway gave the service is used.
 - **The site's own address** is `winterfayresports.co.uk` (13 November 2026), with and without `www`. John bought it through Cloudflare and pointed it at Railway. Cloudflare stands in front of the site: it sends the scripts compressed and keeps them near the visitor.
+- **Cloudflare's Web Analytics is switched on for the domain, and the site refuses it** (found 13 November 2026, by opening the live site in a browser after a deploy). For a visitor's browser, Cloudflare adds a line to every page that asks for its own measuring script from another address (`static.cloudflareinsights.com`). The site's rule for scripts (its own only) stops the browser fetching it, so it never runs and nothing is measured: the site's promise of no analytics service holds, and the privacy page is still true. It is better switched off all the same, and that is done in Cloudflare, not in the site: in the Cloudflare dashboard open Web Analytics, find the site, choose Manage site, and set the automatic setup to Disable. Until then a browser's console shows one refused script on every page, which no visitor sees. Never loosen the site's rules to let that script through. The line could also be kept out from the site's side, by sending its pages marked as not to be changed (`no-transform`), but Cloudflare then stops compressing them too (the arcade page is 69 kilobytes as written and 8 as sent), so the site would have to compress its own pages: not a change for the day before the fayre.
 - **A volume is attached**, so the leaderboards and the numbers survive a restart. `/health` answers `"kept":"file"` when it is in use.
 - **Every merge to `main` is deployed.** With a volume, the old copy stops before the new one starts, so each deploy takes the site away for up to a minute. Railway shows a page that says "Not Found: the train has not arrived at the station" in that minute. It comes back by itself.
 
@@ -80,7 +81,7 @@ The leaderboards and the numbers are kept in the service's memory. If a Railway 
 
 ## What is left
 
-Everything in the brief, and everything John has asked for since, is built and live. Nothing is open.
+Everything in the brief, and everything John has asked for since, is built and live. One thing is open, and it is John's to do in Cloudflare, not in the site: switching off Cloudflare's Web Analytics for the domain (see Deployment). The site already stops it from running, so it can wait until after the fayre.
 
 Things that can be changed quickly if the day shows a need, each in one place:
 
